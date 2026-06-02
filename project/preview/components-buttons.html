@@ -1,0 +1,49 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); padding: 24px; }
+  .grp { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+  .btn { font-family: var(--font-body); font-weight: 700; font-size: 15px; border: 0; cursor: pointer;
+         display: inline-flex; align-items: center; gap: 8px; border-radius: var(--r-sm);
+         padding: 12px 20px; transition: all .15s ease; }
+  .btn i { width: 17px; height: 17px; }
+  .primary { background: var(--orange-500); color: #fff; box-shadow: var(--shadow-xs); }
+  .primary:hover { background: var(--orange-600); }
+  .navy { background: var(--navy-700); color: #fff; }
+  .navy:hover { background: var(--navy-600); }
+  .ghost { background: transparent; color: var(--navy-700); border: 1.5px solid var(--border-strong); }
+  .ghost:hover { border-color: var(--navy-700); background: var(--mist); }
+  .link { background: none; color: var(--link); padding: 12px 4px; }
+  .link:hover { color: var(--blue-500); }
+  .sm { padding: 8px 14px; font-size: 13px; }
+  .lab { font-size: 11px; color: var(--fg-3); width: 64px; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="grp">
+    <span class="lab">Default</span>
+    <button class="btn primary">Apply now <i data-lucide="arrow-right"></i></button>
+    <button class="btn navy">View roles</button>
+    <button class="btn ghost"><i data-lucide="bookmark"></i> Save job</button>
+    <button class="btn link">Read more</button>
+  </div>
+  <div class="grp">
+    <span class="lab">Hover</span>
+    <button class="btn primary" style="background:var(--orange-600)">Apply now <i data-lucide="arrow-right"></i></button>
+    <button class="btn navy" style="background:var(--navy-600)">View roles</button>
+    <button class="btn ghost" style="border-color:var(--navy-700);background:var(--mist)"><i data-lucide="bookmark"></i> Save job</button>
+  </div>
+  <div class="grp">
+    <span class="lab">Small</span>
+    <button class="btn primary sm">Apply</button>
+    <button class="btn ghost sm"><i data-lucide="sliders-horizontal"></i> Filters</button>
+    <button class="btn ghost sm" disabled style="opacity:.45;cursor:not-allowed">Disabled</button>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); padding: 24px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--fg-1); margin-bottom: 6px; }
+  .field { position: relative; }
+  .field i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--slate-400); }
+  input, select { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 14px;
+    padding: 11px 12px; border: 1.5px solid var(--border-strong); border-radius: var(--r-sm); color: var(--fg-1); background: var(--white); }
+  input.ico { padding-left: 36px; }
+  input::placeholder { color: var(--slate-400); }
+  .focus { border-color: var(--blue-500); box-shadow: var(--shadow-focus); }
+  .err input { border-color: var(--error-600); }
+  .hint { font-size: 11px; color: var(--error-600); margin-top: 5px; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div>
+      <label>Keyword</label>
+      <div class="field"><i data-lucide="search"></i><input class="ico" placeholder="Job title or skill"></div>
+    </div>
+    <div>
+      <label>Location</label>
+      <div class="field"><i data-lucide="map-pin"></i><input class="ico focus" value="Birmingham"></div>
+    </div>
+    <div>
+      <label>Sector</label>
+      <select><option>All sectors</option><option>Construction &amp; Skilled Trade</option></select>
+    </div>
+    <div class="err">
+      <label>Upload CV</label>
+      <input value="my-cv.docx" >
+      <div class="hint">File must be under 5 MB</div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

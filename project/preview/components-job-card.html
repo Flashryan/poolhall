@@ -1,0 +1,52 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-2); padding: 22px; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg);
+          box-shadow: var(--shadow-sm); padding: 22px 24px; max-width: 560px; position: relative;
+          border-top: 4px solid var(--orange-500); }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .sector { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--brand); margin: 6px 0 0; }
+  .feat { display:inline-flex; align-items:center; gap:5px; font-size: 11px; font-weight: 700; color: var(--gold-600);
+          background: var(--gold-50); border: 1px solid var(--gold-300); padding: 4px 10px; border-radius: var(--r-pill); }
+  .feat i { width: 12px; height: 12px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 16px; margin: 14px 0 18px; color: var(--fg-2); font-size: 13.5px; }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .meta i { width: 15px; height: 15px; color: var(--slate-400); }
+  .foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--mist); padding-top: 16px; }
+  .sal { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--brand); }
+  .sal small { font-family: var(--font-body); font-weight: 500; font-size: 12px; color: var(--fg-3); }
+  .btn { background: var(--orange-500); color: #fff; border: 0; font-family: var(--font-body); font-weight: 700;
+         font-size: 14px; padding: 11px 20px; border-radius: var(--r-sm); display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap; }
+  .btn i { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <div>
+        <div class="sector">Construction &amp; Skilled Trade</div>
+        <h3>Project Manager — Multi-Storey</h3>
+      </div>
+      <span class="feat"><i data-lucide="star"></i> Featured</span>
+    </div>
+    <div class="meta">
+      <span><i data-lucide="map-pin"></i> Cheltenham</span>
+      <span><i data-lucide="briefcase"></i> Permanent</span>
+      <span><i data-lucide="house"></i> Must be onsite</span>
+      <span><i data-lucide="clock"></i> Posted 3 days ago</span>
+    </div>
+    <div class="foot">
+      <div class="sal">£60,000–£75,000 <small>/ year</small></div>
+      <button class="btn">View job <i data-lucide="arrow-right"></i></button>
+    </div>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

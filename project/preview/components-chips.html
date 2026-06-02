@@ -1,0 +1,46 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); padding: 24px; }
+  .row { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin-bottom: 12px; }
+  .lab { font-size: 11px; color: var(--fg-3); width: 78px; font-weight: 600; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+          padding: 6px 12px; border-radius: var(--r-pill); }
+  .chip i { width: 13px; height: 13px; }
+  .sector { background: var(--navy-700); color: #fff; }
+  .ghost { background: var(--white); border: 1.5px solid var(--border-strong); color: var(--fg-2); }
+  .perm { background: var(--blue-50); color: var(--blue-700); }
+  .remote { background: var(--success-50); color: var(--success-600); }
+  .feat { background: var(--gold-50); color: var(--gold-600); border: 1px solid var(--gold-300); }
+  .salary { background: var(--orange-50); color: var(--orange-700); }
+  .close { background: var(--warning-50); color: var(--warning-600); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <span class="lab">Sectors</span>
+    <span class="chip sector">Construction</span>
+    <span class="chip sector">Manufacturing</span>
+    <span class="chip sector">Marketing &amp; PR</span>
+    <span class="chip sector">Sales</span>
+  </div>
+  <div class="row">
+    <span class="lab">Job meta</span>
+    <span class="chip perm"><i data-lucide="briefcase"></i> Permanent</span>
+    <span class="chip remote"><i data-lucide="house"></i> Part Remote</span>
+    <span class="chip salary"><i data-lucide="banknote"></i> £55k–£65k</span>
+    <span class="chip close"><i data-lucide="clock"></i> Closing soon</span>
+  </div>
+  <div class="row">
+    <span class="lab">Markers</span>
+    <span class="chip feat"><i data-lucide="star"></i> Featured</span>
+    <span class="chip ghost">Filter: Hybrid ×</span>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

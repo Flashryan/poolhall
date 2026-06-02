@@ -1,0 +1,38 @@
+<!-- @dsCard group="Colors" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); color: var(--fg-1); padding: 22px; }
+  .scale { display: flex; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
+  .scale div { flex: 1; height: 64px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 10px; font-weight: 600; }
+  .labels { display: flex; margin-top: 8px; }
+  .labels div { flex: 1; text-align: center; font-size: 10px; color: var(--fg-3); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .tile { border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 12px; }
+  .tile .n { font-size: 12px; font-weight: 700; }
+  .tile .h { font-size: 11px; color: var(--fg-3); font-family: var(--font-mono); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: -2px; margin-right: 6px; border: 1px solid rgba(0,0,0,.08); }
+</style>
+</head>
+<body>
+  <div class="scale">
+    <div style="background:var(--white); color:#888; border-right:1px solid var(--border)">#FFF</div>
+    <div style="background:var(--paper); color:#888">paper</div>
+    <div style="background:var(--mist); color:#888">mist</div>
+    <div style="background:var(--cloud); color:#667">cloud</div>
+    <div style="background:var(--slate-400); color:#fff">400</div>
+    <div style="background:var(--slate-500); color:#fff">500</div>
+    <div style="background:var(--slate-600); color:#fff">600</div>
+    <div style="background:var(--slate-700); color:#fff">700</div>
+    <div style="background:var(--ink); color:#fff">ink</div>
+  </div>
+  <div class="pair">
+    <div class="tile"><div class="n"><span class="dot" style="background:var(--ink)"></span>Primary text</div><div class="h">--fg-1 · #16202F</div></div>
+    <div class="tile"><div class="n"><span class="dot" style="background:var(--slate-600)"></span>Secondary text</div><div class="h">--fg-2 · #586375</div></div>
+    <div class="tile"><div class="n"><span class="dot" style="background:var(--slate-400)"></span>Muted / meta</div><div class="h">--fg-3 · #9AA4B2</div></div>
+  </div>
+</body>
+</html>

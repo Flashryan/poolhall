@@ -1,0 +1,38 @@
+<!-- @dsCard group="Colors" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); padding: 22px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .card { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+  .bar { height: 8px; }
+  .body { padding: 12px 14px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--r-pill); }
+  .hex { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); margin-top: 8px; }
+  .lbl { font-size: 12px; font-weight: 700; color: var(--fg-1); margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="card">
+      <div class="bar" style="background:var(--success-600)"></div>
+      <div class="body"><span class="pill" style="background:var(--success-50); color:var(--success-600)">● Application sent</span><div class="lbl">Success</div><div class="hex">#1F8A5B</div></div>
+    </div>
+    <div class="card">
+      <div class="bar" style="background:var(--warning-600)"></div>
+      <div class="body"><span class="pill" style="background:var(--warning-50); color:var(--warning-600)">● Closing soon</span><div class="lbl">Warning</div><div class="hex">#C9881F</div></div>
+    </div>
+    <div class="card">
+      <div class="bar" style="background:var(--error-600)"></div>
+      <div class="body"><span class="pill" style="background:var(--error-50); color:var(--error-600)">● CV too large</span><div class="lbl">Error</div><div class="hex">#C9382E</div></div>
+    </div>
+    <div class="card">
+      <div class="bar" style="background:var(--info-600)"></div>
+      <div class="body"><span class="pill" style="background:var(--info-50); color:var(--info-600)">● Hybrid role</span><div class="lbl">Info</div><div class="hex">#1F6FB2</div></div>
+    </div>
+  </div>
+</body>
+</html>

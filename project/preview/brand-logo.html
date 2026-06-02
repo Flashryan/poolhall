@@ -1,0 +1,41 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); padding: 0; }
+  .wrap { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+  .cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; min-height: 200px; }
+  .light { background: var(--paper); }
+  .dark { background: var(--navy-800); }
+  .badge { width: 96px; height: 96px; border-radius: 50%; }
+  .lockup { display: flex; align-items: center; gap: 12px; }
+  .mono { font-family: var(--font-display); font-weight: 700; font-size: 30px; color: var(--brand); letter-spacing: .02em; }
+  .rule { width: 2px; height: 38px; background: var(--gold-500); }
+  .name { font-family: var(--font-display); font-size: 13px; line-height: 1.25; color: var(--slate-600); }
+  .name b { display: block; color: var(--brand); font-weight: 700; }
+  .dark .mono, .dark .name b { color: #fff; }
+  .dark .name { color: var(--fg-on-dark-2); }
+  .cap { font-size: 11px; color: var(--fg-3); }
+  .dark .cap { color: var(--fg-on-dark-2); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="cell light">
+      <img class="badge" src="poolhall-logo.png" alt="Poolhall Recruitment">
+      <div class="cap">Primary badge — on light</div>
+    </div>
+    <div class="cell dark">
+      <div class="lockup">
+        <span class="mono">PRL</span>
+        <span class="rule"></span>
+        <span class="name"><b>Poolhall</b>Recruitment<br>Limited</span>
+      </div>
+      <div class="cap">Horizontal lockup — gold rule divider</div>
+    </div>
+  </div>
+</body>
+</html>

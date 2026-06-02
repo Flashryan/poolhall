@@ -1,0 +1,55 @@
+<!-- @dsCard group="Colors" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--bg-1); color: var(--fg-1); padding: 22px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .sw { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
+  .chip { height: 76px; display: flex; align-items: flex-end; padding: 8px 10px; }
+  .chip .hex { font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+  .meta { padding: 8px 10px 10px; }
+  .name { font-size: 13px; font-weight: 700; color: var(--fg-1); }
+  .role { font-size: 11px; color: var(--fg-3); margin-top: 2px; }
+  .ramp { display: flex; gap: 6px; margin-top: 12px; }
+  .ramp span { flex: 1; height: 22px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="sw">
+      <div class="chip" style="background:var(--navy-700); color:#fff;"><span class="hex">#1B3052</span></div>
+      <div class="meta"><div class="name">Navy</div><div class="role">Anchor · brand · dark UI</div></div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:var(--orange-500); color:#fff;"><span class="hex">#EC6F1E</span></div>
+      <div class="meta"><div class="name">Orange</div><div class="role">Primary CTA · energy</div></div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:var(--blue-600); color:#fff;"><span class="hex">#1F6FB2</span></div>
+      <div class="meta"><div class="name">Blue</div><div class="role">Secondary · links · info</div></div>
+    </div>
+    <div class="sw">
+      <div class="chip" style="background:var(--gold-500); color:#3a2e10;"><span class="hex">#C6A052</span></div>
+      <div class="meta"><div class="name">Gold</div><div class="role">Premium accent · sparing</div></div>
+    </div>
+  </div>
+  <div class="ramp">
+    <span style="background:var(--navy-950)"></span>
+    <span style="background:var(--navy-800)"></span>
+    <span style="background:var(--navy-700)"></span>
+    <span style="background:var(--navy-600)"></span>
+    <span style="background:var(--orange-600)"></span>
+    <span style="background:var(--orange-500)"></span>
+    <span style="background:var(--orange-400)"></span>
+    <span style="background:var(--orange-50)"></span>
+    <span style="background:var(--blue-600)"></span>
+    <span style="background:var(--blue-500)"></span>
+    <span style="background:var(--blue-50)"></span>
+    <span style="background:var(--gold-500)"></span>
+    <span style="background:var(--gold-50)"></span>
+  </div>
+</body>
+</html>

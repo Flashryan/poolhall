@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poolhall Recruitment | Jobs in Construction, Manufacturing &amp; Marketing</title>
+<meta name="description" content="Poolhall Recruitment is an independent West Midlands agency placing people in Construction, Manufacturing and Marketing roles. Browse live jobs or hire with us.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTMiIGZpbGw9IiMxNDIzM0YiLz48dGV4dCB4PSIzMiIgeT0iNDQiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCAnVGltZXMgTmV3IFJvbWFuJywgc2VyaWYiIGZvbnQtc2l6ZT0iMzgiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9IiNGRkZGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlA8L3RleHQ+PHJlY3QgeD0iMjAiIHk9IjUxIiB3aWR0aD0iMjQiIGhlaWdodD0iMi41IiByeD0iMS4yNSIgZmlsbD0iI0M2QTA1MiIvPjwvc3ZnPg==">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1B3052"/><text x="100" y="118" font-family="Georgia,serif" font-size="64" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="2">PRL</text><rect x="62" y="132" width="76" height="3" fill="#C6A052"/></svg>
+</template>
+<div id="root"></div>
+
+<script src="images.js"></script>
+<script src="data.js"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="blocks.jsx"></script>
+<script type="text/babel" src="Home.jsx"></script>
+<script type="text/babel" src="Jobs.jsx"></script>
+<script type="text/babel" src="JobSingle.jsx"></script>
+<script type="text/babel" src="Apply.jsx"></script>
+<script type="text/babel" src="Employers.jsx"></script>
+<script type="text/babel" src="Team.jsx"></script>
+<script type="text/babel" src="Contact.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+function App() {
+  const [route, setRoute] = useState("home");
+  const [job, setJob] = useState(null);
+  const [path, setPath] = useState("candidate");
+
+  const go = (r, payload) => {
+    if (r === "job" || r === "apply") setJob(payload || job);
+    if (r === "employers") setPath("employer");
+    if (r === "jobs") setPath("candidate");
+    setRoute(r);
+    window.scrollTo({ top: 0, behavior: "auto" });
+    setTimeout(() => window.lucide && window.lucide.createIcons(), 0);
+  };
+
+  let view;
+  switch (route) {
+    case "jobs": case "sectors": view = <Jobs go={go} />; break;
+    case "job": view = <JobSingle go={go} job={job} />; break;
+    case "apply": view = <Apply go={go} job={job} />; break;
+    case "employers": view = <Employers go={go} />; break;
+    case "team": view = <Team go={go} />; break;
+    case "contact": view = <Contact go={go} />; break;
+    default: view = <Home go={go} path={path} />;
+  }
+
+  const navRoute = route === "job" || route === "apply" ? "jobs" : route;
+  return (
+    <React.Fragment>
+      <Header route={navRoute} go={go} path={path} setPath={setPath} />
+      {view}
+      <Footer go={go} />
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
