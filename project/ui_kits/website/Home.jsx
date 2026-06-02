@@ -70,13 +70,10 @@ function Home({ go, path }) {
       {/* google reviews */}
       <section className="section bg-white">
         <div className="container">
-          <SectionHead eyebrow="Google reviews"
+          <SectionHead eyebrow="What people say"
             title="Rated five stars by the people we place"
-            lead="Real feedback from candidates and clients across the UK."
-            action={<a href="#" onClick={e=>e.preventDefault()} className="jc-link">Read all reviews <Icon name="arrow-right" /></a>} />
-          <Carousel>
-            {D.reviews.map((r, i) => <ReviewCard key={i} r={r} />)}
-          </Carousel>
+            lead="Real feedback from candidates and clients across the UK." />
+          <ReviewsSlider />
         </div>
       </section>
 
