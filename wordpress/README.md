@@ -69,7 +69,17 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
 - **Phase 2 — core plugin and sync:** ✅ code + unit tests + integration
   verification (idempotent sync, duplicate prevention, update-in-place,
   unpublish-on-removal, failure preserves jobs, mass-unpublish guard).
-- **Phase 8 (part) — JobPosting schema:** ✅ generator + eligibility gate +
-  output on single job pages, fixture-tested for onsite/hybrid/remote.
-- **Phases 3–7, 9, 10:** not started. Phases 3–4 (Elementor design system,
-  jobs UX) need a staging WordPress with Elementor Pro + Novamira.
+- **Phase 3 — Elementor design system & global shell:** 🟡 in progress.
+  Done: child-theme token layer (`themes/hello-elementor-child/assets/css/shared.css`,
+  full §3 variable contract + fluid type classes), kit Site Settings script
+  (`scripts/dev/configure-elementor-kit.php` — system/custom colors,
+  typography, 1152px container, 639/899/1199 breakpoints), theme shell
+  script (`scripts/dev/create-theme-shell.php` — 8 core pages, Primary +
+  Footer menus, Theme Builder header/footer with site-wide conditions,
+  mobile nav dropdown). All verified rendering on the local frontend.
+  Remaining: v4 Variables/Global Classes in the editor, style-guide page,
+  contact strip, audience switch, loop item templates.
+- **Phase 8 (part) — JobPosting schema + reviews:** ✅ schema generator +
+  eligibility gate + output on single jobs; Places client + cache policy.
+- **Phases 4–7, 9, 10:** not started. See `/NEXT-SESSION.md` for how to
+  resume in a fresh container.
