@@ -231,6 +231,13 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
   border: 2px dashed #C9D0DA; border-radius: var(--ph-radius-md); background-color: var(--ph-color-white); text-align: center;
 }
 
+/* Hero system (§9): solid navy heroes. */
+.ph-hero--slim { padding-block: clamp(3rem, 3vw + 2rem, 5rem); }
+.ph-hero--job { padding-block: clamp(3.5rem, 4vw + 2rem, 6rem); }
+
+/* Job card internals (§12/§14): salary uses display type, never form/nav. */
+.ph-job-salary { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-700); }
+
 /* Header system (§8): contact strip and audience switch. */
 .ph-contact-strip { font-size: 0.8125rem; }
 .ph-contact-strip p { margin: 0; }

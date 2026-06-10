@@ -88,6 +88,17 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   Elementor kit Global Colors/Fonts stay synced for v3 widgets (doc 10 §3
   fallback clause). Remaining: loop item templates (with Phase 4), mobile
   drawer audience/account state.
+- **Phase 4 (part) — jobs user experience:** 🟡 started:
+  `scripts/dev/create-jobs-templates.php` builds the §12 loop items
+  (`PH Loop - Job Featured Card`, `PH Loop - Job Result Row`), the jobs
+  archive page (navy slim hero + one-column Loop Grid, 10/page, numbered
+  pagination, query ID `poolhall_jobs_archive` owned by
+  `src/Jobs/ArchiveQuery.php`, which also excludes locally-expired jobs
+  between crons) and the §14 single-job template (navy hero, content +
+  card sidebar; CTA routes to Contact while the application mode is unset
+  per hard rules 5/15). Template IDs recorded in `poolhall_template_ids`.
+  Remaining: home page + featured carousel, search/filter/sort widgets,
+  expired-job state, similar roles, save control.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 foundations done:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
   lockout, registration with consent capture and enumeration-safe generic

@@ -84,6 +84,7 @@ final class Plugin {
 
 		( new CandidateRole() )->register();
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
+		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
 
 		$scheduler = new Scheduler();
 		$scheduler->register();
