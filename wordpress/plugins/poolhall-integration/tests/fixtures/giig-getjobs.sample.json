@@ -1,0 +1,73 @@
+{
+  "__comment": "SYNTHETIC fixture matching the field names observed on the Poolhall Giig careers page and the api-doc.giighire.com endpoint docs. Phase 1 replaces this with a recorded live response (secrets stripped) and locks GiigNormalizer::KEYS.",
+  "jobs": [
+    {
+      "jobId": 27499,
+      "companyId": 1182,
+      "jobTitle": "Site Manager",
+      "jobDescription": "<p>Experienced Site Manager required for a residential developer in the West Midlands.</p>",
+      "salary": "£55,000 - £65,000/Year",
+      "remoteOnsite": "Must Be Onsite",
+      "city": "Birmingham",
+      "state": "West Midlands",
+      "country": "United Kingdom",
+      "industry": "Construction",
+      "jobType": "Full Time",
+      "experienceRequired": "5+ years",
+      "educationRequired": "Not required",
+      "datePosted": "2026-05-28T09:14:00Z",
+      "jobReference": "PH-27499"
+    },
+    {
+      "jobId": 27512,
+      "companyId": 1182,
+      "jobTitle": "Marketing Executive",
+      "jobDescription": "<p>Hybrid marketing role with a growing manufacturer.</p>",
+      "salary": "£30,000/Year",
+      "remoteOnsite": "Part Remote",
+      "city": "Wolverhampton",
+      "state": "West Midlands",
+      "country": "United Kingdom",
+      "industry": "Marketing",
+      "jobType": "Full Time Permanent",
+      "experienceRequired": "2 years",
+      "educationRequired": "Degree preferred",
+      "datePosted": "2026-06-02T11:30:00Z",
+      "jobReference": "PH-27512"
+    },
+    {
+      "jobId": 27530,
+      "companyId": 1182,
+      "jobTitle": "CNC Programmer (Nights)",
+      "jobDescription": "<p>Fully remote? No — but the salary parser needs an hourly example.</p>",
+      "salary": "£18.75/Hour",
+      "remoteOnsite": "Must Be Onsite",
+      "city": "Walsall",
+      "state": "West Midlands",
+      "country": "United Kingdom",
+      "industry": "Manufacturing",
+      "jobType": "Contract",
+      "experienceRequired": "3 years",
+      "educationRequired": "Apprenticeship or equivalent",
+      "datePosted": "2026-06-05T08:00:00Z",
+      "jobReference": "PH-27530"
+    },
+    {
+      "jobId": 27544,
+      "companyId": 1182,
+      "jobTitle": "SEO Specialist",
+      "jobDescription": "<p>Fully remote SEO role supporting construction-sector clients.</p>",
+      "salary": "Competitive",
+      "remoteOnsite": "Fully Remote",
+      "city": "",
+      "state": "",
+      "country": "United Kingdom",
+      "industry": "Marketing",
+      "jobType": "Part Time",
+      "experienceRequired": "",
+      "educationRequired": "",
+      "datePosted": "2026-06-08T14:45:00Z",
+      "jobReference": "PH-27544"
+    }
+  ]
+}

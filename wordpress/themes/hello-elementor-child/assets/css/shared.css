@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Poolhall Recruitment — shared foundations (child theme layer)
+   Source of truth for visual tokens is Elementor Site Settings / v4 Variables
+   (see wordpress/docs/10-ELEMENTOR-DESIGN-SYSTEM.md). These custom properties
+   exist as a no-Elementor fallback and for plugin-rendered widgets.
+   ========================================================================== */
+
+:root {
+  /* Palette (prototype-derived) */
+  --ph-navy-950: #0B1626;
+  --ph-navy-900: #0F1D33;
+  --ph-navy-800: #14233F;
+  --ph-navy-700: #1B3052;
+  --ph-orange-600: #D45F12;
+  --ph-orange-500: #EC6F1E;
+  --ph-orange-50: #FDF1E7;
+  --ph-blue-700: #155389;
+  --ph-blue-600: #1F6FB2;
+  --ph-gold-500: #C6A052;
+  --ph-paper: #F7F8FA;
+  --ph-mist: #EEF1F5;
+  --ph-cloud: #E3E7ED;
+  --ph-slate-500: #6B7686;
+  --ph-slate-600: #586375;
+  --ph-ink: #16202F;
+  --ph-white: #FFFFFF;
+
+  /* Status */
+  --ph-success-600: #1F8A5B;
+  --ph-warning-600: #C9881F;
+  --ph-error-600: #C9382E;
+
+  /* Type */
+  --ph-font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --ph-font-body: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Layout */
+  --ph-container: 72rem; /* 1152px measured on the prototype at 1280px viewport */
+  --ph-radius-card: 16px;
+  --ph-radius-input: 10px;
+  --ph-shadow-card: 0 8px 20px rgba(15, 29, 51, 0.10);
+  --ph-focus-ring: 0 0 0 3px rgba(46, 131, 201, 0.35);
+}
+
+/* Accessible focus visibility everywhere, including plugin widgets. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--ph-focus-ring);
+  border-radius: 4px;
+}
+
+/* Hard rule: no horizontal overflow on mobile (brief §5, QA doc). */
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* No-JS fallbacks: plugin widgets mark progressive enhancements. */
+.no-js .ph-requires-js {
+  display: none;
+}
+
+/* Screen-reader utility for plugin-rendered markup. */
+.ph-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
