@@ -53,6 +53,24 @@ foreach ( $pages as $slug => $title ) {
 }
 echo 'Pages: ' . count( $page_ids ) . " present.\n";
 
+// Style guide (design system §26.4): server-rendered from the child-theme
+// token contract via the plugin shortcode; noindexed by the StyleGuide class.
+$style_guide = get_page_by_path( 'style-guide' );
+if ( ! $style_guide instanceof WP_Post ) {
+	$style_guide_id = wp_insert_post(
+		array(
+			'post_type'    => 'page',
+			'post_status'  => 'publish',
+			'post_title'   => 'Style Guide',
+			'post_name'    => 'style-guide',
+			'post_content' => '[poolhall_style_guide]',
+		)
+	);
+} else {
+	$style_guide_id = $style_guide->ID;
+}
+echo "Style guide: page #{$style_guide_id} (noindex via plugin).\n";
+
 // ---------------------------------------------------------------- menus ----
 $ensure_menu = static function ( string $name, array $slugs ) use ( $page_ids ): int {
 	$menu = wp_get_nav_menu_object( $name );
@@ -104,6 +122,54 @@ $widget    = static fn( string $type, array $settings ): array => array(
 );
 
 $header_data = array(
+	// Contact strip (design system §8): Navy 900, phone/email left, location
+	// right. Below 640px the child-theme .ph-contact-strip rules hide the
+	// location; links keep hover underline and visible focus.
+	$container(
+		array(
+			'content_width'         => 'boxed',
+			'boxed_width'           => array(
+				'unit' => 'px',
+				'size' => 1152,
+			),
+			'flex_direction'        => 'row',
+			'flex_align_items'      => 'center',
+			'flex_justify_content'  => 'space-between',
+			'flex_gap'              => array(
+				'unit'   => 'px',
+				'size'   => 16,
+				'column' => '16',
+				'row'    => '16',
+			),
+			'background_background' => 'classic',
+			'background_color'      => '#0F1D33',
+			'padding'               => array(
+				'unit'     => 'px',
+				'top'      => '8',
+				'right'    => '24',
+				'bottom'   => '8',
+				'left'     => '24',
+				'isLinked' => false,
+			),
+			'css_classes'           => 'ph-contact-strip',
+		),
+		array(
+			$widget(
+				'text-editor',
+				array(
+					'editor'     => '<p><a href="tel:01215163000">0121 516 3000</a> &nbsp;·&nbsp; <a href="mailto:jobs@poolhallrecruitment.co.uk">jobs@poolhallrecruitment.co.uk</a></p>',
+					'text_color' => '#FFFFFF',
+				)
+			),
+			$widget(
+				'text-editor',
+				array(
+					'editor'       => '<p class="ph-contact-strip__location">Birmingham · West Midlands</p>',
+					'text_color'   => '#FFFFFF',
+				)
+			),
+		)
+	),
 	$container(
 		array(
 			'content_width'    => 'boxed',
@@ -178,6 +244,15 @@ $header_data = array(
 					'toggle_color'           => '#1B3052',
 					'full_width'             => 'stretch',
 					'text_align'             => 'aside',
+				)
+			),
+			// Audience switch (§8): segmented Candidates/Employers control,
+			// desktop only — the child-theme .ph-audience-switch rules hide
+			// it below 900px (it moves into the mobile drawer in Phase 4).
+			$widget(
+				'text-editor',
+				array(
+					'editor' => '<p class="ph-audience-switch"><a class="is-active" href="' . esc_url( get_permalink( $page_ids['jobs'] ) ) . '">Candidates</a><a href="' . esc_url( get_permalink( $page_ids['employers'] ) ) . '">Employers</a></p>',
 				)
 			),
 			$widget(

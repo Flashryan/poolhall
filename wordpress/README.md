@@ -73,16 +73,21 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
 - **Phase 2 — core plugin and sync:** ✅ code + unit tests + integration
   verification (idempotent sync, duplicate prevention, update-in-place,
   unpublish-on-removal, failure preserves jobs, mass-unpublish guard).
-- **Phase 3 — Elementor design system & global shell:** 🟡 in progress.
+- **Phase 3 — Elementor design system & global shell:** 🟡 nearly done.
   Done: child-theme token layer (`themes/hello-elementor-child/assets/css/shared.css`,
-  full §3 variable contract + fluid type classes), kit Site Settings script
-  (`scripts/dev/configure-elementor-kit.php` — system/custom colors,
-  typography, 1152px container, 639/899/1199 breakpoints), theme shell
-  script (`scripts/dev/create-theme-shell.php` — 8 core pages, Primary +
-  Footer menus, Theme Builder header/footer with site-wide conditions,
-  mobile nav dropdown). All verified rendering on the local frontend.
-  Remaining: v4 Variables/Global Classes in the editor, style-guide page,
-  contact strip, audience switch, loop item templates.
+  full §3 variable contract + the complete §6 global class registry —
+  layout/stacks/grids, typography, buttons with all states, cards, badges,
+  chips, alerts, forms, utilities, reduced-motion rules), kit Site Settings
+  script (`scripts/dev/configure-elementor-kit.php`), theme shell script
+  (`scripts/dev/create-theme-shell.php` — 8 core pages, menus, header with
+  §8 contact strip + desktop audience switch, footer, site-wide conditions),
+  and the style-guide page (`/style-guide/`, server-rendered by the plugin
+  `[poolhall_style_guide]` shortcode from the live token contract; noindexed
+  and excluded from sitemaps). All verified on the local frontend.
+  Note: the child theme deliberately owns all `--ph-*` custom properties;
+  Elementor kit Global Colors/Fonts stay synced for v3 widgets (doc 10 §3
+  fallback clause). Remaining: loop item templates (with Phase 4), mobile
+  drawer audience/account state.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 foundations done:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
   lockout, registration with consent capture and enumeration-safe generic

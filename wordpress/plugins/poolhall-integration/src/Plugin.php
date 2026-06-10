@@ -83,6 +83,7 @@ final class Plugin {
 		);
 
 		( new CandidateRole() )->register();
+		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
 
 		$scheduler = new Scheduler();
 		$scheduler->register();
