@@ -43,9 +43,9 @@ final class PlacesClient {
 			array(
 				'timeout' => $this->timeout,
 				'headers' => array(
-					'X-Goog-Api-Key'    => $this->api_key,
-					'X-Goog-FieldMask'  => self::FIELD_MASK,
-					'Accept'            => 'application/json',
+					'X-Goog-Api-Key'   => $this->api_key,
+					'X-Goog-FieldMask' => self::FIELD_MASK,
+					'Accept'           => 'application/json',
 				),
 			)
 		);

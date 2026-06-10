@@ -19,7 +19,7 @@ use Poolhall\Integration\Support\Logger;
  */
 final class ReviewsService {
 
-	private const OPTION = 'poolhall_reviews_snapshot';
+	private const OPTION       = 'poolhall_reviews_snapshot';
 	private const ERROR_OPTION = 'poolhall_reviews_last_error';
 
 	/** @var callable():ReviewsSnapshot */

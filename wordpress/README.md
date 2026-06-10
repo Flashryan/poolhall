@@ -42,6 +42,10 @@ composer lint     # PHPCS, WordPress Coding Standards
 # 4. Integration verification (runs the real sync pipeline in WP against
 #    the synthetic fixture — no Giig credentials, no real data)
 wp eval-file wp-content/plugins/poolhall-integration/scripts/dev/verify-sync.php
+
+# 5. Candidate-accounts verification (real users/role/saved-jobs table with
+#    a capturing mailer — no email sent, no real candidate data)
+wp eval-file wp-content/plugins/poolhall-integration/scripts/dev/verify-accounts.php
 ```
 
 ## Secrets
@@ -79,7 +83,17 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   mobile nav dropdown). All verified rendering on the local frontend.
   Remaining: v4 Variables/Global Classes in the editor, style-guide page,
   contact strip, audience switch, loop item templates.
+- **Phase 6 (part) — candidate accounts backend:** 🟡 foundations done:
+  `poolhall_candidate` role with minimal caps + admin/author-archive/REST
+  lockout, registration with consent capture and enumeration-safe generic
+  responses, hashed single-use 24h verification tokens with 60s/hourly/daily
+  resend limits, idempotent saved-jobs table keyed by source identity
+  (survives job recreation, live-first listing, clear-expired). Unit tests
+  (`PasswordPolicy`, `TokenPolicy`, `ResendPolicy`, `EmailAddress`) +
+  `scripts/dev/verify-accounts.php` (30 checks). Remaining: login/recovery
+  flows, portal routes/widgets, alerts, recommendations, history, CV,
+  privacy export/deletion.
 - **Phase 8 (part) — JobPosting schema + reviews:** ✅ schema generator +
   eligibility gate + output on single jobs; Places client + cache policy.
-- **Phases 4–7, 9, 10:** not started. See `/NEXT-SESSION.md` for how to
+- **Phases 4–5, 7, 9, 10:** not started. See `/NEXT-SESSION.md` for how to
   resume in a fresh container.

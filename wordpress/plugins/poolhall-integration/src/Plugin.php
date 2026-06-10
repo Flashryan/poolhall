@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Poolhall\Integration;
 
+use Poolhall\Integration\Accounts\CandidateRole;
+use Poolhall\Integration\Accounts\SavedJobsRepository;
 use Poolhall\Integration\Admin\HealthPage;
 use Poolhall\Integration\Cron\Scheduler;
 use Poolhall\Integration\Jobs\ExpiryPolicy;
@@ -29,7 +31,7 @@ use Poolhall\Integration\Support\Options;
 final class Plugin {
 
 	private const DB_VERSION_OPTION = 'poolhall_db_version';
-	private const DB_VERSION        = 1;
+	private const DB_VERSION        = 2;
 
 	private static ?self $instance = null;
 
@@ -49,6 +51,8 @@ final class Plugin {
 
 	public static function activate(): void {
 		Logger::install();
+		SavedJobsRepository::install();
+		CandidateRole::install();
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
 		( new JobPostType() )->register();
 		Scheduler::activate();
@@ -70,11 +74,15 @@ final class Plugin {
 			static function (): void {
 				if ( (int) get_option( self::DB_VERSION_OPTION, 0 ) < self::DB_VERSION ) {
 					Logger::install();
+					SavedJobsRepository::install();
+					CandidateRole::install();
 					update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
 				}
 			},
 			5
 		);
+
+		( new CandidateRole() )->register();
 
 		$scheduler = new Scheduler();
 		$scheduler->register();
