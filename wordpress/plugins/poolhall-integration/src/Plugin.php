@@ -90,7 +90,17 @@ final class Plugin {
 
 	public function run_scheduled_sync(): void {
 		$this->sync_service()->run( 'cron' );
+		// CachePolicy makes this a no-op unless the snapshot is >24h old.
+		$this->reviews_service()->refresh();
 		( new Logger() )->prune();
+	}
+
+	public function reviews_service(): \Poolhall\Integration\Reviews\ReviewsService {
+		return new \Poolhall\Integration\Reviews\ReviewsService(
+			static fn() => \Poolhall\Integration\Reviews\PlacesClient::from_environment()->fetch_snapshot(),
+			new \Poolhall\Integration\Reviews\CachePolicy(),
+			new Logger()
+		);
 	}
 
 	/**
