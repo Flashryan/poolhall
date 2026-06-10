@@ -8,7 +8,9 @@ the last session ended).
 
 1. **Network policy** (claude.ai/code → environment settings → Network).
    Make sure these domains are allowed — you added them on 10 June:
-   - `api.hostinger.com` (Hostinger API)
+   - `developers.hostinger.com` (Hostinger API — the MCP server's real
+     endpoint; `api.hostinger.com` is NOT it and returns a Cloudflare
+     no-origin error)
    - `wordpress.org` and `downloads.wordpress.org` (plugins/translations)
    - `api.giighire.com` (Giig — needed for Phase 1)
    - `places.googleapis.com` (Google reviews)
