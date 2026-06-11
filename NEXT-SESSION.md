@@ -11,6 +11,10 @@ the last session ended).
    - `developers.hostinger.com` (Hostinger API — the MCP server's real
      endpoint; `api.hostinger.com` is NOT it and returns a Cloudflare
      no-origin error)
+   - **Gotcha:** allowlist and env-var changes only apply when a container
+     boots — a running session never sees them. Edit first, then start the
+     session. The proxy's block response is an HTTP 403 with body
+     `Host not in allowlist`; don't mistake the 403 for an origin reply.
    - `wordpress.org` and `downloads.wordpress.org` (plugins/translations)
    - `api.giighire.com` (Giig — needed for Phase 1)
    - `places.googleapis.com` (Google reviews)
