@@ -86,8 +86,12 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   and excluded from sitemaps). All verified on the local frontend.
   Note: the child theme deliberately owns all `--ph-*` custom properties;
   Elementor kit Global Colors/Fonts stay synced for v3 widgets (doc 10 §3
-  fallback clause). Remaining: loop item templates (with Phase 4), mobile
-  drawer audience/account state.
+  fallback clause). All of these setup scripts (plus the portal pages) can
+  also be run from wp-admin — Poolhall Jobs → **Site setup**, a
+  nonce-protected runner that skips steps whose requirements are missing —
+  so managed hosts without wp-cli/SSH (Hostinger staging) configure
+  through the same idempotent code path. Remaining: loop item templates
+  (with Phase 4), mobile drawer audience/account state.
 - **Phase 4 (part) — jobs user experience:** 🟡 started:
   `scripts/dev/create-jobs-templates.php` builds the §12 loop items
   (`PH Loop - Job Featured Card`, `PH Loop - Job Result Row`), the jobs

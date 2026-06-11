@@ -44,6 +44,14 @@ the last session ended).
   fine on free Elementor (which had to come from
   `downloads.wordpress.org` — the GitHub API was rate-limited without a
   `GITHUB_TOKEN`).
+- Third session additions: **wp-admin Site setup runner** (Poolhall Jobs →
+  Site setup; runs portal pages + the three Elementor scripts with
+  requirement-aware skips — staging needs no SSH), and two setup-script
+  fixes: the Hello Elementor parent now installs from
+  `downloads.wordpress.org` (the GitHub source tree ships unbuilt assets
+  and fatals on every wp-admin page) and free Elementor falls back to
+  `downloads.wordpress.org` automatically when the GitHub API is
+  rate-limited.
 
 ## Before you start the session (one-time setup)
 
@@ -123,10 +131,11 @@ Remaining:
 1. **Deploy plugin + child theme to staging** once `srv1350-files.hstgr.io`
    is allowlisted (build `wordpress/dist/` zips first), or have Ryan
    upload the two zips through staging wp-admin → Plugins/Themes → Add.
-2. Activate both on staging, then run the portal-pages script there. No
-   SSH/wp-cli via the API: either Ryan runs `wp eval-file` from hPanel's
-   SSH/terminal, or build the small admin-trigger seam first (Health page
-   button that runs the same idempotent scripts).
+2. Activate both on staging, then run **wp-admin → Poolhall Jobs → Site
+   setup** (added 11 June, third session): one nonce-protected button runs
+   portal pages + the kit/theme-shell/jobs-template scripts, skipping any
+   step whose requirements (Elementor / Elementor Pro) are missing and
+   saying why. No SSH/wp-cli needed.
 3. Ryan installs **Elementor Pro + Novamira manually** on staging
    (Novamira is staging/local only — hard rule 13 — and never production).
 4. Re-run the kit/theme-shell/jobs-template scripts on staging once
@@ -148,9 +157,6 @@ Remaining:
 - **Continue Phase 6** — dashboard modules, alerts, profile,
   recommendations, application history; CV + privacy export/deletion
   (with reauthentication, hard rule 17) once Mode A is decided.
-- **Staging admin-trigger seam** — a Health-page action that runs the
-  idempotent portal-pages/kit/template scripts without wp-cli, so staging
-  setup stops depending on hPanel SSH.
 
 ## If something looks broken in a new session
 

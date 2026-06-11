@@ -49,11 +49,12 @@ if ! $WP core is-installed 2>/dev/null; then
     --admin_user=dev --admin_password=localdev-only --admin_email=dev@example.test --skip-email
 fi
 
-echo "== Hello Elementor parent theme"
+echo "== Hello Elementor parent theme (built release from wordpress.org)"
+# Not the GitHub source tree: that ships without built JS assets and its
+# admin module fatals on every wp-admin page until `npm run build` runs.
 if [ ! -d "$WP_DIR/wp-content/themes/hello-elementor" ]; then
-  curl -sL -o /tmp/hello.tar.gz https://codeload.github.com/elementor/hello-theme/tar.gz/refs/heads/main
-  tar -xzf /tmp/hello.tar.gz -C "$WP_DIR/wp-content/themes"
-  mv "$WP_DIR/wp-content/themes/hello-theme-main" "$WP_DIR/wp-content/themes/hello-elementor"
+  curl -sL -o /tmp/hello.zip https://downloads.wordpress.org/theme/hello-elementor.latest-stable.zip
+  unzip -qo /tmp/hello.zip -d "$WP_DIR/wp-content/themes"
 fi
 
 echo "== Elementor (latest built zip from GitHub releases)"
@@ -65,8 +66,11 @@ if [ ! -d "$WP_DIR/wp-content/plugins/elementor" ]; then
     curl -sL -o /tmp/elementor.zip "$EL_URL"
     unzip -qo /tmp/elementor.zip -d "$WP_DIR/wp-content/plugins"
   else
-    echo "   WARNING: could not resolve Elementor release (API rate limit?)."
-    echo "   Set GITHUB_TOKEN and re-run, or unzip an Elementor zip into wp-content/plugins manually."
+    # GitHub API rate-limited (no GITHUB_TOKEN): wordpress.org carries the
+    # same built zip and is on the network allowlist.
+    echo "   GitHub release lookup failed; falling back to downloads.wordpress.org."
+    curl -sL -o /tmp/elementor.zip https://downloads.wordpress.org/plugin/elementor.latest-stable.zip
+    unzip -qo /tmp/elementor.zip -d "$WP_DIR/wp-content/plugins"
   fi
 fi
 # Elementor Pro is licensed and cannot be fetched: upload the zip and unzip

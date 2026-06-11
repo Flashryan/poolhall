@@ -9,18 +9,23 @@ declare(strict_types=1);
 
 namespace Poolhall\Integration\Admin;
 
+use Poolhall\Integration\Accounts\PortalPages;
 use Poolhall\Integration\Jobs\SyncService;
 use Poolhall\Integration\Support\Logger;
 
 /**
  * "Poolhall Jobs" admin area (architecture doc §13): health summary, recent
- * redacted log events and a nonce-protected Sync now action. Staff must be
- * able to understand sync health without reading logs.
+ * redacted log events, a nonce-protected Sync now action, and the Site
+ * setup runner — the same idempotent scripts wp-cli runs locally, exposed
+ * for hosts without shell access (managed staging has no SSH via the
+ * hosting API). Staff must be able to understand sync health without
+ * reading logs.
  */
 final class HealthPage {
 
-	private const CAPABILITY  = 'manage_options';
-	private const SYNC_ACTION = 'poolhall_sync_now';
+	private const CAPABILITY   = 'manage_options';
+	private const SYNC_ACTION  = 'poolhall_sync_now';
+	private const SETUP_ACTION = 'poolhall_run_setup';
 
 	public function __construct(
 		private readonly SyncService $sync,
@@ -30,6 +35,7 @@ final class HealthPage {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_post_' . self::SYNC_ACTION, array( $this, 'handle_sync_now' ) );
+		add_action( 'admin_post_' . self::SETUP_ACTION, array( $this, 'handle_run_setup' ) );
 	}
 
 	public function add_menu(): void {
@@ -56,6 +62,59 @@ final class HealthPage {
 		exit;
 	}
 
+	/**
+	 * Run every setup step whose requirements are met, in dependency order
+	 * (the jobs templates need the pages the theme shell creates). Steps
+	 * are the same idempotent scripts wp-cli runs; their output is captured
+	 * and shown back on the health screen.
+	 */
+	public function handle_run_setup(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'poolhall-integration' ), '', 403 );
+		}
+		check_admin_referer( self::SETUP_ACTION );
+
+		$summary = array();
+		foreach ( $this->setup_steps() as $step ) {
+			if ( ! $step['runnable'] ) {
+				$summary[] = array(
+					'label'  => $step['label'],
+					'state'  => 'skipped',
+					'output' => $step['reason'],
+				);
+				continue;
+			}
+
+			if ( 'portal-pages' === $step['key'] ) {
+				try {
+					$pages  = PortalPages::ensure();
+					$output = sprintf(
+						/* translators: %d: number of portal pages. */
+						__( '%d portal pages in place.', 'poolhall-integration' ),
+						count( $pages )
+					);
+					$state = 'ok';
+				} catch ( \RuntimeException $e ) {
+					$output = $e->getMessage();
+					$state  = 'failed';
+				}
+			} else {
+				$output = $this->run_script( $step['key'] );
+				$state  = str_contains( $output, 'FAIL' ) ? 'failed' : 'ok';
+			}
+
+			$summary[] = array(
+				'label'  => $step['label'],
+				'state'  => $state,
+				'output' => trim( $output ),
+			);
+		}
+
+		set_transient( $this->setup_transient_key(), $summary, 2 * MINUTE_IN_SECONDS );
+		wp_safe_redirect( add_query_arg( 'setup', '1', admin_url( 'admin.php?page=poolhall-jobs' ) ) );
+		exit;
+	}
+
 	public function render(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			return;
@@ -71,6 +130,10 @@ final class HealthPage {
 
 		if ( isset( $_GET['synced'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only notice.
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Sync completed. Summary below.', 'poolhall-integration' ) . '</p></div>';
+		}
+
+		if ( isset( $_GET['setup'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only notice.
+			$this->render_setup_summary();
 		}
 
 		if ( $failures >= 3 ) {
@@ -110,6 +173,8 @@ final class HealthPage {
 		echo '<p style="margin-top:16px"><a href="' . esc_url( $sync_url ) . '" class="button button-primary">'
 			. esc_html__( 'Sync now', 'poolhall-integration' ) . '</a></p>';
 
+		$this->render_setup_section();
+
 		echo '<h2>' . esc_html__( 'Recent events', 'poolhall-integration' ) . '</h2>';
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time (UTC)', 'poolhall-integration' )
 			. '</th><th>' . esc_html__( 'Event', 'poolhall-integration' )
@@ -119,5 +184,98 @@ final class HealthPage {
 				. esc_html( (string) $row->context ) . '</code></td></tr>';
 		}
 		echo '</tbody></table></div>';
+	}
+
+	/** Outcome notices for the last Site setup run, then the stash clears. */
+	private function render_setup_summary(): void {
+		$summary = get_transient( $this->setup_transient_key() );
+		delete_transient( $this->setup_transient_key() );
+		if ( ! is_array( $summary ) ) {
+			return;
+		}
+
+		foreach ( $summary as $step ) {
+			$class = match ( $step['state'] ) {
+				'ok'      => 'notice-success',
+				'skipped' => 'notice-warning',
+				default   => 'notice-error',
+			};
+			$lines = array_values( array_filter( array_map( 'trim', explode( "\n", (string) $step['output'] ) ) ) );
+			$brief = array() === $lines ? '' : end( $lines );
+
+			echo '<div class="notice ' . esc_attr( $class ) . '"><p><strong>' . esc_html( (string) $step['label'] ) . ':</strong> ' . esc_html( $brief ) . '</p>';
+			if ( count( $lines ) > 1 ) {
+				echo '<details style="margin-bottom:8px"><summary>' . esc_html__( 'Details', 'poolhall-integration' ) . '</summary><pre style="font-size:11px">' . esc_html( (string) $step['output'] ) . '</pre></details>';
+			}
+			echo '</div>';
+		}
+	}
+
+	private function render_setup_section(): void {
+		echo '<h2>' . esc_html__( 'Site setup', 'poolhall-integration' ) . '</h2>';
+		echo '<p style="max-width:760px">' . esc_html__( 'Runs the idempotent setup scripts — the same ones wp-cli runs locally — for hosts without shell access. Safe to re-run; steps whose requirements are missing are skipped and say why.', 'poolhall-integration' ) . '</p>';
+
+		echo '<ul style="max-width:760px">';
+		foreach ( $this->setup_steps() as $step ) {
+			echo '<li>' . esc_html( $step['label'] ) . ' — '
+				. ( $step['runnable']
+					? '<strong>' . esc_html__( 'will run', 'poolhall-integration' ) . '</strong>'
+					: esc_html( sprintf( /* translators: %s: requirement explanation. */ __( 'skipped: %s', 'poolhall-integration' ), $step['reason'] ) ) )
+				. '</li>';
+		}
+		echo '</ul>';
+
+		$setup_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::SETUP_ACTION ), self::SETUP_ACTION );
+		echo '<p><a href="' . esc_url( $setup_url ) . '" class="button">' . esc_html__( 'Run site setup', 'poolhall-integration' ) . '</a></p>';
+	}
+
+	/**
+	 * Steps in dependency order. The Elementor scripts keep their own
+	 * requirement guards as a backstop; checking here turns a hard exit
+	 * into a friendly skip.
+	 *
+	 * @return array<int,array{key:string,label:string,runnable:bool,reason:string}>
+	 */
+	private function setup_steps(): array {
+		$elementor = (bool) did_action( 'elementor/loaded' );
+		$pro       = $elementor && defined( 'ELEMENTOR_PRO_VERSION' );
+
+		return array(
+			array(
+				'key'      => 'portal-pages',
+				'label'    => __( 'Candidate portal pages', 'poolhall-integration' ),
+				'runnable' => true,
+				'reason'   => '',
+			),
+			array(
+				'key'      => 'configure-elementor-kit.php',
+				'label'    => __( 'Elementor kit Site Settings (design tokens)', 'poolhall-integration' ),
+				'runnable' => $elementor,
+				'reason'   => __( 'Elementor is not active.', 'poolhall-integration' ),
+			),
+			array(
+				'key'      => 'create-theme-shell.php',
+				'label'    => __( 'Theme shell (core pages, menus, header and footer)', 'poolhall-integration' ),
+				'runnable' => $pro,
+				'reason'   => __( 'Elementor Pro is not active.', 'poolhall-integration' ),
+			),
+			array(
+				'key'      => 'create-jobs-templates.php',
+				'label'    => __( 'Jobs loop items, archive and single-job template', 'poolhall-integration' ),
+				'runnable' => $pro,
+				'reason'   => __( 'Elementor Pro is not active.', 'poolhall-integration' ),
+			),
+		);
+	}
+
+	/** Capture a dev script's printed report. The scripts are idempotent. */
+	private function run_script( string $filename ): string {
+		ob_start();
+		include POOLHALL_INTEGRATION_DIR . 'scripts/dev/' . $filename;
+		return (string) ob_get_clean();
+	}
+
+	private function setup_transient_key(): string {
+		return 'poolhall_setup_summary_' . get_current_user_id();
 	}
 }
