@@ -99,16 +99,37 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   per hard rules 5/15). Template IDs recorded in `poolhall_template_ids`.
   Remaining: home page + featured carousel, search/filter/sort widgets,
   expired-job state, similar roles, save control.
-- **Phase 6 (part) — candidate accounts backend:** 🟡 foundations done:
+- **Phase 6 (part) — candidate accounts backend:** 🟡 auth complete:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
-  lockout, registration with consent capture and enumeration-safe generic
+  lockout (admin-post stays open for the frontend form handlers),
+  registration with consent capture and enumeration-safe generic
   responses, hashed single-use 24h verification tokens with 60s/hourly/daily
   resend limits, idempotent saved-jobs table keyed by source identity
-  (survives job recreation, live-first listing, clear-expired). Unit tests
-  (`PasswordPolicy`, `TokenPolicy`, `ResendPolicy`, `EmailAddress`) +
-  `scripts/dev/verify-accounts.php` (30 checks). Remaining: login/recovery
-  flows, portal routes/widgets, alerts, recommendations, history, CV,
-  privacy export/deletion.
+  (survives job recreation, live-first listing, clear-expired).
+  **Login/logout/recovery (spec §5):** generic-failure login with
+  self-clearing account+network rate limits (`LoginRateLimiter`,
+  transient-backed `FailedLoginStore`), unverified accounts routed to a
+  resend path only after the password proves ownership; single-use hashed
+  60-minute reset tokens that revoke all sessions and send a security
+  email; allowlisted same-origin return URLs (`ReturnUrlPolicy`).
+  **Portal routes (spec §2):** `PortalGuard` noindexes/no-caches all
+  `/candidate/*` URLs, redirects signed-out users to login with a return
+  URL, unverified candidates to the verification screen, and keeps the
+  page tree out of sitemaps; `scripts/dev/create-portal-pages.php` builds
+  the six portal pages from the server-rendered `[poolhall_candidate_auth]`
+  forms (design-system markup, honeypot + nonce + `poolhall_human_check`
+  Turnstile seam, no Elementor Pro needed — the future Candidate Auth
+  widget wraps the same renderer). **Save control backend (spec §7, hard
+  rule 6):** REST `poolhall/v1/saved-jobs` (toggle idempotently, list,
+  clear-expired) enforcing 401 signed-out / 403 unverified / ownership by
+  construction, plus a no-JS admin-post fallback that routes signed-out
+  saves through login back to the same role. Unit tests (`PasswordPolicy`,
+  `TokenPolicy`, `ResendPolicy`, `EmailAddress`, `LoginRateLimiter`,
+  `ReturnUrlPolicy`) + `scripts/dev/verify-accounts.php` (56 checks) +
+  HTTP-level E2E (login → dashboard → logout, guard redirects,
+  open-redirect and honeypot defenses). Remaining: security page (change
+  password/email, session list/revocation), portal widgets/dashboard
+  modules, alerts, recommendations, history, CV, privacy export/deletion.
 - **Phase 8 (part) — JobPosting schema + reviews:** ✅ schema generator +
   eligibility gate + output on single jobs; Places client + cache policy.
 - **Phases 4–5, 7, 9, 10:** not started. See `/NEXT-SESSION.md` for how to

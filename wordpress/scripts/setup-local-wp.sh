@@ -82,12 +82,28 @@ $WP plugin activate elementor poolhall-integration 2>/dev/null || true
 $WP theme activate hello-elementor-child
 $WP rewrite structure '/%postname%/' --hard >/dev/null
 
+# php -S needs a router for pretty permalinks (no .htaccess support).
+cat > "$WP_DIR/router.php" <<'ROUTER'
+<?php
+$path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+if ( '/' !== $path && is_file( __DIR__ . $path ) ) {
+	return false;
+}
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+require __DIR__ . '/index.php';
+ROUTER
+
+echo "== Candidate portal pages"
+$WP eval-file "$REPO_DIR/wordpress/plugins/poolhall-integration/scripts/dev/create-portal-pages.php" | tail -1
+
 echo "== Plugin dev dependencies + tests"
-( cd "$REPO_DIR/wordpress/plugins/poolhall-integration" && composer install --quiet && ./vendor/bin/phpunit --no-progress 2>&1 | tail -1 )
+# Containers run as root; without the flag Composer skips the phpcs
+# installer plugin and `composer lint` later fails with missing sniffs.
+( cd "$REPO_DIR/wordpress/plugins/poolhall-integration" && COMPOSER_ALLOW_SUPERUSER=1 composer install --quiet && ./vendor/bin/phpunit --no-progress 2>&1 | tail -1 )
 
 echo "== Integration verification"
 $WP eval-file "$REPO_DIR/wordpress/plugins/poolhall-integration/scripts/dev/verify-sync.php" 2>/dev/null | grep "checks passed"
 
 echo
-echo "Done. Serve with:  (cd $WP_DIR && php -S 127.0.0.1:8080)"
+echo "Done. Serve with:  (cd $WP_DIR && php -S 127.0.0.1:8080 router.php)"
 echo "Admin: http://localhost:8080/wp-admin  (dev / localdev-only)"
