@@ -16,6 +16,13 @@
  *   6. Candidates are excluded from REST user listings.
  *   7. Saved jobs are idempotent, survive job recreation under the same
  *      source ID and report live/expired status correctly.
+ *   8. Login is generic about failures, never logs in unverified accounts,
+ *      and rate limits by account and network without permanent lockout.
+ *   9. Password recovery is enumeration-safe; reset links are single-use,
+ *      expire after 60 minutes, revoke sessions and trigger a security
+ *      email; a password is never emailed.
+ *  10. The saved-jobs REST routes enforce authentication, verification and
+ *      ownership, and toggling is idempotent.
  *
  * No strict_types declaration: wp eval-file runs this through eval(), where
  * declare() cannot be the first statement.
@@ -25,8 +32,12 @@
 
 use Poolhall\Integration\Accounts\CandidateRepository;
 use Poolhall\Integration\Accounts\CandidateRole;
+use Poolhall\Integration\Accounts\FailedLoginStore;
+use Poolhall\Integration\Accounts\LoginRateLimiter;
+use Poolhall\Integration\Accounts\LoginService;
 use Poolhall\Integration\Accounts\Mailer;
 use Poolhall\Integration\Accounts\PasswordPolicy;
+use Poolhall\Integration\Accounts\PasswordRecoveryService;
 use Poolhall\Integration\Accounts\RegistrationService;
 use Poolhall\Integration\Accounts\ResendPolicy;
 use Poolhall\Integration\Accounts\SavedJobsRepository;
@@ -71,12 +82,14 @@ $check  = function ( string $name, bool $pass, string $detail = '' ) use ( &$che
 CandidateRole::install();
 SavedJobsRepository::install();
 
-// Clean slate: remove candidates and saved rows from prior verification runs.
+// Clean slate: remove candidates, saved rows and login-failure transients
+// from prior verification runs (the rate-limit window outlives a run).
 foreach ( get_users( array( 'role' => CandidateRole::ROLE, 'fields' => 'ID' ) ) as $old_id ) {
 	wp_delete_user( (int) $old_id );
 }
 global $wpdb;
 $wpdb->query( 'DELETE FROM ' . SavedJobsRepository::table_name() ); // phpcs:ignore WordPress.DB
+$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient%poolhall_login_fail_%'" ); // phpcs:ignore WordPress.DB
 
 $now          = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 $mailer       = new Poolhall_Capture_Mailer();
@@ -256,6 +269,145 @@ $check( 'clear removes only non-live saved jobs', 1 === $removed && 1 === $saved
 $gone = $saved->unsave( $uid, 'giig', $source->source_job_id );
 $again = $saved->unsave( $uid, 'giig', $source->source_job_id );
 $check( 'unsave is idempotent', true === $gone && false === $again && 0 === $saved->count_for_user( $uid ) );
+
+// 10. Login: generic failures, unverified gate, rate limits that self-clear.
+$login = new LoginService( $candidates, new LoginRateLimiter(), new FailedLoginStore( new LoginRateLimiter() ), new Logger() );
+
+$registration->register(
+	array(
+		'first_name'   => 'Dana',
+		'last_name'    => 'Reeve',
+		'email'        => 'dana.reeve@example.test',
+		'password'     => 'maple sunrise harbour',
+		'accept_terms' => true,
+	),
+	$now
+);
+$dana = $candidates->find_by_email( 'dana.reeve@example.test' );
+
+$unknown = $login->attempt( array( 'email' => 'ghost@example.test', 'password' => 'whatever this is' ), 'net-a', $now );
+$wrong   = $login->attempt( array( 'email' => 'avery.quinn@example.test', 'password' => 'not the password' ), 'net-a', $now );
+$check( 'unknown email and wrong password are the same generic invalid', 'invalid' === $unknown['status'] && 'invalid' === $wrong['status'] && 0 === $unknown['user_id'] );
+
+$ok = $login->attempt( array( 'email' => 'Avery.Quinn@Example.test', 'password' => 'quiet velvet morning' ), 'net-a', $now );
+$check( 'verified candidate with correct password logs in', 'ok' === $ok['status'] && (int) $user->ID === $ok['user_id'] );
+
+$gate = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-a', $now );
+$check( 'correct password on an unverified account routes to verification, not a session', 'verify_required' === $gate['status'] );
+
+$admin_user = get_users( array( 'role' => 'administrator', 'number' => 1 ) )[0] ?? null;
+if ( null !== $admin_user ) {
+	$staff = $login->attempt( array( 'email' => (string) $admin_user->user_email, 'password' => 'irrelevant here!' ), 'net-a', $now );
+	$check( 'non-candidate accounts get the same generic invalid', 'invalid' === $staff['status'] );
+}
+
+foreach ( range( 1, 5 ) as $i ) {
+	$login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'wrong attempt ' . $i ), 'net-dana', $now->modify( "+{$i} seconds" ) );
+}
+$locked = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-dana', $now->modify( '+10 seconds' ) );
+$check( 'five failures rate limit the account even with the correct password', 'rate_limited' === $locked['status'] );
+$unlocked = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-dana', $now->modify( '+16 minutes' ) );
+$check( 'the lock clears by itself after the window — never permanent', 'verify_required' === $unlocked['status'] );
+
+foreach ( range( 1, 5 ) as $i ) {
+	$login->attempt( array( 'email' => sprintf( 'ghost%d@example.test', $i ), 'password' => 'wrong attempt ' . $i ), 'net-shared', $now );
+}
+$network_limited = $login->attempt( array( 'email' => 'avery.quinn@example.test', 'password' => 'quiet velvet morning' ), 'net-shared', $now->modify( '+5 seconds' ) );
+$check( 'failures across many accounts rate limit the network signal', 'rate_limited' === $network_limited['status'] );
+
+// 11. Password recovery: enumeration-safe, single-use, expiring, session-revoking.
+$recovery     = new PasswordRecoveryService( $candidates, new PasswordPolicy(), $tokens, $resends, $mailer, new Logger() );
+$mail_count   = count( $mailer->sent );
+$ghost_result = $recovery->request( 'nobody@example.test', $now );
+$check( 'reset request for an unknown email is generic and sends nothing', 'check_email' === $ghost_result['status'] && count( $mailer->sent ) === $mail_count );
+
+$recovery->request( 'avery.quinn@example.test', $now );
+$reset_token = $extract_token( $mailer->last() );
+$reset_mail  = $mailer->last();
+$check( 'reset email sent with a single-use link and no password', count( $mailer->sent ) === $mail_count + 1 && '' !== $reset_token && str_contains( $reset_mail['message'], '/candidate/reset-password/' ) );
+$check( 'reset token stored as hash only', $tokens->hash_token( $reset_token ) === (string) get_user_meta( (int) $user->ID, CandidateRepository::META_RESET_HASH, true ) );
+
+$recovery->request( 'avery.quinn@example.test', $now->modify( '+30 seconds' ) );
+$check( 'reset requests respect the send cooldown', count( $mailer->sent ) === $mail_count + 1 );
+
+$bad_reset = $recovery->reset( 'not-a-token', 'rosewood lantern forty two', $now );
+$fake      = $recovery->reset( str_repeat( 'a', 64 ), 'rosewood lantern forty two', $now );
+$check( 'malformed and unknown reset tokens are invalid', 'invalid' === $bad_reset['status'] && 'invalid' === $fake['status'] );
+
+$weak = $recovery->reset( $reset_token, 'short', $now->modify( '+5 minutes' ) );
+$check( 'weak replacement password is rejected and the token survives', 'weak_password' === $weak['status'] && in_array( 'too_short', $weak['errors'], true ) );
+
+// A live session that must die with the reset.
+$session_manager = WP_Session_Tokens::get_instance( (int) $user->ID );
+$session_token   = $session_manager->create( time() + HOUR_IN_SECONDS );
+$done            = $recovery->reset( $reset_token, 'rosewood lantern forty two', $now->modify( '+10 minutes' ) );
+$avery_fresh     = get_user_by( 'id', (int) $user->ID );
+$check( 'valid reset changes the password', 'reset' === $done['status'] && wp_check_password( 'rosewood lantern forty two', (string) $avery_fresh->user_pass, (int) $user->ID ) );
+$check( 'old password no longer works', ! wp_check_password( 'quiet velvet morning', (string) $avery_fresh->user_pass, (int) $user->ID ) );
+$check( 'reset revokes existing sessions', false === $session_manager->verify( $session_token ) );
+$security_mail = $mailer->last();
+$check( 'security email confirms the change without containing the password', str_contains( $security_mail['subject'], 'password was changed' ) && ! str_contains( $security_mail['message'], 'rosewood lantern forty two' ) );
+
+$replay = $recovery->reset( $reset_token, 'whichever words here', $now->modify( '+11 minutes' ) );
+$check( 'reset token is single use', 'invalid' === $replay['status'] );
+
+$recovery->request( 'avery.quinn@example.test', $now->modify( '+2 minutes' ) );
+$stale_reset = $extract_token( $mailer->last() );
+$expired     = $recovery->reset( $stale_reset, 'rosewood lantern forty two', $now->modify( '+63 minutes' ) );
+$check( 'reset token past 60 minutes is expired', 'expired' === $expired['status'] );
+
+// 12. Saved-jobs REST routes: authentication, verification, ownership.
+rest_get_server(); // Boots the REST server so rest_api_init registers the routes.
+
+$poolhall_rest_save = static function ( bool $save_state, string $job_id ) use ( $source ): WP_REST_Response {
+	$request = new WP_REST_Request( 'POST', '/poolhall/v1/saved-jobs' );
+	$request->set_body_params(
+		array(
+			'source'        => 'giig',
+			'source_job_id' => $job_id,
+			'saved'         => $save_state,
+		)
+	);
+	return rest_do_request( $request );
+};
+
+wp_set_current_user( 0 );
+$response = $poolhall_rest_save( true, $source->source_job_id );
+$check( 'signed-out save returns 401', 401 === $response->get_status() );
+
+wp_set_current_user( (int) $dana->ID );
+$response = $poolhall_rest_save( true, $source->source_job_id );
+$check( 'unverified candidate save returns 403 verification_required', 403 === $response->get_status() && 'verification_required' === ( $response->get_data()['code'] ?? '' ) );
+
+if ( null !== $admin_user ) {
+	wp_set_current_user( (int) $admin_user->ID );
+	$response = $poolhall_rest_save( true, $source->source_job_id );
+	$check( 'non-candidate accounts cannot use the saved-jobs API', 403 === $response->get_status() );
+}
+
+wp_set_current_user( (int) $user->ID );
+$first_save  = $poolhall_rest_save( true, $source->source_job_id );
+$second_save = $poolhall_rest_save( true, $source->source_job_id );
+$check(
+	'verified candidate saves over REST and repeats are idempotent',
+	200 === $first_save->get_status() && true === $first_save->get_data()['saved']
+		&& 200 === $second_save->get_status() && true === $second_save->get_data()['saved']
+		&& 1 === $second_save->get_data()['count']
+);
+
+$response = $poolhall_rest_save( true, 'no-such-job-id' );
+$check( 'saving an unknown job returns 404', 404 === $response->get_status() );
+
+$briar_id = (int) $candidates->find_by_email( 'briar.holt@example.test' )->ID;
+wp_set_current_user( $briar_id );
+$list_request = new WP_REST_Request( 'GET', '/poolhall/v1/saved-jobs' );
+$briar_list   = rest_do_request( $list_request );
+$check( 'another candidate sees none of those saved jobs', 200 === $briar_list->get_status() && 0 === $briar_list->get_data()['count'] );
+
+wp_set_current_user( (int) $user->ID );
+$unsaved = $poolhall_rest_save( false, $source->source_job_id );
+$check( 'REST unsave clears the state idempotently', 200 === $unsaved->get_status() && false === $unsaved->get_data()['saved'] && 0 === $unsaved->get_data()['count'] );
+wp_set_current_user( 0 );
 
 $failed = array_filter( $checks, static fn( array $c ): bool => ! $c[1] );
 printf( "\n%d/%d checks passed.\n", count( $checks ) - count( $failed ), count( $checks ) );

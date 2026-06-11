@@ -9,8 +9,24 @@ declare(strict_types=1);
 
 namespace Poolhall\Integration;
 
+use Poolhall\Integration\Accounts\AuthEndpoints;
+use Poolhall\Integration\Accounts\AuthForms;
+use Poolhall\Integration\Accounts\CandidateRepository;
 use Poolhall\Integration\Accounts\CandidateRole;
+use Poolhall\Integration\Accounts\FailedLoginStore;
+use Poolhall\Integration\Accounts\LoginRateLimiter;
+use Poolhall\Integration\Accounts\LoginService;
+use Poolhall\Integration\Accounts\PasswordPolicy;
+use Poolhall\Integration\Accounts\PasswordRecoveryService;
+use Poolhall\Integration\Accounts\PortalGuard;
+use Poolhall\Integration\Accounts\RegistrationService;
+use Poolhall\Integration\Accounts\ResendPolicy;
+use Poolhall\Integration\Accounts\ReturnUrlPolicy;
+use Poolhall\Integration\Accounts\SavedJobsController;
 use Poolhall\Integration\Accounts\SavedJobsRepository;
+use Poolhall\Integration\Accounts\TokenPolicy;
+use Poolhall\Integration\Accounts\VerificationService;
+use Poolhall\Integration\Accounts\WpMailer;
 use Poolhall\Integration\Admin\HealthPage;
 use Poolhall\Integration\Cron\Scheduler;
 use Poolhall\Integration\Jobs\ExpiryPolicy;
@@ -83,6 +99,7 @@ final class Plugin {
 		);
 
 		( new CandidateRole() )->register();
+		$this->wire_accounts();
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
 
@@ -96,6 +113,27 @@ final class Plugin {
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
 		}
+	}
+
+	/** Candidate accounts: auth flows, portal guard and the saved-jobs endpoints. */
+	private function wire_accounts(): void {
+		$logger     = new Logger();
+		$candidates = new CandidateRepository();
+		$tokens     = new TokenPolicy();
+		$resends    = new ResendPolicy();
+		$passwords  = new PasswordPolicy();
+		$mailer     = new WpMailer();
+		$returns    = new ReturnUrlPolicy();
+
+		$registration = new RegistrationService( $candidates, $passwords, $tokens, $resends, $mailer, $logger );
+		$verification = new VerificationService( $candidates, $tokens, $resends, $registration, $logger );
+		$login        = new LoginService( $candidates, new LoginRateLimiter(), new FailedLoginStore( new LoginRateLimiter() ), $logger );
+		$recovery     = new PasswordRecoveryService( $candidates, $passwords, $tokens, $resends, $mailer, $logger );
+
+		( new PortalGuard( $candidates, $returns ) )->register();
+		( new AuthEndpoints( $login, $registration, $verification, $recovery, $returns ) )->register();
+		( new AuthForms( $verification ) )->register();
+		( new SavedJobsController( new SavedJobsRepository(), new JobRepository(), $candidates, $returns ) )->register();
 	}
 
 	public function run_scheduled_sync(): void {

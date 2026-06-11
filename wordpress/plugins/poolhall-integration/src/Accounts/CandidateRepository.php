@@ -22,6 +22,9 @@ final class CandidateRepository {
 	public const META_TOKEN_ISSUED = 'poolhall_verify_token_issued_at';
 	public const META_VERIFY_SENDS = 'poolhall_verify_sends';
 	public const META_CONSENT      = 'poolhall_consent';
+	public const META_RESET_HASH   = 'poolhall_reset_token_hash';
+	public const META_RESET_ISSUED = 'poolhall_reset_token_issued_at';
+	public const META_RESET_SENDS  = 'poolhall_reset_sends';
 
 	public function find_by_email( string $email ): ?\WP_User {
 		$user = get_user_by( 'email', EmailAddress::normalize( $email ) );
@@ -85,24 +88,7 @@ final class CandidateRepository {
 
 	/** The unverified candidate holding this token hash, if any. */
 	public function find_by_token_hash( string $token_hash ): ?int {
-		if ( '' === $token_hash ) {
-			return null;
-		}
-		$query = new \WP_User_Query(
-			array(
-				'role'       => CandidateRole::ROLE,
-				'number'     => 1,
-				'fields'     => 'ID',
-				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- single keyed lookup.
-					array(
-						'key'   => self::META_TOKEN_HASH,
-						'value' => $token_hash,
-					),
-				),
-			)
-		);
-		$ids   = $query->get_results();
-		return array() === $ids ? null : (int) $ids[0];
+		return $this->find_candidate_by_meta( self::META_TOKEN_HASH, $token_hash );
 	}
 
 	public function token_issued_at( int $user_id ): ?\DateTimeImmutable {
@@ -124,7 +110,18 @@ final class CandidateRepository {
 
 	/** @return \DateTimeImmutable[] */
 	public function verification_sends( int $user_id ): array {
-		$raw     = (string) get_user_meta( $user_id, self::META_VERIFY_SENDS, true );
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_VERIFY_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_verification_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_VERIFY_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	private function decode_sends( string $raw ): array {
 		$decoded = '' === $raw ? array() : (array) json_decode( $raw, true );
 		$sends   = array();
 		foreach ( $decoded as $timestamp ) {
@@ -136,19 +133,70 @@ final class CandidateRepository {
 	}
 
 	/**
-	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 * @param \DateTimeImmutable[] $sends Send history.
 	 */
-	public function record_verification_sends( int $user_id, array $sends ): void {
-		update_user_meta(
-			$user_id,
-			self::META_VERIFY_SENDS,
-			wp_json_encode(
-				array_map(
-					static fn( \DateTimeImmutable $sent_at ): string => $sent_at->format( \DateTimeInterface::ATOM ),
-					$sends
-				)
+	private function encode_sends( array $sends ): string {
+		return (string) wp_json_encode(
+			array_map(
+				static fn( \DateTimeImmutable $sent_at ): string => $sent_at->format( \DateTimeInterface::ATOM ),
+				$sends
 			)
 		);
+	}
+
+	/** Storing a new reset hash invalidates any previous reset link (spec §5). */
+	public function store_reset_token( int $user_id, string $token_hash, \DateTimeImmutable $issued_at ): void {
+		update_user_meta( $user_id, self::META_RESET_HASH, $token_hash );
+		update_user_meta( $user_id, self::META_RESET_ISSUED, $issued_at->format( \DateTimeInterface::ATOM ) );
+	}
+
+	/** The candidate holding this reset-token hash, verified or not. */
+	public function find_by_reset_hash( string $token_hash ): ?int {
+		return $this->find_candidate_by_meta( self::META_RESET_HASH, $token_hash );
+	}
+
+	public function reset_token_issued_at( int $user_id ): ?\DateTimeImmutable {
+		$raw = (string) get_user_meta( $user_id, self::META_RESET_ISSUED, true );
+		return '' === $raw ? null : new \DateTimeImmutable( $raw );
+	}
+
+	/** Single use: redemption (or any password change) deletes the hash. */
+	public function clear_reset_token( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_RESET_HASH );
+		delete_user_meta( $user_id, self::META_RESET_ISSUED );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	public function reset_sends( int $user_id ): array {
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_RESET_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_reset_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_RESET_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	private function find_candidate_by_meta( string $meta_key, string $meta_value ): ?int {
+		if ( '' === $meta_value ) {
+			return null;
+		}
+		$query = new \WP_User_Query(
+			array(
+				'role'       => CandidateRole::ROLE,
+				'number'     => 1,
+				'fields'     => 'ID',
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- single keyed lookup.
+					array(
+						'key'   => $meta_key,
+						'value' => $meta_value,
+					),
+				),
+			)
+		);
+		$ids   = $query->get_results();
+		return array() === $ids ? null : (int) $ids[0];
 	}
 
 	/** Internal, collision-checked, never derived from the email address. */

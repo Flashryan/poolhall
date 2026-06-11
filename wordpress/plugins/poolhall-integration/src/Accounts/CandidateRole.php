@@ -40,9 +40,12 @@ final class CandidateRole {
 		return $user instanceof \WP_User && in_array( self::ROLE, $user->roles, true );
 	}
 
-	/** Candidates never see wp-admin; admin-ajax stays available to frontend code. */
+	/**
+	 * Candidates never see wp-admin; admin-ajax and admin-post stay
+	 * available because the frontend forms (sign out, save job) post there.
+	 */
 	public function block_admin_access(): void {
-		if ( wp_doing_ajax() || ! self::is_candidate( get_current_user_id() ) ) {
+		if ( wp_doing_ajax() || 'admin-post.php' === ( $GLOBALS['pagenow'] ?? '' ) || ! self::is_candidate( get_current_user_id() ) ) {
 			return;
 		}
 		wp_safe_redirect( home_url( '/candidate/' ) );
