@@ -177,6 +177,13 @@
 .ph-card--job.is-featured { border-block-start: 3px solid var(--ph-color-orange-500); }
 .ph-card--review { font-size: var(--ph-type-body-lg-size); }
 .ph-card--team { padding: 0; overflow: hidden; }
+/* Team page (§18): 4:5 portraits bleed to the card edge; never crop heads
+   (subject-aware position set with the image). Stat figures reused on Home. */
+.ph-team-portrait img { aspect-ratio: 4 / 5; object-fit: cover; inline-size: 100%; }
+.ph-stat__value { font-family: var(--ph-font-display); font-weight: 600; font-size: clamp(1.6rem, 1.4rem + 0.8vw, 1.9rem); line-height: 1.1; color: var(--ph-color-orange-600); }
+.ph-stat__label { font-family: var(--ph-font-body); font-weight: 500; font-size: var(--ph-type-small-size); line-height: 1.45; color: var(--ph-color-muted); }
+/* Secondary text on navy surfaces — prototype --fg-on-dark-2 (§9 hero lede). */
+.ph-text-reversed-soft { color: #A7B4C8; }
 .ph-card--portal { border-radius: var(--ph-radius-lg); }
 .ph-panel { background-color: var(--ph-color-mist); border-radius: var(--ph-radius-lg); padding: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); }
 .ph-panel--navy { background-color: var(--ph-color-navy-800); color: var(--ph-color-white); }

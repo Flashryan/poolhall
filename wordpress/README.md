@@ -101,7 +101,16 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   between crons) and the §14 single-job template (navy hero, content +
   card sidebar; CTA routes to Contact while the application mode is unset
   per hard rules 5/15). Template IDs recorded in `poolhall_template_ids`.
-  Remaining: home page + featured carousel, search/filter/sort widgets,
+  **Team page (doc 10 §18/§9):** `scripts/dev/create-team-page.php` —
+  compact image hero, story split with `ph-stat` figures, three
+  `ph-card--team` profiles (4:5 portraits via `ph-team-portrait`), navy
+  CTA band; real client photography ships in the plugin
+  (`assets/img/content/`, extracted from the design handoff) and
+  sideloads idempotently into the media library. No placeholder `#`
+  links (hard rule 7) — the prototype's dummy social icons are omitted
+  until real profile URLs exist. Part of the admin Site-setup runner.
+  Remaining: home page + featured carousel, employers/sectors/services/
+  contact/join-our-team page content, search/filter/sort widgets,
   expired-job state, similar roles, save control.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 auth complete:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST

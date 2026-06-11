@@ -265,6 +265,14 @@ final class HealthPage {
 				'runnable' => $pro,
 				'reason'   => __( 'Elementor Pro is not active.', 'poolhall-integration' ),
 			),
+			array(
+				'key'      => 'create-team-page.php',
+				'label'    => __( 'Meet the Team page content', 'poolhall-integration' ),
+				// Needs Elementor plus the /team/ page; the theme shell step
+				// creates that page earlier in this same run when Pro is active.
+				'runnable' => $elementor && ( $pro || get_page_by_path( 'team' ) instanceof \WP_Post ),
+				'reason'   => __( 'Elementor (or the theme shell /team/ page) is missing.', 'poolhall-integration' ),
+			),
 		);
 	}
 

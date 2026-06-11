@@ -29,6 +29,8 @@ mkdir -p "$STAGE_DIR/poolhall-integration"
 cp "$WP_SRC_DIR/plugins/poolhall-integration/poolhall-integration.php" "$STAGE_DIR/poolhall-integration/"
 cp -R "$WP_SRC_DIR/plugins/poolhall-integration/src" "$STAGE_DIR/poolhall-integration/src"
 cp -R "$WP_SRC_DIR/plugins/poolhall-integration/scripts" "$STAGE_DIR/poolhall-integration/scripts"
+# Bundled client photography the setup scripts sideload into the media library.
+cp -R "$WP_SRC_DIR/plugins/poolhall-integration/assets" "$STAGE_DIR/poolhall-integration/assets"
 ( cd "$STAGE_DIR" && zip -qr "$DIST_DIR/poolhall-integration.zip" poolhall-integration )
 
 echo "== hello-elementor-child.zip"
