@@ -4,54 +4,43 @@ Follow this whenever you start a fresh session on this repo (the container
 is wiped between sessions; everything below gets you back to exactly where
 the last session ended).
 
-## Status after the second 11 June session
+## Where things stand (end of 11 June)
 
-- **Staging exists.** Provisioned via the Hostinger API (token landed —
-  thank you): WordPress is installed and valid at
-  `http://lightslategrey-hare-335761.hostingersite.com/`
-  (account `u232776807`, order 1008376137 = the Business Web Hosting
-  plan; site title "Poolhall Recruitment (staging)", admin user
-  `poolhall-admin`, password passed to Ryan in chat — never in the repo).
-  Account inventory (runbook step 1): no VPS; orders 1008376137
-  (business_v2), 1006103588 (premium), 200041955 (business); 22 websites,
-  none poolhall-related, so a free `hostingersite.com` subdomain was
-  generated rather than nesting under an unrelated client domain.
-- **Plugin/theme deploy to staging is blocked on the network allowlist,
-  not the API.** The deploy endpoints first upload files via TUS to the
-  per-server files host — for this site
-  `srv1350-files.hstgr.io` — which the proxy rejects (`Host not in
-  allowlist`). Add `srv1350-files.hstgr.io` (or `*.hstgr.io`) to the
-  network policy **before** booting the next session, then deploy
-  `wordpress/dist/*.zip`. Until then the zips also install fine through
-  staging wp-admin → upload (Ryan is in there anyway for Elementor Pro).
-  Note: the Hostinger API has **no SSH/wp-cli execution**, so the
-  portal-pages/kit/template scripts on staging need either wp-admin SSH
-  from hPanel or a plugin-side admin trigger (small build task).
-- Phase 6 security page is built and verified: `/candidate/security/`
-  with reauthenticated password change, confirmed email change
-  (enumeration-safe, old address notified), session list with
-  this-device marker, revoke one/others. 78/78 integration checks,
-  110 unit tests, HTTP-level E2E. See `wordpress/README.md`.
-- The earlier 11 June session: Phase 6 auth (login/logout/recovery,
-  portal guard, auth pages, saved-jobs REST).
-- Deploy artifacts are scripted: `bash wordpress/scripts/build-deploy-zips.sh`
-  produces `wordpress/dist/poolhall-integration.zip` and
-  `wordpress/dist/hello-elementor-child.zip` (correct top-level folders for
-  the WP uploader, hPanel and the Hostinger deploy API; no vendor/ needed).
-- **The Elementor Pro zip was not uploaded this session**, so the
-  theme-shell and jobs-template scripts could not run locally (they
-  hard-require `ELEMENTOR_PRO_VERSION`); the kit/Site Settings script ran
-  fine on free Elementor (which had to come from
-  `downloads.wordpress.org` — the GitHub API was rate-limited without a
+**The latest code is on branch `claude/quirky-darwin-vj4vbn`** (tip
+`8f6dde9`) — a fresh session may boot on a stale checkout; fetch and reset
+onto that branch first.
+
+- **Staging is live with WordPress + Elementor Pro:**
+  `http://lightslategrey-hare-335761.hostingersite.com/` (Hostinger
+  account `u232776807`, order 1008376137; admin user `poolhall-admin`,
+  password held by Ryan — ask him to paste it if you need to drive
+  staging wp-admin; never commit it). Ryan installed Elementor Pro
+  manually and uploaded an earlier build of the plugin/child theme by
+  hand. **Staging may be one build behind the repo** — redeploy
+  `wordpress/dist/*` (rebuild first) once the network allowlist includes
+  the Hostinger hosts, then re-run Site setup.
+- **Built and verified locally** (see `wordpress/README.md` status table
+  for detail): Phase 6 auth + security page (78/78 integration checks,
+  110 unit tests), Phase 3 design system + theme shell, Phase 4 jobs
+  templates, **Meet the Team page with real client photography bundled
+  in the plugin** (`scripts/dev/create-team-page.php`), and the
+  **wp-admin Site setup runner** (Poolhall Jobs → Site setup) that runs
+  every setup script with requirement-aware skips — so staging needs no
+  SSH/wp-cli (the Hostinger API has none).
+- **Deploys:** `bash wordpress/scripts/build-deploy-zips.sh` →
+  `wordpress/dist/` (plugin zip includes `assets/img/content/`
+  photography). API deploy path: POST
+  `/api/hosting/v1/files/upload-urls`, TUS-upload files to the returned
+  per-server host (`srv1350-files.hstgr.io`), then POST
+  `.../websites/{domain}/wordpress/plugins/deploy` — blocked until that
+  host is allowlisted (Ryan said he'd add it before the next boot).
+  With the staging hostname also allowlisted you can log into staging
+  wp-admin over HTTP (credentials from Ryan) and trigger Site setup +
+  verify pages yourself — same curl flow as the local E2E.
+- Local quirks already solved in the setup script: Hello Elementor and
+  free Elementor install from `downloads.wordpress.org` (GitHub source
+  tree fatals in wp-admin; GitHub API rate-limits without
   `GITHUB_TOKEN`).
-- Third session additions: **wp-admin Site setup runner** (Poolhall Jobs →
-  Site setup; runs portal pages + the three Elementor scripts with
-  requirement-aware skips — staging needs no SSH), and two setup-script
-  fixes: the Hello Elementor parent now installs from
-  `downloads.wordpress.org` (the GitHub source tree ships unbuilt assets
-  and fatals on every wp-admin page) and free Elementor falls back to
-  `downloads.wordpress.org` automatically when the GitHub API is
-  rate-limited.
 
 ## Before you start the session (one-time setup)
 
@@ -70,11 +59,16 @@ the last session ended).
      it). The proxy's block response is an HTTP 403 with body
      `Host not in allowlist`; a real Hostinger reply to a tokenless call
      is a 401 `Unauthenticated` JSON body.
-   - **`srv1350-files.hstgr.io` (or `*.hstgr.io`) — NEW, add this:** the
-     Hostinger plugin/theme deploy uploads files there (TUS) before the
-     deploy call; it was blocked on 11 June so staging deploys had to
-     wait. The host is per-server: re-check with
-     `POST /api/hosting/v1/files/upload-urls` if the site ever moves.
+   - **`srv1350-files.hstgr.io` (or `*.hstgr.io`)** — the Hostinger
+     plugin/theme deploy uploads files there (TUS) before the deploy
+     call; blocked all of 11 June, which is why builds went to Ryan as
+     zips. Ryan said he'd add it before the next boot. The host is
+     per-server: re-check with `POST /api/hosting/v1/files/upload-urls`
+     if the site ever moves.
+   - **`lightslategrey-hare-335761.hostingersite.com` (or
+     `*.hostingersite.com`)** — lets the session load staging pages and
+     drive staging wp-admin over HTTP (verification without Ryan
+     relaying screenshots). Also promised for the next boot.
    - `wordpress.org` and `downloads.wordpress.org` (core/plugins; Elementor
      free comes from here when the GitHub API is rate-limited)
    - `api.giighire.com` (Giig — needed for Phase 1)
@@ -92,19 +86,24 @@ the last session ended).
 4. Start a new Claude Code session on the **Flashryan/poolhall** repo.
 5. Paste this as your first message:
 
-   > Read `wordpress/README.md`, `wordpress/docs/CLAUDE.md` and
+   > Fetch origin and reset onto `origin/claude/quirky-darwin-vj4vbn`
+   > (the latest work — your checkout may be stale). Read
+   > `wordpress/README.md`, `wordpress/docs/CLAUDE.md` and
    > `NEXT-SESSION.md`. Then:
-   > 1. Run `bash wordpress/scripts/setup-local-wp.sh` to rebuild the local
-   >    WordPress dev environment (idempotent; ends with tests + 15/15 sync
-   >    checks; also creates the candidate portal pages).
-   > 2. Unzip the Elementor Pro upload into the local WP plugins folder and
-   >    activate it.
-   > 3. Run `wp eval-file .../scripts/dev/configure-elementor-kit.php`,
-   >    `.../create-theme-shell.php` and `.../create-jobs-templates.php` to
-   >    restore the Phase 3/4 design system, theme shell and jobs
-   >    templates, and verify the frontend renders.
-   > 4. Run the Hostinger staging runbook below.
-   > 5. Continue the build from the status table in `wordpress/README.md`.
+   > 1. Run `bash wordpress/scripts/setup-local-wp.sh` to rebuild the
+   >    local WordPress dev environment, unzip the Elementor Pro upload
+   >    into the local WP plugins folder and activate it, then run the
+   >    Site setup steps (`wp eval-file` the kit/theme-shell/jobs/team
+   >    scripts) and verify the frontend renders.
+   > 2. Rebuild `wordpress/dist/` and deploy the plugin + child theme to
+   >    staging via the Hostinger API (the files host is allowlisted
+   >    now), then drive staging wp-admin's Poolhall Jobs → Site setup
+   >    over HTTP (I'll paste the admin password when you ask) and
+   >    verify the staging frontend matches local.
+   > 3. Continue the build from the status table in
+   >    `wordpress/README.md` — next up: home page + featured carousel,
+   >    then the remaining marketing pages (employers, sectors,
+   >    services, contact, join-our-team).
 
 ## Hostinger staging runbook — steps 1–3 DONE on 11 June, remainder below
 
@@ -177,7 +176,7 @@ Remaining:
 |---|---|---|
 | GitHub PAT | you paste it when pushing | active |
 | Hostinger API token | `HOSTINGER_API_TOKEN` env var | ✅ active, verified 11 June |
-| Staging wp-admin (`poolhall-admin`) | passed to Ryan in chat, 11 June | active — change it after first sign-in if you like |
+| Staging wp-admin (`poolhall-admin`) | Ryan holds it; paste into chat when the session asks (needed to drive staging Site setup over HTTP) | active |
 | Giig API token + secret | wp-config constants on staging | waiting on you/Matt |
 | Google Places API key | wp-config constants on staging | not yet created |
 | Elementor Pro licence | elementor.com account | zip uploaded per session (forgotten 11 June); installed manually on staging by Ryan |
