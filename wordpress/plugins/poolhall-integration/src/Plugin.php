@@ -24,6 +24,10 @@ use Poolhall\Integration\Accounts\ResendPolicy;
 use Poolhall\Integration\Accounts\ReturnUrlPolicy;
 use Poolhall\Integration\Accounts\SavedJobsController;
 use Poolhall\Integration\Accounts\SavedJobsRepository;
+use Poolhall\Integration\Accounts\SecurityEndpoints;
+use Poolhall\Integration\Accounts\SecurityService;
+use Poolhall\Integration\Accounts\SessionDescriber;
+use Poolhall\Integration\Accounts\SessionRegistry;
 use Poolhall\Integration\Accounts\TokenPolicy;
 use Poolhall\Integration\Accounts\VerificationService;
 use Poolhall\Integration\Accounts\WpMailer;
@@ -125,14 +129,19 @@ final class Plugin {
 		$mailer     = new WpMailer();
 		$returns    = new ReturnUrlPolicy();
 
+		$limiter      = new LoginRateLimiter();
+		$failures     = new FailedLoginStore( $limiter );
 		$registration = new RegistrationService( $candidates, $passwords, $tokens, $resends, $mailer, $logger );
 		$verification = new VerificationService( $candidates, $tokens, $resends, $registration, $logger );
-		$login        = new LoginService( $candidates, new LoginRateLimiter(), new FailedLoginStore( new LoginRateLimiter() ), $logger );
+		$login        = new LoginService( $candidates, $limiter, $failures, $logger );
 		$recovery     = new PasswordRecoveryService( $candidates, $passwords, $tokens, $resends, $mailer, $logger );
+		$security     = new SecurityService( $candidates, $passwords, $tokens, $resends, $limiter, $failures, $mailer, $logger );
+		$sessions     = new SessionRegistry();
 
 		( new PortalGuard( $candidates, $returns ) )->register();
 		( new AuthEndpoints( $login, $registration, $verification, $recovery, $returns ) )->register();
-		( new AuthForms( $verification ) )->register();
+		( new SecurityEndpoints( $security, $sessions, $candidates ) )->register();
+		( new AuthForms( $verification, $security, $sessions, new SessionDescriber() ) )->register();
 		( new SavedJobsController( new SavedJobsRepository(), new JobRepository(), $candidates, $returns ) )->register();
 	}
 

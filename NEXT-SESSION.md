@@ -4,39 +4,69 @@ Follow this whenever you start a fresh session on this repo (the container
 is wiped between sessions; everything below gets you back to exactly where
 the last session ended).
 
-## Status after the 11 June session
+## Status after the second 11 June session
 
-- Phase 6 auth is built and verified: candidate login/logout, password
-  recovery, the `/candidate/*` portal guard, server-rendered auth pages
-  and the saved-jobs REST API (56/56 integration checks, 105 unit tests,
-  HTTP-level E2E). See the status table in `wordpress/README.md`.
-- The Hostinger MCP server now starts from `.mcp.json`, **but the API
-  rejected every call with `Unauthenticated` because `HOSTINGER_API_TOKEN`
-  is not in the container** — staging could not be provisioned. Fixing
-  that is item 1 below.
+- **Staging exists.** Provisioned via the Hostinger API (token landed —
+  thank you): WordPress is installed and valid at
+  `http://lightslategrey-hare-335761.hostingersite.com/`
+  (account `u232776807`, order 1008376137 = the Business Web Hosting
+  plan; site title "Poolhall Recruitment (staging)", admin user
+  `poolhall-admin`, password passed to Ryan in chat — never in the repo).
+  Account inventory (runbook step 1): no VPS; orders 1008376137
+  (business_v2), 1006103588 (premium), 200041955 (business); 22 websites,
+  none poolhall-related, so a free `hostingersite.com` subdomain was
+  generated rather than nesting under an unrelated client domain.
+- **Plugin/theme deploy to staging is blocked on the network allowlist,
+  not the API.** The deploy endpoints first upload files via TUS to the
+  per-server files host — for this site
+  `srv1350-files.hstgr.io` — which the proxy rejects (`Host not in
+  allowlist`). Add `srv1350-files.hstgr.io` (or `*.hstgr.io`) to the
+  network policy **before** booting the next session, then deploy
+  `wordpress/dist/*.zip`. Until then the zips also install fine through
+  staging wp-admin → upload (Ryan is in there anyway for Elementor Pro).
+  Note: the Hostinger API has **no SSH/wp-cli execution**, so the
+  portal-pages/kit/template scripts on staging need either wp-admin SSH
+  from hPanel or a plugin-side admin trigger (small build task).
+- Phase 6 security page is built and verified: `/candidate/security/`
+  with reauthenticated password change, confirmed email change
+  (enumeration-safe, old address notified), session list with
+  this-device marker, revoke one/others. 78/78 integration checks,
+  110 unit tests, HTTP-level E2E. See `wordpress/README.md`.
+- The earlier 11 June session: Phase 6 auth (login/logout/recovery,
+  portal guard, auth pages, saved-jobs REST).
 - Deploy artifacts are scripted: `bash wordpress/scripts/build-deploy-zips.sh`
   produces `wordpress/dist/poolhall-integration.zip` and
   `wordpress/dist/hello-elementor-child.zip` (correct top-level folders for
   the WP uploader, hPanel and the Hostinger deploy API; no vendor/ needed).
+- **The Elementor Pro zip was not uploaded this session**, so the
+  theme-shell and jobs-template scripts could not run locally (they
+  hard-require `ELEMENTOR_PRO_VERSION`); the kit/Site Settings script ran
+  fine on free Elementor (which had to come from
+  `downloads.wordpress.org` — the GitHub API was rate-limited without a
+  `GITHUB_TOKEN`).
 
 ## Before you start the session (one-time setup)
 
 1. **Environment variables** (claude.ai/code → environment settings):
-   - `HOSTINGER_API_TOKEN` = token from hPanel → Account → API.
-     **This was still missing on 11 June — the whole staging step is
-     blocked until it lands.**
+   - `HOSTINGER_API_TOKEN` — ✅ landed, verified working on 11 June
+     (second session).
    - Optional: `GITHUB_TOKEN` = a GitHub token (avoids API rate limits in
      the setup script; without it Elementor falls back to
-     downloads.wordpress.org, which also works).
+     downloads.wordpress.org, which also works — confirmed this session).
    - **Gotcha (verified twice):** allowlist and env-var changes only apply
      when a container boots — a running session never sees them. Edit
      first, then start the session.
 2. **Network policy** (same settings screen). Confirm these domains are
-   allowed — you added them on 10 June:
+   allowed — you added the first five on 10 June:
    - `developers.hostinger.com` (Hostinger API; `api.hostinger.com` is NOT
      it). The proxy's block response is an HTTP 403 with body
      `Host not in allowlist`; a real Hostinger reply to a tokenless call
      is a 401 `Unauthenticated` JSON body.
+   - **`srv1350-files.hstgr.io` (or `*.hstgr.io`) — NEW, add this:** the
+     Hostinger plugin/theme deploy uploads files there (TUS) before the
+     deploy call; it was blocked on 11 June so staging deploys had to
+     wait. The host is per-server: re-check with
+     `POST /api/hosting/v1/files/upload-urls` if the site ever moves.
    - `wordpress.org` and `downloads.wordpress.org` (core/plugins; Elementor
      free comes from here when the GitHub API is rate-limited)
    - `api.giighire.com` (Giig — needed for Phase 1)
@@ -45,7 +75,9 @@ the last session ended).
 3. **Upload the Elementor Pro zip** into the chat (licensed, deliberately
    not in the repo). Without it the local theme-shell and jobs-template
    scripts refuse to run (free Elementor from the setup script is enough
-   for the kit/Site Settings script and all plugin work).
+   for the kit/Site Settings script and all plugin work). **Forgotten on
+   11 June (second session) — that's why Phase 3/4 visual work stayed
+   paused.**
 
 ## Starting the session
 
@@ -66,45 +98,59 @@ the last session ended).
    > 4. Run the Hostinger staging runbook below.
    > 5. Continue the build from the status table in `wordpress/README.md`.
 
-## Hostinger staging runbook (blocked only on the token)
+## Hostinger staging runbook — steps 1–3 DONE on 11 June, remainder below
 
 Ryan's decision on 11 June: **Claude provisions the staging site; Ryan
 installs Elementor Pro and Novamira on it manually** (their zips/licences
 never go through the API or the repo).
 
-1. Inventory: `hosting_listWebsitesV1`, `billing_getSubscriptionListV1`,
-   `VPS_getVirtualMachinesV1`, `domains_getDomainListV1` (MCP tools — the
-   server starts from `.mcp.json` automatically). What we can provision
-   depends on which plan the subscriptions show; record it here.
-2. Managed/shared WP plan path (expected): create a staging subdomain on
-   the existing site (`hosting_createWebsiteSubdomainV1` or
-   `hosting_generateAFreeSubdomainV1` if no domain fits), install WordPress
-   on it (`hosting_installWordPressV1`), then deploy our artifacts with
-   `hosting_deployWordpressPlugin` / `hosting_deployWordpressTheme` from
-   `wordpress/dist/` (build them first: `bash
-   wordpress/scripts/build-deploy-zips.sh`).
-3. VPS path (only if the inventory says so): pick the WordPress template
-   via `VPS_getTemplatesV1` and set up through the VPS endpoints instead.
-4. After WordPress is up: activate the plugin + child theme, run the
-   portal-pages script, then hand the wp-admin URL to Ryan to install
-   **Elementor Pro + Novamira manually** (Novamira is staging/local only —
-   hard rule 13 — and never production).
-5. Re-run the kit/theme-shell/jobs-template scripts on staging once
-   Elementor Pro is active, then `verify-sync.php` and
-   `verify-accounts.php` (56 checks) against the staging install.
-6. Never purchase anything (VPS, domains) through the API without Ryan
-   confirming in chat first.
+Done (11 June, second session): inventory recorded (no VPS → managed
+path), free subdomain generated, website created on order 1008376137,
+WordPress installed and `is_valid` —
+`http://lightslategrey-hare-335761.hostingersite.com/`. Note the MCP
+server tools may not load in the session; everything above worked by
+calling the REST API directly with `HOSTINGER_API_TOKEN` (base
+`https://developers.hostinger.com`, endpoints mirrored from the
+`hostinger-api-mcp` npm package — the composite
+`hosting_deployWordpressPlugin`/`Theme` tools are: POST
+`/api/hosting/v1/files/upload-urls`, TUS-upload each file to the returned
+`url` + `/wordpress-plugins/<slug>/…?override=true` with the returned
+keys, then POST
+`/api/hosting/v1/accounts/{username}/websites/{domain}/wordpress/plugins/deploy`).
 
-## What the session after that can do
+Remaining:
+
+1. **Deploy plugin + child theme to staging** once `srv1350-files.hstgr.io`
+   is allowlisted (build `wordpress/dist/` zips first), or have Ryan
+   upload the two zips through staging wp-admin → Plugins/Themes → Add.
+2. Activate both on staging, then run the portal-pages script there. No
+   SSH/wp-cli via the API: either Ryan runs `wp eval-file` from hPanel's
+   SSH/terminal, or build the small admin-trigger seam first (Health page
+   button that runs the same idempotent scripts).
+3. Ryan installs **Elementor Pro + Novamira manually** on staging
+   (Novamira is staging/local only — hard rule 13 — and never production).
+4. Re-run the kit/theme-shell/jobs-template scripts on staging once
+   Elementor Pro is active, then `verify-sync.php` and
+   `verify-accounts.php` (78 checks) against the staging install.
+5. Never purchase anything (VPS, domains) through the API without Ryan
+   confirming in chat first. (Nothing was purchased on 11 June — the
+   subdomain and WP install are free on the existing plan.)
+
+## What the next session can do
 
 - **Phase 1 — prove the Giig API** (needs the Giig token + secret from
   Matt's Giig account; have them ready to paste when asked; they go into
   wp-config constants on staging, never the repo).
-- **Continue Phase 3/4** — mobile drawer audience/account state, home page
-  + featured carousel, search/filter/sort widgets, expired-job state,
-  similar roles, save control frontend.
-- **Continue Phase 6** — security page (change password/email, session
-  revocation), dashboard modules, alerts.
+- **Continue Phase 3/4** (needs the Elementor Pro zip uploaded) — mobile
+  drawer audience/account state, home page + featured carousel,
+  search/filter/sort widgets, expired-job state, similar roles, save
+  control frontend.
+- **Continue Phase 6** — dashboard modules, alerts, profile,
+  recommendations, application history; CV + privacy export/deletion
+  (with reauthentication, hard rule 17) once Mode A is decided.
+- **Staging admin-trigger seam** — a Health-page action that runs the
+  idempotent portal-pages/kit/template scripts without wp-cli, so staging
+  setup stops depending on hPanel SSH.
 
 ## If something looks broken in a new session
 
@@ -124,8 +170,9 @@ never go through the API or the repo).
 | Credential | Where it lives | Status |
 |---|---|---|
 | GitHub PAT | you paste it when pushing | active |
-| Hostinger API token | `HOSTINGER_API_TOKEN` env var | **still to add — blocked staging on 11 June** |
+| Hostinger API token | `HOSTINGER_API_TOKEN` env var | ✅ active, verified 11 June |
+| Staging wp-admin (`poolhall-admin`) | passed to Ryan in chat, 11 June | active — change it after first sign-in if you like |
 | Giig API token + secret | wp-config constants on staging | waiting on you/Matt |
 | Google Places API key | wp-config constants on staging | not yet created |
-| Elementor Pro licence | elementor.com account | zip uploaded per session; installed manually on staging by Ryan |
+| Elementor Pro licence | elementor.com account | zip uploaded per session (forgotten 11 June); installed manually on staging by Ryan |
 | Novamira | Ryan installs manually on staging/local only | never production (hard rule 13) |

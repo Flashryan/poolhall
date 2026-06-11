@@ -123,13 +123,28 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   rule 6):** REST `poolhall/v1/saved-jobs` (toggle idempotently, list,
   clear-expired) enforcing 401 signed-out / 403 unverified / ownership by
   construction, plus a no-JS admin-post fallback that routes signed-out
-  saves through login back to the same role. Unit tests (`PasswordPolicy`,
+  saves through login back to the same role.
+  **Security page (spec §5, hard rule 17):** `/candidate/security/`
+  (`SecurityService`/`SecurityEndpoints`, server-rendered like the other
+  auth flows) — change password after current-password reauthentication
+  (shares login's account+network rate limits, revokes every other
+  session, kills any outstanding reset link, mails a security notice);
+  change email via a single-use hashed 24h token mailed to the *new*
+  address with enumeration-safe generic responses and a notice to the old
+  address on completion (core's own change email suppressed — the Mailer
+  seam owns email); session list with approximate device/browser
+  (`SessionDescriber`) and a current-session marker, revoking one other
+  session by verifier or all others (`SessionRegistry`); `PortalGuard`
+  now preserves query strings through the login round trip so emailed
+  confirmation links survive sign-in. Unit tests (`PasswordPolicy`,
   `TokenPolicy`, `ResendPolicy`, `EmailAddress`, `LoginRateLimiter`,
-  `ReturnUrlPolicy`) + `scripts/dev/verify-accounts.php` (56 checks) +
-  HTTP-level E2E (login → dashboard → logout, guard redirects,
-  open-redirect and honeypot defenses). Remaining: security page (change
-  password/email, session list/revocation), portal widgets/dashboard
-  modules, alerts, recommendations, history, CV, privacy export/deletion.
+  `ReturnUrlPolicy`, `SessionDescriber`) +
+  `scripts/dev/verify-accounts.php` (78 checks) + HTTP-level E2E (login →
+  dashboard → logout, guard redirects, open-redirect and honeypot
+  defenses, security-page reauth + revoke-others). Remaining: portal
+  widgets/dashboard modules, alerts, recommendations, history, CV,
+  privacy export/deletion (reauth for CV/account deletion lands with
+  those features).
 - **Phase 8 (part) — JobPosting schema + reviews:** ✅ schema generator +
   eligibility gate + output on single jobs; Places client + cache policy.
 - **Phases 4–5, 7, 9, 10:** not started. See `/NEXT-SESSION.md` for how to

@@ -53,6 +53,11 @@ $poolhall_portal_pages = array(
 		'content' => '[poolhall_candidate_auth form="reset"]',
 		'parent'  => 'candidate',
 	),
+	'security'        => array(
+		'title'   => 'Sign-in & security',
+		'content' => '[poolhall_candidate_auth form="security"]',
+		'parent'  => 'candidate',
+	),
 );
 
 $poolhall_page_ids = array();

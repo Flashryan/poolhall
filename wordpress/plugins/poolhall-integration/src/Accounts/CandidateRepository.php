@@ -26,6 +26,11 @@ final class CandidateRepository {
 	public const META_RESET_ISSUED = 'poolhall_reset_token_issued_at';
 	public const META_RESET_SENDS  = 'poolhall_reset_sends';
 
+	public const META_PENDING_EMAIL        = 'poolhall_pending_email';
+	public const META_PENDING_EMAIL_HASH   = 'poolhall_pending_email_token_hash';
+	public const META_PENDING_EMAIL_ISSUED = 'poolhall_pending_email_token_issued_at';
+	public const META_EMAIL_CHANGE_SENDS   = 'poolhall_email_change_sends';
+
 	public function find_by_email( string $email ): ?\WP_User {
 		$user = get_user_by( 'email', EmailAddress::normalize( $email ) );
 		return $user instanceof \WP_User ? $user : null;
@@ -176,6 +181,45 @@ final class CandidateRepository {
 	 */
 	public function record_reset_sends( int $user_id, array $sends ): void {
 		update_user_meta( $user_id, self::META_RESET_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	/** Storing a new pending email invalidates any previous change request. */
+	public function store_pending_email( int $user_id, string $new_email, string $token_hash, \DateTimeImmutable $issued_at ): void {
+		update_user_meta( $user_id, self::META_PENDING_EMAIL, $new_email );
+		update_user_meta( $user_id, self::META_PENDING_EMAIL_HASH, $token_hash );
+		update_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED, $issued_at->format( \DateTimeInterface::ATOM ) );
+	}
+
+	public function pending_email( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_PENDING_EMAIL, true );
+	}
+
+	public function pending_email_hash( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_PENDING_EMAIL_HASH, true );
+	}
+
+	public function pending_email_issued_at( int $user_id ): ?\DateTimeImmutable {
+		$raw = (string) get_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED, true );
+		return '' === $raw ? null : new \DateTimeImmutable( $raw );
+	}
+
+	/** Single use: redemption (or abandoning the change) deletes everything. */
+	public function clear_pending_email( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL );
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL_HASH );
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	public function email_change_sends( int $user_id ): array {
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_EMAIL_CHANGE_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_email_change_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_EMAIL_CHANGE_SENDS, $this->encode_sends( $sends ) );
 	}
 
 	private function find_candidate_by_meta( string $meta_key, string $meta_value ): ?int {

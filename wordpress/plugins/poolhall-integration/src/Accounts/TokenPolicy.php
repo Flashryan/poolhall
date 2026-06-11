@@ -19,6 +19,8 @@ final class TokenPolicy {
 
 	public const VERIFY_TTL_SECONDS = 24 * 60 * 60;
 	public const RESET_TTL_SECONDS  = 60 * 60;
+	/** Email-change confirmation mirrors registration verification (spec §5). */
+	public const EMAIL_CHANGE_TTL_SECONDS = 24 * 60 * 60;
 
 	/** 32 random bytes as 64 hex chars. */
 	public function generate(): string {

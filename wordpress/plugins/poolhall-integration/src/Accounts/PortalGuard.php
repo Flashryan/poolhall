@@ -60,7 +60,9 @@ final class PortalGuard {
 		}
 
 		if ( 0 === $user_id ) {
-			$this->redirect( self::LOGIN_PATH . '?return=' . rawurlencode( $path ) );
+			// Keep the query string: emailed links (e.g. the security page's
+			// email-change confirmation token) survive the sign-in round trip.
+			$this->redirect( self::LOGIN_PATH . '?return=' . rawurlencode( $path . $this->request_query() ) );
 		}
 		if ( CandidateRole::is_candidate( $user_id ) && ! $this->candidates->is_verified( $user_id ) ) {
 			$this->redirect( self::VERIFY_PATH . '?state=required' );
@@ -105,6 +107,13 @@ final class PortalGuard {
 		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$path = (string) ( wp_parse_url( $uri, PHP_URL_PATH ) ?? '' );
 		return trailingslashit( $path );
+	}
+
+	/** '?…' when the request carried a query string, '' otherwise. */
+	private function request_query(): string {
+		$uri   = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$query = (string) ( wp_parse_url( $uri, PHP_URL_QUERY ) ?? '' );
+		return '' === $query ? '' : '?' . $query;
 	}
 
 	private function is_portal_path( string $path ): bool {

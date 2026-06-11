@@ -23,6 +23,11 @@
  *      email; a password is never emailed.
  *  10. The saved-jobs REST routes enforce authentication, verification and
  *      ownership, and toggling is idempotent.
+ *  11. The security page (spec §5, hard rule 17): password and email changes
+ *      reauthenticate with the current password under login's rate limits;
+ *      email changes confirm via a single-use hashed token mailed to the new
+ *      address, stay enumeration-safe and notify the old address; sessions
+ *      list with the current one marked and revoke one-or-all-others.
  *
  * No strict_types declaration: wp eval-file runs this through eval(), where
  * declare() cannot be the first statement.
@@ -84,7 +89,12 @@ SavedJobsRepository::install();
 
 // Clean slate: remove candidates, saved rows and login-failure transients
 // from prior verification runs (the rate-limit window outlives a run).
-foreach ( get_users( array( 'role' => CandidateRole::ROLE, 'fields' => 'ID' ) ) as $old_id ) {
+foreach ( get_users(
+	array(
+		'role'   => CandidateRole::ROLE,
+		'fields' => 'ID',
+	)
+) as $old_id ) {
 	wp_delete_user( (int) $old_id );
 }
 global $wpdb;
@@ -153,7 +163,7 @@ $result = $registration->register(
 	),
 	$now
 );
-$user = $candidates->find_by_email( 'avery.quinn@example.test' );
+$user   = $candidates->find_by_email( 'avery.quinn@example.test' );
 $check( 'registration returns generic check_email', 'check_email' === $result['status'] );
 $check( 'unverified candidate created with normalized email', null !== $user && ! $candidates->is_verified( (int) $user->ID ) );
 $check( 'candidate has internal non-email username', null !== $user && str_starts_with( $user->user_login, 'ph_c_' ) && $user->user_login !== $user->user_email );
@@ -165,7 +175,14 @@ $check( 'verification email sent with single-use token link', 1 === count( $mail
 $check( 'token stored as hash only, never raw', $tokens->hash_token( $verify_token ) === (string) get_user_meta( (int) $user->ID, CandidateRepository::META_TOKEN_HASH, true ) );
 
 // 4. Duplicate registration is generic and non-destructive.
-$before_users = count( get_users( array( 'role' => CandidateRole::ROLE, 'fields' => 'ID' ) ) );
+$before_users = count(
+	get_users(
+		array(
+			'role'   => CandidateRole::ROLE,
+			'fields' => 'ID',
+		)
+	)
+);
 $result       = $registration->register(
 	array(
 		'first_name'   => 'Avery',
@@ -176,7 +193,14 @@ $result       = $registration->register(
 	),
 	$now->modify( '+5 seconds' )
 );
-$after_users = count( get_users( array( 'role' => CandidateRole::ROLE, 'fields' => 'ID' ) ) );
+$after_users  = count(
+	get_users(
+		array(
+			'role'   => CandidateRole::ROLE,
+			'fields' => 'ID',
+		)
+	)
+);
 $check( 'duplicate registration returns the same generic response', 'check_email' === $result['status'] );
 $check( 'duplicate registration creates no account', $before_users === $after_users );
 $check( 'duplicate within cooldown sends no second email', 1 === count( $mailer->sent ) );
@@ -248,8 +272,8 @@ $check(
 );
 
 // Live-first ordering and expired status.
-$source_b  = ( new GiigNormalizer() )->normalize( $fixture['jobs'][1] );
-$post_b    = $jobs->upsert( $source_b, new ExpiryPolicy(), $now );
+$source_b = ( new GiigNormalizer() )->normalize( $fixture['jobs'][1] );
+$post_b   = $jobs->upsert( $source_b, new ExpiryPolicy(), $now );
 $saved->save( $uid, 'giig', $source_b->source_job_id, $now->modify( '+3 minutes' ) );
 wp_update_post(
 	array(
@@ -266,7 +290,7 @@ $check(
 $removed = $saved->clear_not_live_for_user( $uid, $jobs );
 $check( 'clear removes only non-live saved jobs', 1 === $removed && 1 === $saved->count_for_user( $uid ) && $saved->is_saved( $uid, 'giig', $source->source_job_id ) );
 
-$gone = $saved->unsave( $uid, 'giig', $source->source_job_id );
+$gone  = $saved->unsave( $uid, 'giig', $source->source_job_id );
 $again = $saved->unsave( $uid, 'giig', $source->source_job_id );
 $check( 'unsave is idempotent', true === $gone && false === $again && 0 === $saved->count_for_user( $uid ) );
 
@@ -285,34 +309,109 @@ $registration->register(
 );
 $dana = $candidates->find_by_email( 'dana.reeve@example.test' );
 
-$unknown = $login->attempt( array( 'email' => 'ghost@example.test', 'password' => 'whatever this is' ), 'net-a', $now );
-$wrong   = $login->attempt( array( 'email' => 'avery.quinn@example.test', 'password' => 'not the password' ), 'net-a', $now );
+$unknown = $login->attempt(
+	array(
+		'email'    => 'ghost@example.test',
+		'password' => 'whatever this is',
+	),
+	'net-a',
+	$now
+);
+$wrong   = $login->attempt(
+	array(
+		'email'    => 'avery.quinn@example.test',
+		'password' => 'not the password',
+	),
+	'net-a',
+	$now
+);
 $check( 'unknown email and wrong password are the same generic invalid', 'invalid' === $unknown['status'] && 'invalid' === $wrong['status'] && 0 === $unknown['user_id'] );
 
-$ok = $login->attempt( array( 'email' => 'Avery.Quinn@Example.test', 'password' => 'quiet velvet morning' ), 'net-a', $now );
+$ok = $login->attempt(
+	array(
+		'email'    => 'Avery.Quinn@Example.test',
+		'password' => 'quiet velvet morning',
+	),
+	'net-a',
+	$now
+);
 $check( 'verified candidate with correct password logs in', 'ok' === $ok['status'] && (int) $user->ID === $ok['user_id'] );
 
-$gate = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-a', $now );
+$gate = $login->attempt(
+	array(
+		'email'    => 'dana.reeve@example.test',
+		'password' => 'maple sunrise harbour',
+	),
+	'net-a',
+	$now
+);
 $check( 'correct password on an unverified account routes to verification, not a session', 'verify_required' === $gate['status'] );
 
-$admin_user = get_users( array( 'role' => 'administrator', 'number' => 1 ) )[0] ?? null;
+$admin_user = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+	)
+)[0] ?? null;
 if ( null !== $admin_user ) {
-	$staff = $login->attempt( array( 'email' => (string) $admin_user->user_email, 'password' => 'irrelevant here!' ), 'net-a', $now );
+	$staff = $login->attempt(
+		array(
+			'email'    => (string) $admin_user->user_email,
+			'password' => 'irrelevant here!',
+		),
+		'net-a',
+		$now
+	);
 	$check( 'non-candidate accounts get the same generic invalid', 'invalid' === $staff['status'] );
 }
 
 foreach ( range( 1, 5 ) as $i ) {
-	$login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'wrong attempt ' . $i ), 'net-dana', $now->modify( "+{$i} seconds" ) );
+	$login->attempt(
+		array(
+			'email'    => 'dana.reeve@example.test',
+			'password' => 'wrong attempt ' . $i,
+		),
+		'net-dana',
+		$now->modify( "+{$i} seconds" )
+	);
 }
-$locked = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-dana', $now->modify( '+10 seconds' ) );
+$locked = $login->attempt(
+	array(
+		'email'    => 'dana.reeve@example.test',
+		'password' => 'maple sunrise harbour',
+	),
+	'net-dana',
+	$now->modify( '+10 seconds' )
+);
 $check( 'five failures rate limit the account even with the correct password', 'rate_limited' === $locked['status'] );
-$unlocked = $login->attempt( array( 'email' => 'dana.reeve@example.test', 'password' => 'maple sunrise harbour' ), 'net-dana', $now->modify( '+16 minutes' ) );
+$unlocked = $login->attempt(
+	array(
+		'email'    => 'dana.reeve@example.test',
+		'password' => 'maple sunrise harbour',
+	),
+	'net-dana',
+	$now->modify( '+16 minutes' )
+);
 $check( 'the lock clears by itself after the window — never permanent', 'verify_required' === $unlocked['status'] );
 
 foreach ( range( 1, 5 ) as $i ) {
-	$login->attempt( array( 'email' => sprintf( 'ghost%d@example.test', $i ), 'password' => 'wrong attempt ' . $i ), 'net-shared', $now );
+	$login->attempt(
+		array(
+			'email'    => sprintf( 'ghost%d@example.test', $i ),
+			'password' => 'wrong attempt ' . $i,
+		),
+		'net-shared',
+		$now
+	);
 }
-$network_limited = $login->attempt( array( 'email' => 'avery.quinn@example.test', 'password' => 'quiet velvet morning' ), 'net-shared', $now->modify( '+5 seconds' ) );
+$network_limited = $login->attempt(
+	array(
+		'email'    => 'avery.quinn@example.test',
+		'password' => 'quiet velvet morning',
+	),
+	'net-shared',
+	$now->modify( '+5 seconds' )
+);
 $check( 'failures across many accounts rate limit the network signal', 'rate_limited' === $network_limited['status'] );
 
 // 11. Password recovery: enumeration-safe, single-use, expiring, session-revoking.
@@ -408,6 +507,176 @@ wp_set_current_user( (int) $user->ID );
 $unsaved = $poolhall_rest_save( false, $source->source_job_id );
 $check( 'REST unsave clears the state idempotently', 200 === $unsaved->get_status() && false === $unsaved->get_data()['saved'] && 0 === $unsaved->get_data()['count'] );
 wp_set_current_user( 0 );
+
+// 13. Security page: reauthentication, email change, session control.
+// Two days on from the earlier checks so their rate-limit and resend
+// histories have all aged out of their windows.
+$sec_now  = $now->modify( '+2 days' );
+$security = new Poolhall\Integration\Accounts\SecurityService(
+	$candidates,
+	new PasswordPolicy(),
+	$tokens,
+	$resends,
+	new LoginRateLimiter(),
+	new FailedLoginStore( new LoginRateLimiter() ),
+	$mailer,
+	new Logger()
+);
+$registry = new Poolhall\Integration\Accounts\SessionRegistry();
+$avery_id = (int) $user->ID;
+// Avery's password after the recovery checks above.
+$avery_password = 'rosewood lantern forty two';
+
+$mail_count = count( $mailer->sent );
+$denied     = $security->change_password( $avery_id, 'not the password', 'meadow crossing lantern nine', 'net-sec', $sec_now );
+$still      = get_user_by( 'id', $avery_id );
+$check(
+	'password change with a wrong current password is refused and changes nothing',
+	'reauth_failed' === $denied['status'] && wp_check_password( $avery_password, (string) $still->user_pass, $avery_id ) && count( $mailer->sent ) === $mail_count
+);
+
+for ( $i = 0; $i < 4; $i++ ) {
+	$security->change_password( $avery_id, 'still wrong ' . $i, 'meadow crossing lantern nine', 'net-sec', $sec_now->modify( '+' . ( $i + 1 ) . ' seconds' ) );
+}
+$locked = $security->change_password( $avery_id, $avery_password, 'meadow crossing lantern nine', 'net-sec', $sec_now->modify( '+10 seconds' ) );
+$check( 'five reauth failures rate limit even the correct password', 'rate_limited' === $locked['status'] );
+$weak = $security->change_password( $avery_id, $avery_password, 'short', 'net-sec', $sec_now->modify( '+16 minutes' ) );
+$check( 'the reauth lock clears by itself and a weak new password is rejected', 'weak_password' === $weak['status'] && in_array( 'too_short', $weak['errors'], true ) );
+
+// A pending reset link and a second session, both of which must die with the change.
+$recovery->request( 'avery.quinn@example.test', $sec_now->modify( '+17 minutes' ) );
+$other_session  = $session_manager->create( time() + HOUR_IN_SECONDS );
+$mail_count     = count( $mailer->sent );
+$changed        = $security->change_password( $avery_id, $avery_password, 'juniper afternoon ledger', 'net-sec', $sec_now->modify( '+18 minutes' ) );
+$avery_fresh    = get_user_by( 'id', $avery_id );
+$avery_password = 'juniper afternoon ledger';
+$check( 'correct reauth changes the password', 'changed' === $changed['status'] && wp_check_password( $avery_password, (string) $avery_fresh->user_pass, $avery_id ) );
+$check( 'password change revokes existing sessions', false === $session_manager->verify( $other_session ) );
+$check( 'password change clears any outstanding reset link', '' === (string) get_user_meta( $avery_id, CandidateRepository::META_RESET_HASH, true ) );
+$pw_mail = $mailer->last();
+$check( 'password change mails a security notice without the password', count( $mailer->sent ) === $mail_count + 1 && str_contains( $pw_mail['subject'], 'password was changed' ) && ! str_contains( $pw_mail['message'], $avery_password ) );
+
+// Email change: reauthentication and validation first.
+$mail_count = count( $mailer->sent );
+$em_denied  = $security->request_email_change( $avery_id, 'wrong password', 'avery.new@example.test', 'net-sec2', $sec_now->modify( '+20 minutes' ) );
+$em_invalid = $security->request_email_change( $avery_id, $avery_password, 'not-an-email', 'net-sec2', $sec_now->modify( '+21 minutes' ) );
+$em_same    = $security->request_email_change( $avery_id, $avery_password, 'Avery.Quinn@example.test', 'net-sec2', $sec_now->modify( '+22 minutes' ) );
+$check(
+	'email change refuses a wrong password, a malformed address and the current address',
+	'reauth_failed' === $em_denied['status'] && 'email_invalid' === $em_invalid['status'] && 'email_unchanged' === $em_same['status'] && count( $mailer->sent ) === $mail_count
+);
+
+// An address held by another account: same outward outcome, nothing sent.
+$em_taken = $security->request_email_change( $avery_id, $avery_password, 'briar.holt@example.test', 'net-sec2', $sec_now->modify( '+23 minutes' ) );
+$check(
+	'an address already on an account looks identical from the browser but sends nothing',
+	'pending' === $em_taken['status'] && count( $mailer->sent ) === $mail_count && '' === $candidates->pending_email( $avery_id )
+);
+
+$em_ok    = $security->request_email_change( $avery_id, $avery_password, 'avery.new@example.test', 'net-sec2', $sec_now->modify( '+25 minutes' ) );
+$em_mail  = $mailer->last();
+$em_token = $extract_token( $em_mail );
+$check(
+	'a free address gets a confirmation link at the new inbox',
+	'pending' === $em_ok['status'] && 'avery.new@example.test' === $em_mail['to'] && str_contains( $em_mail['message'], '/candidate/security/' ) && '' !== $em_token
+);
+$check( 'the pending change stores the token hash only', $tokens->hash_token( $em_token ) === $candidates->pending_email_hash( $avery_id ) );
+
+$mail_count = count( $mailer->sent );
+$security->request_email_change( $avery_id, $avery_password, 'avery.new@example.test', 'net-sec2', $sec_now->modify( '+25 minutes +30 seconds' ) );
+$check( 'email-change requests respect the send cooldown', count( $mailer->sent ) === $mail_count );
+
+$security->request_email_change( $avery_id, $avery_password, 'avery.newer@example.test', 'net-sec2', $sec_now->modify( '+27 minutes' ) );
+$em_token_2    = $extract_token( $mailer->last() );
+$stale_confirm = $security->confirm_email_change( $avery_id, $em_token, $sec_now->modify( '+28 minutes' ) );
+$check( 'a newer request invalidates the earlier confirmation link', 'invalid' === $stale_confirm['status'] );
+
+$bad_confirm = $security->confirm_email_change( $avery_id, str_repeat( 'b', 64 ), $sec_now->modify( '+28 minutes' ) );
+$check( 'unknown confirmation tokens are invalid', 'invalid' === $bad_confirm['status'] );
+
+$mail_count  = count( $mailer->sent );
+$confirmed   = $security->confirm_email_change( $avery_id, $em_token_2, $sec_now->modify( '+29 minutes' ) );
+$avery_fresh = get_user_by( 'id', $avery_id );
+$old_notice  = $mailer->last();
+$check(
+	'a valid confirmation changes the sign-in email and notifies the old address',
+	'changed' === $confirmed['status'] && 'avery.newer@example.test' === (string) $avery_fresh->user_email
+		&& count( $mailer->sent ) === $mail_count + 1 && 'avery.quinn@example.test' === $old_notice['to']
+		&& str_contains( $old_notice['subject'], 'email was changed' )
+);
+$check( 'the confirmation token is single use', 'invalid' === $security->confirm_email_change( $avery_id, $em_token_2, $sec_now->modify( '+30 minutes' ) )['status'] && '' === $candidates->pending_email( $avery_id ) );
+
+$security->request_email_change( $avery_id, $avery_password, 'avery.late@example.test', 'net-sec2', $sec_now->modify( '+90 minutes' ) );
+$late_token = $extract_token( $mailer->last() );
+$check( 'a confirmation link past 24 hours is expired', 'expired' === $security->confirm_email_change( $avery_id, $late_token, $sec_now->modify( '+26 hours' ) )['status'] );
+
+// An address taken between request and confirmation fails closed.
+$security->request_email_change( $avery_id, $avery_password, 'avery.raced@example.test', 'net-sec2', $sec_now->modify( '+92 minutes' ) );
+$raced_token = $extract_token( $mailer->last() );
+$squatter_id = wp_insert_user(
+	array(
+		'user_login' => 'ph_test_squatter',
+		'user_pass'  => wp_generate_password( 20 ),
+		'user_email' => 'avery.raced@example.test',
+	)
+);
+$raced       = $security->confirm_email_change( $avery_id, $raced_token, $sec_now->modify( '+93 minutes' ) );
+$avery_fresh = get_user_by( 'id', $avery_id );
+$check(
+	'an address taken after the request fails generically at confirmation',
+	'invalid' === $raced['status'] && 'avery.newer@example.test' === (string) $avery_fresh->user_email
+);
+if ( ! is_wp_error( $squatter_id ) ) {
+	require_once ABSPATH . 'wp-admin/includes/user.php';
+	wp_delete_user( (int) $squatter_id );
+}
+
+// Leave Avery as a re-run expects: original address, no pending email state.
+$candidates->clear_pending_email( $avery_id );
+delete_user_meta( $avery_id, CandidateRepository::META_EMAIL_CHANGE_SENDS );
+add_filter( 'send_email_change_email', '__return_false' );
+wp_update_user(
+	array(
+		'ID'         => $avery_id,
+		'user_email' => 'avery.quinn@example.test',
+	)
+);
+remove_filter( 'send_email_change_email', '__return_false' );
+
+// Sessions: listing marks the current one; revocation is one-or-all-others.
+$ua_backup                  = $_SERVER['HTTP_USER_AGENT'] ?? null;
+$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0 Mobile/15E148 Safari/604.1';
+$phone_session              = $session_manager->create( time() + HOUR_IN_SECONDS );
+$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+$desktop_session            = $session_manager->create( time() + HOUR_IN_SECONDS );
+if ( null === $ua_backup ) {
+	unset( $_SERVER['HTTP_USER_AGENT'] );
+} else {
+	$_SERVER['HTTP_USER_AGENT'] = $ua_backup;
+}
+
+$listed       = $registry->list_sessions( $avery_id, $desktop_session );
+$current_rows = array_values( array_filter( $listed, static fn( array $s ): bool => $s['current'] ) );
+$check(
+	'the session list marks exactly the caller as current, first',
+	2 === count( $listed ) && 1 === count( $current_rows ) && $listed[0]['current'] && str_contains( $listed[0]['ua'], 'Windows' )
+);
+
+$phone_verifier = '';
+foreach ( $listed as $row ) {
+	if ( ! $row['current'] ) {
+		$phone_verifier = $row['verifier'];
+	}
+}
+$check( 'the current session cannot be revoked through the one-session control', false === $registry->revoke( $avery_id, hash( 'sha256', $desktop_session ), $desktop_session ) );
+$check( 'one other session revokes by verifier', true === $registry->revoke( $avery_id, $phone_verifier, $desktop_session ) && false === $session_manager->verify( $phone_session ) && false !== $session_manager->verify( $desktop_session ) );
+
+$session_manager->create( time() + HOUR_IN_SECONDS );
+$session_manager->create( time() + HOUR_IN_SECONDS );
+$revoked_count = $registry->revoke_others( $avery_id, $desktop_session );
+$remaining     = $registry->list_sessions( $avery_id, $desktop_session );
+$check( 'revoke-others signs out everything but the caller', 2 === $revoked_count && 1 === count( $remaining ) && $remaining[0]['current'] );
+$session_manager->destroy_all();
 
 $failed = array_filter( $checks, static fn( array $c ): bool => ! $c[1] );
 printf( "\n%d/%d checks passed.\n", count( $checks ) - count( $failed ), count( $checks ) );

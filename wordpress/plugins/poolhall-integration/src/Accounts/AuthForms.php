@@ -29,6 +29,8 @@ final class AuthForms {
 		'first_name_required' => 'Enter your first name.',
 		'last_name_required'  => 'Enter your last name.',
 		'email_invalid'       => 'Enter an email address in the right format.',
+		'email_unchanged'     => 'That is already the email address on this account.',
+		'reauth_failed'       => 'Your current password is not right.',
 		'terms_required'      => 'You need to accept the Terms and Privacy Notice to create an account.',
 		'too_short'           => 'Use a password of at least 12 characters — a few words work well.',
 		'too_long'            => 'Use a password of 128 characters or fewer.',
@@ -37,7 +39,12 @@ final class AuthForms {
 		'contains_email'      => 'Your password should not contain your email address.',
 	);
 
-	public function __construct( private VerificationService $verification ) {}
+	public function __construct(
+		private VerificationService $verification,
+		private SecurityService $security,
+		private SessionRegistry $sessions,
+		private SessionDescriber $describer,
+	) {}
 
 	public function register(): void {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
@@ -56,6 +63,7 @@ final class AuthForms {
 			'forgot'   => $this->forgot(),
 			'reset'    => $this->reset(),
 			'account'  => $this->account(),
+			'security' => $this->security_page(),
 			default    => '',
 		};
 
@@ -200,7 +208,125 @@ final class AuthForms {
 			__( 'Saved jobs, alerts and applications will appear here as they go live.', 'poolhall-integration' )
 		)
 			. '<p class="ph-body"><a class="ph-link ph-link--arrow" href="' . esc_url( home_url( '/jobs/' ) ) . '">' . esc_html__( 'Browse live jobs', 'poolhall-integration' ) . '</a></p>'
+			. '<p class="ph-body"><a class="ph-link ph-link--arrow" href="' . esc_url( home_url( SecurityEndpoints::SECURITY_PATH ) ) . '">' . esc_html__( 'Sign-in & security', 'poolhall-integration' ) . '</a></p>'
 			. $this->signout_form();
+	}
+
+	/** Portal spec §5 security page: password, email and session controls. */
+	private function security_page(): string {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$user_id = get_current_user_id();
+
+		$out = $this->heading( __( 'Sign-in & security', 'poolhall-integration' ), __( 'Change your password or email address and see where you are signed in.', 'poolhall-integration' ) );
+
+		$token = $this->query_arg( 'token' );
+		if ( '' !== $token ) {
+			$result = $this->security->confirm_email_change( $user_id, $token, new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) );
+			$out   .= match ( $result['status'] ) {
+				'changed' => $this->alert( 'success', __( 'Your sign-in email address is updated. Use it next time you sign in.', 'poolhall-integration' ) ),
+				'expired' => $this->alert( 'error', __( 'That confirmation link has expired. Request the change again below.', 'poolhall-integration' ) ),
+				default   => $this->alert( 'error', __( 'That confirmation link is not valid. Request the change again below.', 'poolhall-integration' ) ),
+			};
+		}
+
+		$out .= match ( $this->query_arg( 'status' ) ) {
+			'password_changed' => $this->alert( 'success', __( 'Your password is changed and every other device has been signed out.', 'poolhall-integration' ) ),
+			'email_pending'    => $this->alert( 'success', __( 'If that address can be used, a confirmation link is on its way to it. The change happens when you follow the link — it works once and expires in 24 hours.', 'poolhall-integration' ) ),
+			'session_revoked'  => $this->alert( 'success', __( 'That device has been signed out.', 'poolhall-integration' ) ),
+			'sessions_revoked' => $this->alert( 'success', __( 'Every other device has been signed out.', 'poolhall-integration' ) ),
+			default            => '',
+		};
+		if ( 'rate_limited' === $this->query_arg( 'error' ) ) {
+			$out .= $this->alert( 'error', __( 'Too many password attempts. Wait a few minutes, then try again.', 'poolhall-integration' ) );
+		}
+
+		return $out
+			. $this->change_password_card( array_filter( explode( ',', $this->query_arg( 'pw' ) ) ) )
+			. $this->change_email_card( $user_id, array_filter( explode( ',', $this->query_arg( 'em' ) ) ) )
+			. $this->sessions_card( $user_id )
+			. '<p class="ph-body"><a class="ph-link" href="' . esc_url( home_url( PortalGuard::PATH_PREFIX ) ) . '">' . esc_html__( 'Back to your account', 'poolhall-integration' ) . '</a></p>';
+	}
+
+	/**
+	 * @param string[] $codes Active error codes for this card.
+	 */
+	private function change_password_card( array $codes ): string {
+		return '<div class="ph-card"><form class="ph-form" method="post" action="' . $this->action_url() . '">'
+			. '<h2 class="ph-h4" style="margin: 0;">' . esc_html__( 'Change your password', 'poolhall-integration' ) . '</h2>'
+			. $this->error_summary( $codes )
+			. $this->common_fields( 'poolhall_change_password' )
+			. $this->password_field( 'current_password', __( 'Current password', 'poolhall-integration' ), 'current-password', '', $codes, array( 'reauth_failed' ) )
+			. $this->password_field( 'password', __( 'New password', 'poolhall-integration' ), 'new-password', __( 'At least 12 characters. Every other device is signed out when it changes.', 'poolhall-integration' ), $codes, array( 'too_short', 'too_long', 'common_password', 'low_variety', 'contains_email' ) )
+			. '<div><button class="ph-button ph-button--primary" type="submit">' . esc_html__( 'Change password', 'poolhall-integration' ) . '</button></div>'
+			. '</form></div>';
+	}
+
+	/**
+	 * @param string[] $codes Active error codes for this card.
+	 */
+	private function change_email_card( int $user_id, array $codes ): string {
+		$pending = $this->security->pending_email( $user_id );
+		$notice  = '' === $pending ? '' : $this->alert(
+			'warning',
+			sprintf(
+				/* translators: %s: pending new email address. */
+				__( 'A confirmation link is waiting at %s. The change happens when you follow it; submitting again replaces it.', 'poolhall-integration' ),
+				$pending
+			)
+		);
+
+		return '<div class="ph-card"><form class="ph-form" method="post" action="' . $this->action_url() . '">'
+			. '<h2 class="ph-h4" style="margin: 0;">' . esc_html__( 'Change your email address', 'poolhall-integration' ) . '</h2>'
+			. $notice
+			. $this->error_summary( $codes )
+			. $this->common_fields( 'poolhall_change_email' )
+			. $this->text_field( 'email', __( 'New email address', 'poolhall-integration' ), 'email', 'email', $codes, array( 'email_invalid', 'email_unchanged' ) )
+			. $this->password_field( 'current_password', __( 'Current password', 'poolhall-integration' ), 'current-password', __( 'We confirm the new address by email and notify your current one.', 'poolhall-integration' ), $codes, array( 'reauth_failed' ) )
+			. '<div><button class="ph-button ph-button--primary" type="submit">' . esc_html__( 'Send confirmation link', 'poolhall-integration' ) . '</button></div>'
+			. '</form></div>';
+	}
+
+	private function sessions_card( int $user_id ): string {
+		$rows = '';
+		foreach ( $this->sessions->list_sessions( $user_id, (string) wp_get_session_token() ) as $session ) {
+			$described = $this->describer->describe( $session['ua'] );
+			$browser   = '' === $described['browser'] ? __( 'Unknown browser', 'poolhall-integration' ) : $described['browser'];
+			$platform  = '' === $described['platform'] ? __( 'Unknown device', 'poolhall-integration' ) : $described['platform'];
+			$label     = sprintf(
+				/* translators: 1: browser family, 2: device/platform family. */
+				__( '%1$s on %2$s', 'poolhall-integration' ),
+				$browser,
+				$platform
+			);
+			$signed_in = sprintf(
+				/* translators: %s: localized date and time. */
+				__( 'Signed in %s', 'poolhall-integration' ),
+				wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), $session['login'] )
+			);
+
+			$action = $session['current']
+				? '<span class="ph-badge ph-badge--success">' . esc_html__( 'This device', 'poolhall-integration' ) . '</span>'
+				: '<form method="post" action="' . $this->action_url() . '" style="margin: 0;">'
+					. $this->common_fields( 'poolhall_revoke_session' )
+					. '<input type="hidden" name="session" value="' . esc_attr( $session['verifier'] ) . '" />'
+					. '<button class="ph-button ph-button--ghost" type="submit">' . esc_html__( 'Sign out', 'poolhall-integration' ) . '</button>'
+					. '</form>';
+
+			$rows .= '<li class="ph-cluster" style="justify-content: space-between; align-items: center;">'
+				. '<div><p class="ph-body" style="margin: 0;"><strong>' . esc_html( $label ) . '</strong></p>'
+				. '<p class="ph-caption" style="margin: 0;">' . esc_html( $signed_in ) . ( '' === $session['ip'] ? '' : ' · ' . esc_html( $session['ip'] ) ) . '</p></div>'
+				. $action . '</li>';
+		}
+
+		return '<div class="ph-card"><div class="ph-stack-sm">'
+			. '<h2 class="ph-h4" style="margin: 0;">' . esc_html__( 'Where you are signed in', 'poolhall-integration' ) . '</h2>'
+			. '<ul class="ph-stack-sm" style="list-style: none; margin: 0; padding: 0;">' . $rows . '</ul>'
+			. '<form method="post" action="' . $this->action_url() . '">'
+			. $this->common_fields( 'poolhall_revoke_all_sessions' )
+			. '<button class="ph-button ph-button--secondary" type="submit">' . esc_html__( 'Sign out everywhere else', 'poolhall-integration' ) . '</button>'
+			. '</form></div></div>';
 	}
 
 	private function resend_form(): string {
