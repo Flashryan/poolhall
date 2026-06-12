@@ -27,6 +27,7 @@ When sources disagree, use this order:
 - `08-CANDIDATE-PORTAL-SPEC.md` - candidate identity, dashboard, saved jobs, alerts, applications, profile, CV and privacy behavior.
 - `09-PENETRATION-TEST-PLAN.md` - authorised test scope, test script, evidence, remediation, retest and launch gate.
 - `10-ELEMENTOR-DESIGN-SYSTEM.md` - prototype-derived variables, Atomic classes, components, loop templates, fluid sizing and responsive rules.
+- `11-AS-BUILT-SCAFFOLD.md` - living as-built inventory: stack diagram, annotated repo tree, site/template map, dynamic seams, and the open design gaps for the visual pass.
 - `CLAUDE.md` - concise standing context for the coding agent.
 
 ## Non-negotiable decisions
