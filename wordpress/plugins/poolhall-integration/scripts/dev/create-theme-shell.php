@@ -120,6 +120,13 @@ $widget    = static fn( string $type, array $settings ): array => array(
 	'settings'   => $settings,
 	'elements'   => array(),
 );
+// Dynamic tag value for a widget setting (Elementor's serialized tag format).
+$tag = static fn( string $name, array $settings = array() ): string => sprintf(
+	'[elementor-tag id="%s" name="%s" settings="%s"]',
+	$eid(),
+	$name,
+	rawurlencode( wp_json_encode( (object) $settings ) )
+);
 
 $header_data = array(
 	// Contact strip (design system §8): Navy 900, phone/email left, location
@@ -213,6 +220,20 @@ $header_data = array(
 				array(
 					'header_size' => 'p',
 					'title_color' => '#1B3052',
+					// Explicit dynamic tags + static fallbacks: the widget's
+					// own dynamic defaults only apply through the editor, not
+					// programmatic writes — without these the logo rendered
+					// the heading placeholder with no link at all.
+					'title'       => get_bloginfo( 'name' ),
+					'link'        => array(
+						'url'         => home_url( '/' ),
+						'is_external' => '',
+						'nofollow'    => '',
+					),
+					'__dynamic__' => array(
+						'title' => $tag( 'site-title' ),
+						'link'  => $tag( 'site-url' ),
+					),
 					'typography_typography'  => 'custom',
 					'typography_font_family' => 'Source Serif 4',
 					'typography_font_weight' => '600',
@@ -247,14 +268,12 @@ $header_data = array(
 				)
 			),
 			// Audience switch (§8): segmented Candidates/Employers control,
-			// desktop only — the child-theme .ph-audience-switch rules hide
-			// it below 900px (it moves into the mobile drawer in Phase 4).
-			$widget(
-				'text-editor',
-				array(
-					'editor' => '<p class="ph-audience-switch"><a class="is-active" href="' . esc_url( get_permalink( $page_ids['jobs'] ) ) . '">Candidates</a><a href="' . esc_url( get_permalink( $page_ids['employers'] ) ) . '">Employers</a></p>',
-				)
-			),
+			// server-rendered per page (active side + animated pill) by the
+			// plugin shortcode; desktop only — the child-theme rules hide it
+			// below 900px (it moves into the mobile drawer in Phase 4).
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_audience_switch]' ) ),
+			// Candidate account entry (§8): Sign in / My account by state.
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_account_link]' ) ),
 			$widget(
 				'button',
 				array(

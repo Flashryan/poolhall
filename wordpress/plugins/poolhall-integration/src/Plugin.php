@@ -105,6 +105,7 @@ final class Plugin {
 		( new CandidateRole() )->register();
 		$this->wire_accounts();
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
+		( new \Poolhall\Integration\DesignSystem\HeaderControls() )->register();
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
 		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
 		( new \Poolhall\Integration\Jobs\SearchForm() )->register();

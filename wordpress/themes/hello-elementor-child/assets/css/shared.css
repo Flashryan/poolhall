@@ -79,10 +79,13 @@
 
 /* --- Global class layer (doc §6) — fluid type applied via classes only --- */
 .ph-display { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-display-size); line-height: 1.08; letter-spacing: -0.005em; }
-.ph-h1 { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h1-size); line-height: 1.12; letter-spacing: -0.005em; }
-.ph-h2 { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h2-size); line-height: 1.15; letter-spacing: -0.005em; }
-.ph-h3 { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; letter-spacing: -0.005em; }
-.ph-h4 { font-family: var(--ph-font-body); font-weight: 700; font-size: var(--ph-type-h4-size); line-height: 1.3; }
+/* The ph-h* classes are also set on Elementor widget wrappers via the
+   Advanced tab, so each rule targets the inner heading element too —
+   otherwise the parent theme reset (h3 = 1.75rem) wins on card titles. */
+.ph-h1, .ph-h1 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h1-size); line-height: 1.12; letter-spacing: -0.005em; }
+.ph-h2, .ph-h2 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h2-size); line-height: 1.15; letter-spacing: -0.005em; }
+.ph-h3, .ph-h3 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; letter-spacing: -0.005em; }
+.ph-h4, .ph-h4 .elementor-heading-title { font-family: var(--ph-font-body); font-weight: 700; font-size: var(--ph-type-h4-size); line-height: 1.3; }
 .ph-body-lg { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-lg-size); line-height: 1.65; }
 .ph-body { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-size); line-height: 1.6; }
 .ph-small { font-family: var(--ph-font-body); font-weight: 500; font-size: var(--ph-type-small-size); line-height: 1.45; }
@@ -286,20 +289,46 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 @media (max-width: 639.98px) {
   .ph-contact-strip__location { display: none; }
 }
+/* Segmented Candidates/Employers control (§8): the active side comes from
+   the server ([poolhall_audience_switch]); the white pill slides on hover
+   to preview the other side, with the transition removed under
+   prefers-reduced-motion. Hidden below 900px (mobile drawer, Phase 4). */
 .ph-audience-switch {
-  display: none; align-items: center; margin: 0; padding: 0.1875rem;
+  position: relative; display: none; grid-template-columns: 1fr 1fr; margin: 0; padding: 0.1875rem;
   border: var(--ph-border); border-radius: var(--ph-radius-pill); background-color: var(--ph-color-mist);
 }
 @media (min-width: 900px) {
-  .ph-audience-switch { display: inline-flex; }
+  .ph-audience-switch { display: inline-grid; }
 }
+.ph-audience-switch__pill {
+  position: absolute; inset-block: 0.1875rem; inset-inline-start: 0.1875rem; inline-size: calc(50% - 0.1875rem);
+  border-radius: var(--ph-radius-pill); background-color: var(--ph-color-white); box-shadow: var(--ph-shadow-card);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ph-audience-switch--employers .ph-audience-switch__pill { transform: translateX(100%); }
+.ph-audience-switch:has(a:first-of-type:hover) .ph-audience-switch__pill,
+.ph-audience-switch:has(a:first-of-type:focus-visible) .ph-audience-switch__pill { transform: translateX(0); }
+.ph-audience-switch:has(a:last-of-type:hover) .ph-audience-switch__pill,
+.ph-audience-switch:has(a:last-of-type:focus-visible) .ph-audience-switch__pill { transform: translateX(100%); }
 .ph-audience-switch a {
-  display: inline-flex; align-items: center; min-block-size: 2.25rem; padding-inline: 0.875rem;
+  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center;
+  min-block-size: 2.25rem; padding-inline: 0.875rem;
   border-radius: var(--ph-radius-pill); font-family: var(--ph-font-body); font-weight: 600;
   font-size: var(--ph-type-small-size); color: var(--ph-color-muted); text-decoration: none;
+  transition: color 0.2s ease;
 }
 .ph-audience-switch a:hover { color: var(--ph-color-navy-800); }
-.ph-audience-switch a.is-active { background-color: var(--ph-color-white); color: var(--ph-color-navy-800); box-shadow: var(--ph-shadow-card); }
+.ph-audience-switch a.is-active { color: var(--ph-color-navy-800); }
+
+/* Header candidate account entry (§8, portal spec §2): signed-out shows
+   Sign in, signed-in shows My account — rendered by [poolhall_account_link]. */
+.ph-account-link {
+  display: inline-flex; align-items: center; gap: var(--ph-space-2); min-block-size: var(--ph-touch-min);
+  font-family: var(--ph-font-body); font-weight: 600; font-size: var(--ph-type-small-size);
+  color: var(--ph-color-navy-800); text-decoration: none; white-space: nowrap;
+}
+.ph-account-link:hover { color: var(--ph-color-orange-700); }
+.ph-account-link svg { flex-shrink: 0; }
 
 /* Utilities (§6). */
 .ph-no-overflow { overflow: hidden; min-inline-size: 0; }
@@ -319,6 +348,7 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
   .ph-card--interactive, .ph-card--interactive:hover, .ph-card--interactive:focus-within { transform: none; transition: none; }
   .ph-link--arrow::after, .ph-link--arrow:hover::after, .ph-link--arrow:focus-visible::after { transform: none; transition: none; }
   .ph-button { transition: none; }
+  .ph-audience-switch__pill, .ph-audience-switch a { transition: none; }
 }
 
 /* Accessible focus visibility everywhere, including plugin widgets. */
