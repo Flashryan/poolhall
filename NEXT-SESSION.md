@@ -4,43 +4,53 @@ Follow this whenever you start a fresh session on this repo (the container
 is wiped between sessions; everything below gets you back to exactly where
 the last session ended).
 
-## Where things stand (end of 11 June)
+## Where things stand (end of 12 June)
 
-**The latest code is on branch `claude/quirky-darwin-vj4vbn`** (tip
-`8f6dde9`) — a fresh session may boot on a stale checkout; fetch and reset
-onto that branch first.
+**The latest code is on branch `claude/gifted-ptolemy-p6lg3t`** — a fresh
+session may boot on a stale checkout; fetch and reset onto that branch
+first.
 
-- **Staging is live with WordPress + Elementor Pro:**
+- **Staging is live and current with the repo:**
   `http://lightslategrey-hare-335761.hostingersite.com/` (Hostinger
   account `u232776807`, order 1008376137; admin user `poolhall-admin`,
   password held by Ryan — ask him to paste it if you need to drive
-  staging wp-admin; never commit it). Ryan installed Elementor Pro
-  manually and uploaded an earlier build of the plugin/child theme by
-  hand. **Staging may be one build behind the repo** — redeploy
-  `wordpress/dist/*` (rebuild first) once the network allowlist includes
-  the Hostinger hosts, then re-run Site setup.
-- **Built and verified locally** (see `wordpress/README.md` status table
-  for detail): Phase 6 auth + security page (78/78 integration checks,
-  110 unit tests), Phase 3 design system + theme shell, Phase 4 jobs
-  templates, **Meet the Team page with real client photography bundled
-  in the plugin** (`scripts/dev/create-team-page.php`), and the
-  **wp-admin Site setup runner** (Poolhall Jobs → Site setup) that runs
-  every setup script with requirement-aware skips — so staging needs no
-  SSH/wp-cli (the Hostinger API has none).
+  staging wp-admin; never commit it). On 12 June the API deploy worked
+  end to end (`srv1350-files.hstgr.io` + staging hostname are
+  allowlisted): dist zips extracted and TUS-uploaded file-by-file to
+  `wp-content/plugins/<slug>-<rand8>/`, then the
+  plugins/themes `/deploy` endpoints (the exact flow the
+  `hostinger-api-mcp` package uses — headers `X-Auth` + `X-Auth-Rest`,
+  pre-create POST expecting 201, PATCH with `Tus-Resumable: 1.0.0`).
+  Staging wp-admin was driven over HTTP with curl (login → nonce →
+  Poolhall Jobs → Site setup) — all 7 steps green.
+- **Built and verified locally AND on staging** (see
+  `wordpress/README.md` status table): Phase 6 auth + security page
+  (78/78 checks, 125 unit tests), Phase 3 design system + theme shell,
+  Phase 4 jobs templates + Team page, **Home page with image hero,
+  server-rendered job search (`[poolhall_job_search]`, GET to `/jobs/`,
+  q/location/sector applied server-side, filtered results
+  noindex,follow), featured jobs Loop Carousel (`poolhall_featured_jobs`,
+  `is_featured` first), sectors/steps/stats/employer-CTA** — and all
+  five **marketing pages (employers, sectors, services, contact,
+  join-our-team) with the real enquiry backend**
+  (`[poolhall_enquiry_form]`: honeypot+nonce+Turnstile seam, consent,
+  rate-limited, mails `poolhall_enquiry_inbox` option → admin email
+  fallback). Staging shows empty featured carousel/jobs archive until
+  Phase 1 syncs real jobs — that is the honest expected state.
 - **Deploys:** `bash wordpress/scripts/build-deploy-zips.sh` →
-  `wordpress/dist/` (plugin zip includes `assets/img/content/`
-  photography). API deploy path: POST
-  `/api/hosting/v1/files/upload-urls`, TUS-upload files to the returned
-  per-server host (`srv1350-files.hstgr.io`), then POST
-  `.../websites/{domain}/wordpress/plugins/deploy` — blocked until that
-  host is allowlisted (Ryan said he'd add it before the next boot).
-  With the staging hostname also allowlisted you can log into staging
-  wp-admin over HTTP (credentials from Ryan) and trigger Site setup +
-  verify pages yourself — same curl flow as the local E2E.
+  `wordpress/dist/`, then the API flow above (a working deploy script
+  from this session is the pattern: fetch upload-urls with
+  `{username,domain}`, upload every file, POST deploy with
+  `{slug, plugin_path|theme_path}`). The Hostinger MCP server tools also
+  loaded this session (`mcp__hostinger-mcp__hosting_deployWordpressPlugin`)
+  but direct REST worked fine.
 - Local quirks already solved in the setup script: Hello Elementor and
   free Elementor install from `downloads.wordpress.org` (GitHub source
   tree fatals in wp-admin; GitHub API rate-limits without
   `GITHUB_TOKEN`).
+- **Not allowlisted on 12 June:** `www.poolhallrecruitment.co.uk` (the
+  live Wix site) — marketing-page copy is from the approved prototype;
+  a Wix copy reconciliation pass needs that host allowlisted.
 
 ## Before you start the session (one-time setup)
 
@@ -86,24 +96,27 @@ onto that branch first.
 4. Start a new Claude Code session on the **Flashryan/poolhall** repo.
 5. Paste this as your first message:
 
-   > Fetch origin and reset onto `origin/claude/quirky-darwin-vj4vbn`
+   > Fetch origin and reset onto `origin/claude/gifted-ptolemy-p6lg3t`
    > (the latest work — your checkout may be stale). Read
    > `wordpress/README.md`, `wordpress/docs/CLAUDE.md` and
    > `NEXT-SESSION.md`. Then:
    > 1. Run `bash wordpress/scripts/setup-local-wp.sh` to rebuild the
    >    local WordPress dev environment, unzip the Elementor Pro upload
-   >    into the local WP plugins folder and activate it, then run the
-   >    Site setup steps (`wp eval-file` the kit/theme-shell/jobs/team
-   >    scripts) and verify the frontend renders.
-   > 2. Rebuild `wordpress/dist/` and deploy the plugin + child theme to
-   >    staging via the Hostinger API (the files host is allowlisted
-   >    now), then drive staging wp-admin's Poolhall Jobs → Site setup
-   >    over HTTP (I'll paste the admin password when you ask) and
-   >    verify the staging frontend matches local.
-   > 3. Continue the build from the status table in
-   >    `wordpress/README.md` — next up: home page + featured carousel,
-   >    then the remaining marketing pages (employers, sectors,
-   >    services, contact, join-our-team).
+   >    into the local WP plugins folder and activate it, then run every
+   >    Site setup script (kit/theme-shell/jobs/team/home/marketing) and
+   >    verify the frontend renders.
+   > 2. Continue the build from the status table in
+   >    `wordpress/README.md` — next up: jobs filter/sort widgets
+   >    (type, work mode, salary, sort, chips, mobile filter drawer),
+   >    expired-job state and similar roles, then the save-control
+   >    frontend. If I paste the Giig token + secret, do Phase 1 first
+   >    (prove the contracts, lock GiigNormalizer::KEYS and the auth
+   >    header, record fixtures).
+   > 3. When done, rebuild `wordpress/dist/`, deploy to staging via the
+   >    Hostinger API (flow in NEXT-SESSION.md, verified 12 June), drive
+   >    staging wp-admin's Poolhall Jobs → Site setup over HTTP (I'll
+   >    paste the admin password when you ask) and verify staging
+   >    matches local.
 
 ## Hostinger staging runbook — steps 1–3 DONE on 11 June, remainder below
 
@@ -125,34 +138,36 @@ calling the REST API directly with `HOSTINGER_API_TOKEN` (base
 keys, then POST
 `/api/hosting/v1/accounts/{username}/websites/{domain}/wordpress/plugins/deploy`).
 
+DONE on 12 June: deploy steps 1, 2 and 4 — the API deploy ran end to end
+(all plugin + theme files TUS-uploaded, both `/deploy` calls accepted),
+the Site-setup runner (now 7 steps: + home page, + marketing pages) was
+driven over HTTP and came back all green, and every page was verified on
+the staging frontend. Elementor Pro was already active on staging (Ryan
+installed it 11 June).
+
 Remaining:
 
-1. **Deploy plugin + child theme to staging** once `srv1350-files.hstgr.io`
-   is allowlisted (build `wordpress/dist/` zips first), or have Ryan
-   upload the two zips through staging wp-admin → Plugins/Themes → Add.
-2. Activate both on staging, then run **wp-admin → Poolhall Jobs → Site
-   setup** (added 11 June, third session): one nonce-protected button runs
-   portal pages + the kit/theme-shell/jobs-template scripts, skipping any
-   step whose requirements (Elementor / Elementor Pro) are missing and
-   saying why. No SSH/wp-cli needed.
-3. Ryan installs **Elementor Pro + Novamira manually** on staging
-   (Novamira is staging/local only — hard rule 13 — and never production).
-4. Re-run the kit/theme-shell/jobs-template scripts on staging once
-   Elementor Pro is active, then `verify-sync.php` and
-   `verify-accounts.php` (78 checks) against the staging install.
-5. Never purchase anything (VPS, domains) through the API without Ryan
-   confirming in chat first. (Nothing was purchased on 11 June — the
-   subdomain and WP install are free on the existing plan.)
+1. Run `verify-sync.php` / `verify-accounts.php` against the staging
+   install (needs wp-cli or a temporary admin runner — they are dev
+   scripts, not part of Site setup).
+2. Never purchase anything (VPS, domains) through the API without Ryan
+   confirming in chat first. (Nothing was purchased on 11 or 12 June.)
 
 ## What the next session can do
 
 - **Phase 1 — prove the Giig API** (needs the Giig token + secret from
   Matt's Giig account; have them ready to paste when asked; they go into
-  wp-config constants on staging, never the repo).
-- **Continue Phase 3/4** (needs the Elementor Pro zip uploaded) — mobile
-  drawer audience/account state, home page + featured carousel,
-  search/filter/sort widgets, expired-job state, similar roles, save
-  control frontend.
+  wp-config constants on staging, never the repo). This also makes the
+  home featured carousel, jobs archive, sector taxonomy/search select
+  and live-roles trust item come alive with real data.
+- **Continue Phase 4** (needs the Elementor Pro zip uploaded) — jobs
+  filter/sort widgets (type, work mode, salary, sort, applied chips,
+  mobile filter drawer), expired-job state, similar roles, save control
+  frontend; mobile drawer audience/account state (Phase 3 leftover).
+- **Content passes** — reconcile marketing copy against the live Wix
+  site (needs `www.poolhallrecruitment.co.uk` allowlisted), Better Job
+  Adverts page (price needs Ryan's confirmation), blog migration,
+  legal/compliance pages.
 - **Continue Phase 6** — dashboard modules, alerts, profile,
   recommendations, application history; CV + privacy export/deletion
   (with reauthentication, hard rule 17) once Mode A is decided.
@@ -175,7 +190,7 @@ Remaining:
 | Credential | Where it lives | Status |
 |---|---|---|
 | GitHub PAT | you paste it when pushing | active |
-| Hostinger API token | `HOSTINGER_API_TOKEN` env var | ✅ active, verified 11 June |
+| Hostinger API token | `HOSTINGER_API_TOKEN` env var | ✅ active, API deploy verified 12 June |
 | Staging wp-admin (`poolhall-admin`) | Ryan holds it; paste into chat when the session asks (needed to drive staging Site setup over HTTP) | active |
 | Giig API token + secret | wp-config constants on staging | waiting on you/Matt |
 | Google Places API key | wp-config constants on staging | not yet created |
