@@ -157,7 +157,7 @@ $heading = static fn( string $text, string $size, string $color, string $clamp )
 		'title_color'            => $color,
 		'typography_typography'  => 'custom',
 		'typography_font_family' => 'Source Serif 4',
-		'typography_font_weight' => '600',
+		'typography_font_weight' => '500',
 		'typography_font_size'   => array(
 			'unit' => 'custom',
 			'size' => $clamp,
@@ -472,7 +472,8 @@ $employers_data = array(
 		56
 	),
 
-	// Better Job Adverts callout (spec §8: never buried).
+	// Better Job Adverts callout (spec §8: never buried; directive §3.6:
+	// gold band with a navy action).
 	$section(
 		'#FFFFFF',
 		array(
@@ -484,18 +485,18 @@ $employers_data = array(
 					'flex_align_items'     => 'center',
 					'flex_justify_content' => 'space-between',
 					'flex_gap'             => $gap( 24 ),
-					'css_classes'          => 'ph-panel ph-panel--navy',
+					'css_classes'          => 'ph-panel ph-panel--gold',
 				),
 				array(
 					$column(
 						array(
-							$eyebrow( 'Hiring in-house?', true ),
-							$heading( 'Better Job Adverts', 'h2', '#FFFFFF', $h2_clamp ),
-							$lede( 'Fixed-fee job advertising across the major boards, with branded adverts, CV screening and an organised, interview-ready shortlist.', true ),
+							$eyebrow( 'Better Job Adverts' ),
+							$heading( 'Prefer to run the hiring yourself?', 'h2', '#1B3052', $h2_clamp ),
+							$lede( 'Fixed-fee job advertising across the major boards, with branded adverts, CV screening and an organised, interview-ready shortlist.' ),
 						),
 						10
 					),
-					$button( 'See how it works', $bja_url, 'primary' ),
+					$button( 'How it works', $bja_url, 'navy' ),
 				),
 				true
 			),
@@ -874,7 +875,183 @@ $join_data = array(
 	),
 );
 
+// ======================================= Better Job Adverts (directive §3.5) ----
+// Hard guardrail: never publish a price; "Pricing confirmed when you
+// enquire." is the only pricing line allowed.
+$poolhall_bja_props = array(
+	array( 'One simple fixed fee', 'One agreed fee for the whole campaign. No placement percentages and no surprises.' ),
+	array( 'Multi-board reach', 'Your role advertised across the major UK job boards, so the right people actually see it.' ),
+	array( 'Branded adverts', 'Professionally written adverts with your brand front and centre, not ours.' ),
+	array( 'CV screening', 'We read every application, so you only spend time on candidates worth meeting.' ),
+	array( 'Interview-ready shortlists', 'Organised, qualified candidates delivered ready to book in for interview.' ),
+	array( 'Results you can check', 'Clear reporting on views, applications and shortlist quality while the advert runs.' ),
+);
+$bja_prop_cards = array();
+foreach ( $poolhall_bja_props as [ $poolhall_prop_title, $poolhall_prop_body ] ) {
+	$bja_prop_cards[] = $card( $poolhall_prop_title, $poolhall_prop_body );
+}
+
+$poolhall_bja_steps = array(
+	array( '1', 'Tell us the role', 'Share the job, the must-haves and your timescales. We take it from there.' ),
+	array( '2', 'We write, brand and post', 'A professionally written, branded advert goes out across the major boards.' ),
+	array( '3', 'You interview from a shortlist', 'We screen every CV and hand you an organised, interview-ready shortlist.' ),
+);
+$bja_step_cards = array();
+foreach ( $poolhall_bja_steps as [ $poolhall_step_num, $poolhall_step_title, $poolhall_step_body ] ) {
+	$bja_step_cards[] = $container(
+		array(
+			'content_width'  => 'full',
+			'flex_direction' => 'column',
+			'flex_gap'       => $gap( 8 ),
+			'css_classes'    => 'ph-card',
+		),
+		array(
+			$widget( 'text-editor', array( 'editor' => '<div class="ph-stat__value">' . esc_html( $poolhall_step_num ) . '</div>' ) ),
+			$widget(
+				'heading',
+				array(
+					'title'        => $poolhall_step_title,
+					'header_size'  => 'h3',
+					'title_color'  => '#1B3052',
+					'_css_classes' => 'ph-h4',
+				)
+			),
+			$body( $poolhall_step_body ),
+		),
+		true
+	);
+}
+
+$bja_data = array(
+	// Image hero (§9 compact): office photo under a navy scrim.
+	$container(
+		$boxed(
+			array(
+				'flex_direction'                => 'column',
+				'flex_justify_content'          => 'center',
+				'min_height'                    => array(
+					'unit' => 'custom',
+					'size' => 'clamp(24rem, 50svh, 32rem)',
+				),
+				'background_background'         => 'classic',
+				'background_color'              => '#0F1D33',
+				'background_image'              => array(
+					'id'  => $poolhall_office_img,
+					'url' => (string) wp_get_attachment_image_url( $poolhall_office_img, 'full' ),
+				),
+				'background_size'               => 'cover',
+				'background_position'           => 'center center',
+				'background_overlay_background' => 'classic',
+				'background_overlay_color'      => '#0F1D33',
+				'background_overlay_opacity'    => array(
+					'unit' => 'px',
+					'size' => 0.82,
+				),
+				'padding'                       => $section_padding( 96 ),
+			)
+		),
+		array(
+			$container(
+				array(
+					'content_width'  => 'full',
+					'flex_direction' => 'column',
+					'flex_gap'       => $gap( 14 ),
+					'width'          => array(
+						'unit' => 'custom',
+						'size' => 'min(100%, 43rem)',
+					),
+				),
+				array(
+					$eyebrow( 'For employers · Better Job Adverts', true ),
+					$heading( 'Better job adverts, better applicants', 'h1', '#FFFFFF', $h1_clamp ),
+					$lede( 'Keep the hiring in-house and let us make your advert work harder. One fixed fee, your brand front and centre, and a shortlist that&rsquo;s ready to interview.', true ),
+					$container(
+						array(
+							'content_width'  => 'full',
+							'flex_direction' => 'row',
+							'flex_wrap'      => 'wrap',
+							'flex_gap'       => $gap( 12 ),
+						),
+						array(
+							$button( 'Get started', $employers_url . '#enquiry', 'primary' ),
+							$button( '0121 516 3000', 'tel:01215163000', 'ghost' ),
+						),
+						true
+					),
+				),
+				true
+			),
+		)
+	),
+	// Six proposition cards (3 x 2).
+	$section(
+		'#FFFFFF',
+		array(
+			$section_head( 'What you get', 'Everything a good advert needs to perform' ),
+			$container(
+				array(
+					'content_width' => 'full',
+					'css_classes'   => 'ph-grid-3',
+				),
+				$bja_prop_cards,
+				true
+			),
+			// Pricing pill (guardrail: never a figure).
+			$widget(
+				'text-editor',
+				array(
+					'editor' => '<p style="text-align:center"><span class="ph-chip">Pricing confirmed when you enquire. No obligation.</span></p>',
+				)
+			),
+		)
+	),
+	// Three steps.
+	$section(
+		'#F7F8FA',
+		array(
+			$section_head( 'How it works', 'Live in days, not weeks' ),
+			$container(
+				array(
+					'content_width' => 'full',
+					'css_classes'   => 'ph-grid-3',
+				),
+				$bja_step_cards,
+				true
+			),
+		)
+	),
+	// CTA band.
+	$section(
+		'#14233F',
+		array(
+			$container(
+				array(
+					'content_width'        => 'full',
+					'flex_direction'       => 'row',
+					'flex_wrap'            => 'wrap',
+					'flex_align_items'     => 'center',
+					'flex_justify_content' => 'space-between',
+					'flex_gap'             => $gap( 24 ),
+				),
+				array(
+					$column(
+						array(
+							$heading( 'Got a role to advertise?', 'h2', '#FFFFFF', $h2_clamp ),
+							$lede( 'Tell us about it and we&rsquo;ll come back with everything you need to decide.', true ),
+						),
+						10
+					),
+					$button( 'Send an enquiry', $employers_url . '#enquiry', 'primary' ),
+				),
+				true
+			),
+		),
+		56
+	),
+);
+
 // ----------------------------------------------------------- write all ----
+$write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
 $write_page( $poolhall_pages['sectors'], $sectors_data );
 $write_page( $poolhall_pages['services'], $services_data );
@@ -885,13 +1062,14 @@ $write_page( $poolhall_pages['join-our-team'], $join_data );
 \Elementor\Plugin::instance()->files_manager->clear_cache();
 
 $poolhall_ids = (array) get_option( 'poolhall_template_ids', array() );
-foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team' ) as $poolhall_slug ) {
+foreach ( array( 'better-job-adverts', 'employers', 'sectors', 'services', 'contact', 'join-our-team' ) as $poolhall_slug ) {
 	$poolhall_ids[ str_replace( '-', '_', $poolhall_slug ) . '_page' ] = $poolhall_pages[ $poolhall_slug ]->ID;
 }
 update_option( 'poolhall_template_ids', $poolhall_ids, false );
 
 printf(
-	"Pages: employers #%d, sectors #%d, services #%d, contact #%d, join-our-team #%d.\n",
+	"Pages: BJA #%d, employers #%d, sectors #%d, services #%d, contact #%d, join-our-team #%d.\n",
+	$poolhall_pages['better-job-adverts']->ID,
 	$poolhall_pages['employers']->ID,
 	$poolhall_pages['sectors']->ID,
 	$poolhall_pages['services']->ID,

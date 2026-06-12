@@ -304,7 +304,110 @@ $header_data = array(
 	),
 );
 
-$year        = gmdate( 'Y' );
+$year = gmdate( 'Y' );
+
+// Footer images: brand logo + TEAM/BNI accreditation marks (bundled in the
+// plugin; keyed sideload identical to the team/home scripts).
+$poolhall_import_image = static function ( string $filename, string $alt ): int {
+	$existing = get_posts(
+		array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_key'       => 'poolhall_content_image', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- single keyed lookup at setup time.
+			'meta_value'     => $filename, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		)
+	);
+	if ( array() !== $existing ) {
+		return (int) $existing[0];
+	}
+	$source = POOLHALL_INTEGRATION_DIR . 'assets/img/content/' . $filename;
+	if ( ! file_exists( $source ) ) {
+		return 0;
+	}
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	$tmp = wp_tempnam( $filename );
+	copy( $source, $tmp );
+	$attachment_id = media_handle_sideload(
+		array(
+			'name'     => $filename,
+			'tmp_name' => $tmp,
+		),
+		0,
+		null,
+		array( 'post_excerpt' => '' )
+	);
+	if ( is_wp_error( $attachment_id ) ) {
+		@unlink( $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- best-effort temp cleanup.
+		return 0;
+	}
+	update_post_meta( $attachment_id, 'poolhall_content_image', $filename );
+	update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt );
+	return (int) $attachment_id;
+};
+
+$logo_id  = $poolhall_import_image( 'poolhall-logo.png', 'Poolhall Recruitment' );
+$team_id  = $poolhall_import_image( 'accred-team.png', 'TEAM member' );
+$bni_id   = $poolhall_import_image( 'accred-bni.png', 'BNI member' );
+$logo_url = $logo_id ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+$team_url = $team_id ? (string) wp_get_attachment_image_url( $team_id, 'full' ) : '';
+$bni_url  = $bni_id ? (string) wp_get_attachment_image_url( $bni_id, 'full' ) : '';
+
+// Footer links: real, published pages only (hard rule 7 — the prototype's
+// '#' socials/About/Career-advice links are omitted until real URLs exist;
+// Privacy policy appears as soon as the page is published and Site setup
+// re-runs).
+$poolhall_footer_link = static function ( string $slug, string $label ): string {
+	$page = get_page_by_path( $slug );
+	if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ) {
+		return '';
+	}
+	return '<li><a href="' . esc_url( (string) get_permalink( $page ) ) . '">' . esc_html( $label ) . '</a></li>';
+};
+
+$footer_columns = '<div class="ph-footer-grid">'
+	. '<div class="ph-footer-col ph-footer-col--brand">'
+	. ( '' !== $logo_url ? '<p class="ph-footer-brand"><img src="' . esc_url( $logo_url ) . '" alt="" width="52" height="52" /><span>Poolhall</span></p>' : '<p class="ph-footer-brand"><span>Poolhall</span></p>' )
+	. '<p class="ph-footer-about">Independent recruitment across Construction, Manufacturing and Marketing. Quality and ethical solutions since 2021.</p>'
+	. '</div>'
+	. '<div class="ph-footer-col"><p class="ph-footer-head">Candidates</p><ul>'
+	. $poolhall_footer_link( 'jobs', 'Find a job' )
+	. $poolhall_footer_link( 'sectors', 'Browse sectors' )
+	. $poolhall_footer_link( 'candidate/register', 'Register your CV' )
+	. $poolhall_footer_link( 'candidate/login', 'Sign in' )
+	. '</ul></div>'
+	. '<div class="ph-footer-col"><p class="ph-footer-head">Employers</p><ul>'
+	. $poolhall_footer_link( 'employers', 'Hire talent' )
+	. $poolhall_footer_link( 'services', 'Our services' )
+	. $poolhall_footer_link( 'better-job-adverts', 'Better Job Adverts' )
+	. $poolhall_footer_link( 'join-our-team', 'Partner with us' )
+	. '</ul></div>'
+	. '<div class="ph-footer-col"><p class="ph-footer-head">Company</p><ul>'
+	. $poolhall_footer_link( 'team', 'Meet the team' )
+	. $poolhall_footer_link( 'join-our-team', 'Join our team' )
+	. $poolhall_footer_link( 'contact', 'Contact' )
+	. $poolhall_footer_link( 'privacy-policy', 'Privacy policy' )
+	. '</ul></div>'
+	. '</div>';
+
+$footer_accred = '<div class="ph-footer-accred">'
+	. '<span class="ph-footer-accred__label">Proud members of</span>'
+	. '<span class="ph-footer-accred__logos">'
+	. ( '' !== $team_url ? '<span class="ph-footer-chip"><img src="' . esc_url( $team_url ) . '" alt="TEAM member" height="26" /></span>' : '' )
+	. ( '' !== $bni_url ? '<span class="ph-footer-chip"><img src="' . esc_url( $bni_url ) . '" alt="BNI member" height="26" /></span>' : '' )
+	. '</span></div>';
+
+$footer_bottom = '<div class="ph-footer-bottom">'
+	. '<span>&copy; ' . esc_html( $year ) . ' Poolhall Recruitment Limited &middot; Company No. 13319338 &middot; VAT 383617377</span>'
+	. '<span>Grosvenor House, 11 St Pauls Square, Birmingham, B3 1RB</span>'
+	. '</div>';
+
+// Footer (directive §2.1): navy-900, 4-column grid, accreditation strip,
+// company/VAT/address bottom bar. Social icon buttons are deliberately
+// absent until real profile URLs exist (hard rule 7).
 $footer_data = array(
 	$container(
 		array(
@@ -316,62 +419,26 @@ $footer_data = array(
 			'flex_direction'        => 'column',
 			'flex_gap'              => array(
 				'unit'   => 'px',
-				'size'   => 32,
-				'column' => '32',
-				'row'    => '32',
+				'size'   => 0,
+				'column' => '0',
+				'row'    => '0',
 			),
 			'background_background' => 'classic',
-			'background_color'      => '#0B1626',
+			'background_color'      => '#0F1D33',
 			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '64',
 				'right'    => '24',
-				'bottom'   => '40',
+				'bottom'   => '28',
 				'left'     => '24',
 				'isLinked' => false,
 			),
+			'css_classes'           => 'ph-footer',
 		),
 		array(
-			$widget(
-				'heading',
-				array(
-					'title'       => 'Poolhall Recruitment',
-					'header_size' => 'h2',
-					'title_color' => '#FFFFFF',
-					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Source Serif 4',
-					'typography_font_weight' => '600',
-					'typography_font_size'   => array(
-						'unit' => 'rem',
-						'size' => 1.5,
-					),
-				)
-			),
-			$widget(
-				'text-editor',
-				array(
-					'editor'     => '<p>Independent West Midlands recruitment across Construction, Manufacturing and Digital/Marketing.</p>',
-					'text_color' => '#A7B4C8',
-				)
-			),
-			$widget(
-				'nav-menu',
-				array(
-					'menu'                  => (string) $footer_menu,
-					'layout'                => 'horizontal',
-					'pointer'               => 'none',
-					'color_menu_item'       => '#EEF2F8',
-					'color_menu_item_hover' => '#F4904A',
-					'dropdown'              => 'none',
-				)
-			),
-			$widget(
-				'text-editor',
-				array(
-					'editor'     => '<p>© ' . $year . ' Poolhall Recruitment Ltd. All rights reserved.</p>',
-					'text_color' => '#6B7686',
-				)
-			),
+			$widget( 'text-editor', array( 'editor' => $footer_columns ) ),
+			$widget( 'text-editor', array( 'editor' => $footer_accred ) ),
+			$widget( 'text-editor', array( 'editor' => $footer_bottom ) ),
 		)
 	),
 );

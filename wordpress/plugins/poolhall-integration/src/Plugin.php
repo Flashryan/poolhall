@@ -109,6 +109,7 @@ final class Plugin {
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
 		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
 		( new \Poolhall\Integration\Jobs\SearchForm() )->register();
+		( new \Poolhall\Integration\Jobs\JobCardBits() )->register();
 
 		$enquiries = new \Poolhall\Integration\Enquiries\EnquiryService( new WpMailer(), new Logger() );
 		( new \Poolhall\Integration\Enquiries\EnquiryEndpoints( $enquiries ) )->register();
@@ -120,6 +121,7 @@ final class Plugin {
 
 		$options = new Options();
 		( new SchemaOutput( $options ) )->register();
+		( new \Poolhall\Integration\Reviews\ReviewsCarousel( $this->reviews_service() ) )->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();

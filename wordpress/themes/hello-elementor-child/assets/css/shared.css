@@ -19,6 +19,8 @@
   --ph-color-blue-700: #155389;
   --ph-color-blue-600: #1F6FB2;
   --ph-color-gold-500: #C6A052;
+  --ph-color-gold-300: #DCC58A;
+  --ph-color-gold-50: #FAF4E6;
   --ph-color-paper: #F7F8FA;
   --ph-color-mist: #EEF1F5;
   --ph-color-white: #FFFFFF;
@@ -84,8 +86,8 @@
    otherwise the parent theme reset (h3 = 1.75rem) wins on card titles. */
 .ph-h1, .ph-h1 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h1-size); line-height: 1.12; letter-spacing: -0.005em; }
 .ph-h2, .ph-h2 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h2-size); line-height: 1.15; letter-spacing: -0.005em; }
-.ph-h3, .ph-h3 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; letter-spacing: -0.005em; }
-.ph-h4, .ph-h4 .elementor-heading-title { font-family: var(--ph-font-body); font-weight: 700; font-size: var(--ph-type-h4-size); line-height: 1.3; }
+.ph-h3, .ph-h3 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 600; font-size: var(--ph-type-h3-size); line-height: 1.2; letter-spacing: -0.005em; }
+.ph-h4, .ph-h4 .elementor-heading-title { font-family: var(--ph-font-body); font-weight: 600; font-size: var(--ph-type-h4-size); line-height: 1.3; }
 .ph-body-lg { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-lg-size); line-height: 1.65; }
 .ph-body { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-size); line-height: 1.6; }
 .ph-small { font-family: var(--ph-font-body); font-weight: 500; font-size: var(--ph-type-small-size); line-height: 1.45; }
@@ -177,8 +179,23 @@
 .ph-card--interactive { transition: transform 180ms ease, box-shadow 180ms ease; }
 .ph-card--interactive:hover, .ph-card--interactive:focus-within { transform: translateY(-2px); box-shadow: var(--ph-shadow-raised); }
 .ph-card--job { padding: 22px 24px; }
-.ph-card--job.is-featured { border-block-start: 3px solid var(--ph-color-orange-500); }
-.ph-card--review { font-size: var(--ph-type-body-lg-size); }
+.ph-card--job.is-featured,
+.ph-card--job:has(.ph-badge--featured) { border-block-start: 4px solid var(--ph-color-orange-500); }
+
+/* Job card fragments (directive 4.1, rendered by [poolhall_job_card_*]). */
+.ph-job-flair { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ph-space-3); }
+.ph-job-flair .ph-eyebrow { color: var(--ph-color-orange-700); }
+.ph-job-meta { display: flex; flex-wrap: wrap; gap: var(--ph-space-2) var(--ph-space-4); }
+.ph-job-meta__item {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--ph-type-small-size); color: var(--ph-color-muted);
+}
+.ph-job-meta__item svg { flex-shrink: 0; color: #9AA4B2; }
+.ph-job-summary {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden; color: var(--ph-color-muted); margin-block-start: var(--ph-space-2);
+}
+
 .ph-card--team { padding: 0; overflow: hidden; }
 /* Team page (§18): 4:5 portraits bleed to the card edge; never crop heads
    (subject-aware position set with the image). Stat figures reused on Home. */
@@ -190,13 +207,17 @@
 .ph-card--portal { border-radius: var(--ph-radius-lg); }
 .ph-panel { background-color: var(--ph-color-mist); border-radius: var(--ph-radius-lg); padding: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); }
 .ph-panel--navy { background-color: var(--ph-color-navy-800); color: var(--ph-color-white); }
+.ph-panel--gold { background-color: var(--ph-color-gold-50); border: 1px solid var(--ph-color-gold-300); }
 .ph-badge {
   display: inline-flex; align-items: center; gap: var(--ph-space-1);
   padding: 0.125rem 0.625rem; border-radius: var(--ph-radius-pill);
   font-family: var(--ph-font-body); font-weight: 700; font-size: var(--ph-type-eyebrow-size);
   letter-spacing: 0.04em; background-color: var(--ph-color-mist); color: var(--ph-color-navy-700);
 }
-.ph-badge--featured { background-color: var(--ph-color-orange-50); color: var(--ph-color-orange-700); }
+.ph-badge--featured {
+  display: inline-flex; align-items: center; gap: 4px;
+  background-color: var(--ph-color-gold-50); border: 1px solid var(--ph-color-gold-300); color: #B08A3C;
+}
 .ph-badge--success { background-color: #E4F3EC; color: var(--ph-color-success); }
 .ph-badge--warning { background-color: #F8EFDC; color: var(--ph-color-warning); }
 .ph-badge--error { background-color: #FAE7E5; color: var(--ph-color-error); }
@@ -278,7 +299,7 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-search-trust__item svg { flex-shrink: 0; color: var(--ph-color-gold-500); }
 
 /* Job card internals (§12/§14): salary uses display type, never form/nav. */
-.ph-job-salary { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-700); }
+.ph-job-salary { font-family: var(--ph-font-display); font-weight: 600; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-700); }
 
 /* Header system (§8): contact strip and audience switch. */
 .ph-contact-strip { font-size: 0.8125rem; }
@@ -329,6 +350,63 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 }
 .ph-account-link:hover { color: var(--ph-color-orange-700); }
 .ph-account-link svg { flex-shrink: 0; }
+
+/* Footer (§8, directive 2.1): navy-900, 4-column grid, accreditation
+   strip, company/VAT/address bottom bar. Values mirror prototype kit.css
+   .site-footer. */
+.ph-footer { color: rgba(255, 255, 255, 0.72); }
+.ph-footer-grid { display: grid; grid-template-columns: 1fr; gap: 36px; }
+@media (min-width: 40em) { .ph-footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 56.25em) { .ph-footer-grid { grid-template-columns: 1.6fr 1fr 1fr 1fr; } }
+.ph-footer-brand { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.ph-footer-brand img { inline-size: 52px; block-size: 52px; }
+.ph-footer-brand span { font-family: var(--ph-font-display); font-weight: 600; font-size: 20px; color: var(--ph-color-white); }
+.ph-footer-about { font-size: 14px; line-height: 1.6; max-inline-size: 34ch; margin: 0; }
+.ph-footer-head {
+  font-family: var(--ph-font-body); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ph-color-white); margin: 0 0 16px;
+}
+.ph-footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; }
+.ph-footer-col a { font-size: 14px; color: rgba(255, 255, 255, 0.72); text-decoration: none; }
+.ph-footer-col a:hover { color: var(--ph-color-white); }
+.ph-footer-accred {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  border-block-start: 1px solid rgba(255, 255, 255, 0.12); margin-block-start: 44px; padding-block-start: 26px;
+}
+.ph-footer-accred__label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.ph-footer-accred__logos { display: flex; gap: 12px; flex-wrap: wrap; }
+.ph-footer-chip {
+  display: flex; align-items: center; block-size: 46px; padding: 9px 14px;
+  background-color: var(--ph-color-white); border-radius: 6px;
+}
+.ph-footer-chip img { block-size: 26px; inline-size: auto; }
+.ph-footer-bottom {
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 12.5px;
+  border-block-start: 1px solid rgba(255, 255, 255, 0.12); margin-block-start: 28px; padding-block-start: 22px;
+}
+
+/* Reviews section + scroll-snap carousel (directive 3.1.6). Native
+   scroll on every input; arrow buttons arrive with the JS enhancement
+   pass. The track is keyboard-scrollable via tabindex on the wrapper. */
+.ph-reviews { padding-block: 88px; display: flex; flex-direction: column; gap: 40px; }
+.ph-reviews__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.ph-reviews__head .ph-stack-xs { max-inline-size: 43rem; }
+.ph-carousel {
+  display: flex; gap: 20px; overflow-x: auto; padding-block-end: 8px;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+.ph-carousel:focus-visible { outline: none; box-shadow: var(--ph-focus-ring); border-radius: var(--ph-radius-md); }
+.ph-carousel > * { flex: 0 0 min(85%, 23.75rem); scroll-snap-align: start; }
+.ph-card--review { display: flex; flex-direction: column; gap: 14px; min-block-size: 200px; padding: 26px; }
+.ph-card--review__stars { display: inline-flex; gap: 2px; color: var(--ph-color-gold-500); }
+.ph-card--review__quote { margin: 0; font-size: 0.96875rem; line-height: 1.6; color: var(--ph-color-ink); }
+.ph-card--review__footer { display: flex; align-items: center; gap: 12px; margin-block-start: auto; font-size: var(--ph-type-small-size); }
+.ph-avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  inline-size: 40px; block-size: 40px; border-radius: 50%;
+  background-color: var(--ph-color-navy-700); color: var(--ph-color-white);
+  font-family: var(--ph-font-body); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em;
+}
 
 /* Utilities (§6). */
 .ph-no-overflow { overflow: hidden; min-inline-size: 0; }

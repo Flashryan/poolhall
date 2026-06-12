@@ -16,9 +16,10 @@
  * autoplay), six static sector cards, the three-step candidate process,
  * the credibility stat strip and the employer CTA split.
  *
- * The prototype's Google Reviews carousel is deliberately absent: real
- * reviews arrive with the Places integration (Phase 8) and sample quotes
- * are not real content. The reviews section lands when that data exists.
+ * The Google Reviews section renders through `[poolhall_reviews]`, which
+ * shows the cached Places snapshot (Phase 8) or, on staging only, the
+ * seeded demo quotes — and renders nothing at all otherwise, so the
+ * section can never appear empty or leak placeholders to production.
  *
  * Requires Elementor Pro (Loop Carousel), the theme shell (pages, menus)
  * and the jobs templates (the `PH Loop - Job Featured Card` loop item).
@@ -184,7 +185,7 @@ $heading = static fn( string $text, string $size, string $color, string $clamp )
 		'title_color'            => $color,
 		'typography_typography'  => 'custom',
 		'typography_font_family' => 'Source Serif 4',
-		'typography_font_weight' => '600',
+		'typography_font_weight' => '500',
 		'typography_font_size'   => array(
 			'unit' => 'custom',
 			'size' => $clamp,
@@ -514,7 +515,29 @@ $stats = $container(
 	)
 );
 
-// 6. Employer CTA split (§25 step 9; reviews carousel lands with Phase 8).
+// 6. Google reviews (§25 step 8): self-contained server render — the
+// shortcode emits head + carousel only when review data exists.
+$reviews = $container(
+	$boxed(
+		array(
+			'background_background' => 'classic',
+			'background_color'      => '#FFFFFF',
+			'padding'               => array(
+				'unit'     => 'px',
+				'top'      => '0',
+				'right'    => '24',
+				'bottom'   => '0',
+				'left'     => '24',
+				'isLinked' => false,
+			),
+		)
+	),
+	array(
+		$widget( 'shortcode', array( 'shortcode' => '[poolhall_reviews]' ) ),
+	)
+);
+
+// 7. Employer CTA split (§25 step 9).
 $employer_cta = $container(
 	$boxed(
 		array(
@@ -627,7 +650,7 @@ $employer_cta = $container(
 	)
 );
 
-$home_data = array( $hero, $featured, $sectors, $steps, $stats, $employer_cta );
+$home_data = array( $hero, $featured, $sectors, $steps, $stats, $reviews, $employer_cta );
 
 // Backup before modifying Elementor data (hard rule 11).
 $prior = get_post_meta( $poolhall_home_page->ID, '_elementor_data', true );

@@ -89,7 +89,10 @@ $ensure_template = static function ( string $title, string $type, array $data, ?
 };
 
 // ------------------------------------------------- loop item templates ----
-// §12 `PH Loop - Job Featured Card`: vertical card for the Home carousel.
+// §12 `PH Loop - Job Featured Card`: vertical card for the Home carousel
+// (anatomy per directive §4.1: flair row, serif 600 title, icon meta row +
+// clamped summary, divider, salary + View job footer; the child theme
+// paints the featured top border off the gold pill's presence).
 $featured_card = array(
 	$container(
 		array(
@@ -104,16 +107,7 @@ $featured_card = array(
 			'css_classes'    => 'ph-card ph-card--job ph-card--interactive',
 		),
 		array(
-			$widget(
-				'heading',
-				array(
-					'title'       => '',
-					'header_size' => 'p',
-					'title_color' => '#B9510E',
-					'_css_classes' => 'ph-eyebrow',
-					'__dynamic__' => array( 'title' => $tag( 'post-terms', array( 'taxonomy' => 'poolhall_sector' ) ) ),
-				)
-			),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_card_flair]' ) ),
 			$widget(
 				'heading',
 				array(
@@ -127,25 +121,44 @@ $featured_card = array(
 					),
 				)
 			),
-			$widget(
-				'heading',
-				array(
-					'title'       => '',
-					'header_size' => 'p',
-					'title_color' => '#586375',
-					'_css_classes' => 'ph-small',
-					'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'location_display' ) ) ),
-				)
-			),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_card_meta]' ) ),
 			$widget( 'divider', array( 'color' => '#E3E7ED' ) ),
-			$widget(
-				'heading',
+			$container(
 				array(
-					'title'       => '',
-					'header_size' => 'p',
-					'_css_classes' => 'ph-job-salary',
-					'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
-				)
+					'content_width'        => 'full',
+					'flex_direction'       => 'row',
+					'flex_justify_content' => 'space-between',
+					'flex_align_items'     => 'center',
+					'flex_wrap'            => 'wrap',
+					'flex_gap'             => array(
+						'unit'   => 'px',
+						'size'   => 8,
+						'column' => '8',
+						'row'    => '8',
+					),
+				),
+				array(
+					$widget(
+						'heading',
+						array(
+							'title'       => '',
+							'header_size' => 'p',
+							'_css_classes' => 'ph-job-salary',
+							'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
+						)
+					),
+					$widget(
+						'heading',
+						array(
+							'title'       => 'View job',
+							'header_size' => 'p',
+							'title_color' => '#B9510E',
+							'_css_classes' => 'ph-link ph-link--arrow',
+							'__dynamic__' => array( 'link' => $tag( 'post-url' ) ),
+						)
+					),
+				),
+				true
 			),
 		)
 	),
@@ -183,16 +196,7 @@ $result_row = array(
 					),
 				),
 				array(
-					$widget(
-						'heading',
-						array(
-							'title'       => '',
-							'header_size' => 'p',
-							'title_color' => '#B9510E',
-							'_css_classes' => 'ph-eyebrow',
-							'__dynamic__' => array( 'title' => $tag( 'post-terms', array( 'taxonomy' => 'poolhall_sector' ) ) ),
-						)
-					),
+					$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_card_flair]' ) ),
 					$widget(
 						'heading',
 						array(
@@ -206,16 +210,7 @@ $result_row = array(
 							),
 						)
 					),
-					$widget(
-						'heading',
-						array(
-							'title'       => '',
-							'header_size' => 'p',
-							'title_color' => '#586375',
-							'_css_classes' => 'ph-small',
-							'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'location_display' ) ) ),
-						)
-					),
+					$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_card_meta]' ) ),
 				),
 				true
 			),

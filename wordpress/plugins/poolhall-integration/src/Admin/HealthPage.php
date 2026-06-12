@@ -26,6 +26,7 @@ final class HealthPage {
 	private const CAPABILITY   = 'manage_options';
 	private const SYNC_ACTION  = 'poolhall_sync_now';
 	private const SETUP_ACTION = 'poolhall_run_setup';
+	private const DEMO_ACTION  = 'poolhall_seed_demo';
 
 	public function __construct(
 		private readonly SyncService $sync,
@@ -36,6 +37,7 @@ final class HealthPage {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_post_' . self::SYNC_ACTION, array( $this, 'handle_sync_now' ) );
 		add_action( 'admin_post_' . self::SETUP_ACTION, array( $this, 'handle_run_setup' ) );
+		add_action( 'admin_post_' . self::DEMO_ACTION, array( $this, 'handle_seed_demo' ) );
 	}
 
 	public function add_menu(): void {
@@ -227,6 +229,40 @@ final class HealthPage {
 
 		$setup_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::SETUP_ACTION ), self::SETUP_ACTION );
 		echo '<p><a href="' . esc_url( $setup_url ) . '" class="button">' . esc_html__( 'Run site setup', 'poolhall-integration' ) . '</a></p>';
+
+		// Staging-only demo content: the action and the script both refuse
+		// to run on the production domain (directive guardrail 5).
+		if ( ! $this->is_production_domain() ) {
+			echo '<h2>' . esc_html__( 'Staging demo content', 'poolhall-integration' ) . '</h2>';
+			echo '<p style="max-width:760px">' . esc_html__( 'Seeds sample jobs (source=demo) and demo review quotes from the approved prototype so the featured carousel, jobs archive and reviews section can be previewed before the Giig and Places integrations go live. Staging only.', 'poolhall-integration' ) . '</p>';
+			$demo_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::DEMO_ACTION ), self::DEMO_ACTION );
+			echo '<p><a href="' . esc_url( $demo_url ) . '" class="button">' . esc_html__( 'Seed demo content', 'poolhall-integration' ) . '</a></p>';
+		}
+	}
+
+	public function handle_seed_demo(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'poolhall-integration' ), '', 403 );
+		}
+		check_admin_referer( self::DEMO_ACTION );
+		if ( $this->is_production_domain() ) {
+			wp_die( esc_html__( 'Demo content never runs on the production domain.', 'poolhall-integration' ), '', 403 );
+		}
+
+		$summary = array(
+			array(
+				'label'  => __( 'Staging demo content', 'poolhall-integration' ),
+				'state'  => 'ok',
+				'output' => trim( $this->run_script( 'seed-demo-content.php' ) ),
+			),
+		);
+		set_transient( $this->setup_transient_key(), $summary, 2 * MINUTE_IN_SECONDS );
+		wp_safe_redirect( add_query_arg( 'setup', '1', admin_url( 'admin.php?page=poolhall-jobs' ) ) );
+		exit;
+	}
+
+	private function is_production_domain(): bool {
+		return str_contains( (string) home_url(), 'poolhallrecruitment.co.uk' );
 	}
 
 	/**
