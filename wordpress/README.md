@@ -139,11 +139,27 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   option (default admin email), redacted log events; a failed send shows
   the visitor an honest phone/email fallback, never a silent drop). All
   in the Site-setup runner.
-  Remaining: page copy reconciliation against the live Wix site (host not
-  on the network allowlist this session), Better Job Adverts page content
-  (price needs client confirmation), blog migration, filter/sort widgets
-  (type, work mode, salary, sort, chips), expired-job state, similar
-  roles, save control frontend.
+  **Directive pass (12 June, from the design audit):** footer rebuilt to
+  the prototype (4 columns, TEAM + BNI accreditation chips extracted from
+  the prototype assets, company no./VAT/address bar; '#' social links
+  omitted until real URLs exist); serif weights corrected (display 500,
+  card titles 600); Better Job Adverts page built (six proposition
+  cards, three steps, "Pricing confirmed when you enquire" — never a
+  figure); employers BJA callout is the gold band; job cards carry the
+  §4.1 anatomy ([poolhall_job_card_flair]/[poolhall_job_card_meta]:
+  gold Featured pill + orange top border, icon meta row, clamped real
+  summary, salary + View job footer); [poolhall_reviews] renders the
+  Places snapshot as a scroll-snap carousel with a staging-only demo
+  fallback; gated Health-page action seeds prototype sample jobs/quotes
+  (source=demo, refuses on the production domain). FeaturedQuery now
+  resolves IDs deterministically (featured first, then newest) with a
+  re-entrancy guard.
+  Remaining: jobs archive filter/sort UX (sidebar, chips, pagination
+  styling, empty state, mobile filter drawer — directive §3.2), single
+  job enrichment + expired state + similar roles + save control
+  (§3.3), apply page (blocked: application Mode A/B undecided, hard
+  rules 5/15), carousel arrow buttons + drawer JS, portal auth-card
+  styling pass (§3.9), Wix copy reconciliation, blog migration.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 auth complete:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
   lockout (admin-post stays open for the frontend form handlers),
