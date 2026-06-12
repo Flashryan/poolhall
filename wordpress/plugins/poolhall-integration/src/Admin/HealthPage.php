@@ -281,6 +281,14 @@ final class HealthPage {
 				'runnable' => $pro,
 				'reason'   => __( 'Elementor Pro is not active.', 'poolhall-integration' ),
 			),
+			array(
+				'key'      => 'create-marketing-pages.php',
+				'label'    => __( 'Marketing pages (employers, sectors, services, contact, join our team)', 'poolhall-integration' ),
+				// Needs Elementor plus the theme-shell pages, which the shell
+				// step creates earlier in this same run when Pro is active.
+				'runnable' => $elementor && ( $pro || get_page_by_path( 'employers' ) instanceof \WP_Post ),
+				'reason'   => __( 'Elementor (or the theme shell pages) are missing.', 'poolhall-integration' ),
+			),
 		);
 	}
 

@@ -124,9 +124,26 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   server-side (normalized by the unit-tested `SearchRequest`), marks
   filtered results `noindex,follow`, and the jobs archive carries the
   wide variant of the same search panel above the Loop Grid.
-  Remaining: employers/sectors/services/contact/join-our-team page
-  content, filter/sort widgets (type, work mode, salary, sort, chips),
-  expired-job state, similar roles, save control frontend.
+  **Marketing pages (spec 01 §7–§10):** `scripts/dev/create-marketing-pages.php`
+  builds Employers (services cards, ethics proof split, sectors strip,
+  Better Job Adverts callout, hiring enquiry), Sectors (three core
+  capability splits with discipline chips + candidate/employer CTAs),
+  Services (three service cards + prominent Better Job Adverts band),
+  Contact (details + general form) and Join Our Team (both propositions,
+  with the unconfirmed salary/commission/ownership figures deliberately
+  absent — migration doc §4). The hiring/contact forms are the
+  server-rendered `[poolhall_enquiry_form]` (`src/Enquiries/` —
+  unit-tested `EnquiryRequest` validation, honeypot + nonce +
+  `poolhall_human_check` Turnstile seam, required privacy consent,
+  network rate limiting, notification to the `poolhall_enquiry_inbox`
+  option (default admin email), redacted log events; a failed send shows
+  the visitor an honest phone/email fallback, never a silent drop). All
+  in the Site-setup runner.
+  Remaining: page copy reconciliation against the live Wix site (host not
+  on the network allowlist this session), Better Job Adverts page content
+  (price needs client confirmation), blog migration, filter/sort widgets
+  (type, work mode, salary, sort, chips), expired-job state, similar
+  roles, save control frontend.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 auth complete:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
   lockout (admin-post stays open for the frontend form handlers),

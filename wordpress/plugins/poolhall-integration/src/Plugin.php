@@ -109,6 +109,10 @@ final class Plugin {
 		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
 		( new \Poolhall\Integration\Jobs\SearchForm() )->register();
 
+		$enquiries = new \Poolhall\Integration\Enquiries\EnquiryService( new WpMailer(), new Logger() );
+		( new \Poolhall\Integration\Enquiries\EnquiryEndpoints( $enquiries ) )->register();
+		( new \Poolhall\Integration\Enquiries\EnquiryForm() )->register();
+
 		$scheduler = new Scheduler();
 		$scheduler->register();
 		add_action( Scheduler::HOOK, array( $this, 'run_scheduled_sync' ) );
