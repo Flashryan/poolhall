@@ -335,13 +335,23 @@ $archive_data = array(
 		array(
 			$container(
 				array(
-					'content_width' => 'boxed',
-					'boxed_width'   => array(
+					'content_width'  => 'boxed',
+					'boxed_width'    => array(
 						'unit' => 'px',
 						'size' => 1152,
 					),
+					'flex_direction' => 'column',
+					'flex_gap'       => array(
+						'unit'   => 'px',
+						'size'   => 32,
+						'column' => '32',
+						'row'    => '32',
+					),
 				),
 				array(
+					// §11 archive search: same server-rendered form as the
+					// home hero, full container width, values retained.
+					$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_search variant="wide"]' ) ),
 					$widget(
 						'loop-grid',
 						array(

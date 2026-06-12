@@ -106,6 +106,8 @@ final class Plugin {
 		$this->wire_accounts();
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
+		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
+		( new \Poolhall\Integration\Jobs\SearchForm() )->register();
 
 		$scheduler = new Scheduler();
 		$scheduler->register();

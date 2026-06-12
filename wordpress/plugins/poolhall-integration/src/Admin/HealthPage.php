@@ -273,6 +273,14 @@ final class HealthPage {
 				'runnable' => $elementor && ( $pro || get_page_by_path( 'team' ) instanceof \WP_Post ),
 				'reason'   => __( 'Elementor (or the theme shell /team/ page) is missing.', 'poolhall-integration' ),
 			),
+			array(
+				'key'      => 'create-home-page.php',
+				// Needs the featured-card loop item the jobs-templates step
+				// records earlier in this same run.
+				'label'    => __( 'Home page (hero, search, featured carousel)', 'poolhall-integration' ),
+				'runnable' => $pro,
+				'reason'   => __( 'Elementor Pro is not active.', 'poolhall-integration' ),
+			),
 		);
 	}
 

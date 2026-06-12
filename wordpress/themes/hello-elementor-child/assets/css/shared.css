@@ -242,6 +242,38 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-hero--slim { padding-block: clamp(3rem, 3vw + 2rem, 5rem); }
 .ph-hero--job { padding-block: clamp(3.5rem, 4vw + 2rem, 6rem); }
 
+/* Search module (§11): home search panel. White card, Mist fields,
+   one control per row on mobile, three fields + action on desktop. */
+.ph-search {
+  display: grid; grid-template-columns: 1fr; gap: var(--ph-space-2);
+  max-inline-size: 40rem; padding: clamp(0.75rem, 0.5rem + 0.6vw, 0.875rem);
+  background-color: var(--ph-color-white); border-radius: var(--ph-radius-lg); box-shadow: var(--ph-shadow-card);
+}
+.ph-search__field { display: flex; min-inline-size: 0; }
+.ph-search__field input,
+.ph-search__field select {
+  inline-size: 100%; min-block-size: var(--ph-control); padding-inline: 0.875rem;
+  font-family: var(--ph-font-body); font-size: var(--ph-type-body-size); color: var(--ph-color-ink);
+  background-color: var(--ph-color-mist); border: 1px solid transparent; border-radius: var(--ph-radius-md);
+}
+.ph-search__field input:focus,
+.ph-search__field select:focus { border-color: var(--ph-color-blue-600); outline: none; box-shadow: var(--ph-focus-ring); }
+.ph-search .ph-button { inline-size: 100%; }
+@media (min-width: 56.25em) {
+  .ph-search { grid-template-columns: 1.4fr 1fr 1fr auto; }
+  .ph-search .ph-button { inline-size: auto; }
+}
+/* Archive variant (§11): full container width on the Paper surface. */
+.ph-search--wide { max-inline-size: none; }
+
+/* Hero trust row (§9 proof/meta row): small reversed items with icons. */
+.ph-search-trust { display: flex; flex-wrap: wrap; gap: var(--ph-space-3) var(--ph-space-5); }
+.ph-search-trust__item {
+  display: inline-flex; align-items: center; gap: var(--ph-space-2);
+  font-size: var(--ph-type-small-size); font-weight: 600; color: rgba(255, 255, 255, 0.92);
+}
+.ph-search-trust__item svg { flex-shrink: 0; color: var(--ph-color-gold-500); }
+
 /* Job card internals (§12/§14): salary uses display type, never form/nav. */
 .ph-job-salary { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-700); }
 

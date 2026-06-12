@@ -109,9 +109,24 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   sideloads idempotently into the media library. No placeholder `#`
   links (hard rule 7) — the prototype's dummy social icons are omitted
   until real profile URLs exist. Part of the admin Site-setup runner.
-  Remaining: home page + featured carousel, employers/sectors/services/
-  contact/join-our-team page content, search/filter/sort widgets,
-  expired-job state, similar roles, save control.
+  **Home page (doc 10 §25, §9, §11, §12):** `scripts/dev/create-home-page.php` —
+  image hero with the server-rendered `[poolhall_job_search]` panel
+  (`src/Jobs/SearchForm.php`; plain GET to `/jobs/`, works without JS,
+  values retained on the results page) and trust row
+  (`[poolhall_live_roles]` renders nothing while the job store is empty),
+  featured jobs Loop Carousel (query `poolhall_featured_jobs` owned by
+  `src/Jobs/FeaturedQuery.php` — unexpired, manually featured via the
+  `is_featured` meta flag then newest, max six, no autoplay), six static
+  sector cards, the three-step process, stat strip and employer CTA
+  split; sets the site front page and runs from the Site-setup runner.
+  The reviews carousel is deliberately absent until Phase 8 supplies real
+  Google reviews. `ArchiveQuery` now applies `q`/`location`/`sector`
+  server-side (normalized by the unit-tested `SearchRequest`), marks
+  filtered results `noindex,follow`, and the jobs archive carries the
+  wide variant of the same search panel above the Loop Grid.
+  Remaining: employers/sectors/services/contact/join-our-team page
+  content, filter/sort widgets (type, work mode, salary, sort, chips),
+  expired-job state, similar roles, save control frontend.
 - **Phase 6 (part) — candidate accounts backend:** 🟡 auth complete:
   `poolhall_candidate` role with minimal caps + admin/author-archive/REST
   lockout (admin-post stays open for the frontend form handlers),
