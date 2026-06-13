@@ -265,10 +265,15 @@ In priority order, with the binding spec section:
 6. **Featured card polish** — doc 10 §12 wants meta cluster, 3-line
    clamps, featured badge top-right, orange top border only when
    featured: the current card is title/sector/location/salary only.
-7. **Candidate portal visual pass** — portal pages are functional,
-   design-system-classed server renders; doc 08 + doc 10 §19 describe
-   the portal card/dashboard look. Restyle via classes around the
-   existing form markup.
+7. **Candidate portal visual pass** — DONE (spec §3.9). Auth screens
+   (login/register/verify/forgot/reset) are a centred 460px auth card
+   (logo, serif-500 title, sub, cross-links); the signed-in dashboard
+   (`form="account"`) shows real saved-job data + honest coming-soon
+   tiles; the security page uses the 760px portal shell with device-icon
+   session rows and a green Current pill. Portal pages render on the
+   full-width `elementor_header_footer` template. Remaining portal work:
+   alerts, applications history, profile and CV modules once those
+   features land (doc 08).
 8. **Empty/edge states everywhere** — empty carousel (staging today!),
    empty archive, expired job, long titles at 360px (hard rule 10).
 9. **Blog** — doc 01 §11: archive + 4 posts migrate from Wix; templates
