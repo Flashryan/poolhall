@@ -150,7 +150,7 @@ final class Plugin {
 		( new PortalGuard( $candidates, $returns ) )->register();
 		( new AuthEndpoints( $login, $registration, $verification, $recovery, $returns ) )->register();
 		( new SecurityEndpoints( $security, $sessions, $candidates ) )->register();
-		( new AuthForms( $verification, $security, $sessions, new SessionDescriber() ) )->register();
+		( new AuthForms( $verification, $security, $sessions, new SessionDescriber(), new SavedJobsRepository(), new JobRepository() ) )->register();
 		( new SavedJobsController( new SavedJobsRepository(), new JobRepository(), $candidates, $returns ) )->register();
 	}
 

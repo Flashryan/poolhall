@@ -205,6 +205,46 @@
 /* Secondary text on navy surfaces — prototype --fg-on-dark-2 (§9 hero lede). */
 .ph-text-reversed-soft { color: #A7B4C8; }
 .ph-card--portal { border-radius: var(--ph-radius-lg); }
+
+/* Candidate portal (spec §3.9). Auth screens: a centred 460px card with a
+   logo, serif-500 title and helper sub; cross-links sit beneath the card.
+   The signed-in dashboard and security page use the wider portal column. */
+.ph-auth { background-color: var(--ph-color-paper); padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem); padding-inline: var(--ph-page-gutter); }
+.ph-auth__inner { inline-size: 100%; max-inline-size: 28.75rem; margin-inline: auto; }
+.ph-auth-card { background-color: var(--ph-color-white); border: var(--ph-border); border-radius: var(--ph-radius-lg); box-shadow: var(--ph-shadow-card); padding: clamp(1.5rem, 1rem + 1.6vw, 2.25rem); }
+.ph-auth-card__head { display: flex; flex-direction: column; align-items: center; gap: var(--ph-space-3); text-align: center; margin-block-end: var(--ph-space-2); }
+.ph-auth-card__logo { display: inline-flex; align-items: center; gap: var(--ph-space-2); text-decoration: none; }
+.ph-auth-card__logo img { inline-size: 40px; block-size: 40px; }
+.ph-auth-card__logo span { font-family: var(--ph-font-display); font-weight: 600; font-size: 1.25rem; color: var(--ph-color-navy-700); }
+.ph-auth-card__title { font-family: var(--ph-font-display); font-weight: 500; font-size: var(--ph-type-h3-size); line-height: 1.15; color: var(--ph-color-navy-700); margin: 0; }
+.ph-auth-card__sub { font-size: var(--ph-type-small-size); line-height: 1.5; color: var(--ph-color-muted); margin: 0; max-inline-size: 34ch; }
+.ph-auth__alt { margin-block-start: var(--ph-space-5); text-align: center; }
+.ph-auth__alt p { margin: 0; }
+.ph-form__row { display: flex; align-items: center; justify-content: space-between; gap: var(--ph-space-3); flex-wrap: wrap; }
+
+.ph-portal { inline-size: min(100% - (2 * var(--ph-page-gutter)), 47.5rem); margin-inline: auto; padding-block: var(--ph-space-section); }
+.ph-portal__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ph-space-4); flex-wrap: wrap; }
+.ph-portal__panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ph-space-3); }
+.ph-portal-grid { display: grid; grid-template-columns: 1fr; gap: var(--ph-space-4); }
+@media (min-width: 40em) { .ph-portal-grid { grid-template-columns: repeat(3, 1fr); } }
+.ph-portal-tile { display: flex; flex-direction: column; gap: var(--ph-space-1); }
+.ph-portal-tile__icon { display: inline-flex; align-items: center; justify-content: center; inline-size: 2.75rem; block-size: 2.75rem; border-radius: var(--ph-radius-md); background-color: var(--ph-color-orange-50); color: var(--ph-color-orange-600); margin-block-end: var(--ph-space-2); }
+.ph-portal-tile__value { font-family: var(--ph-font-display); font-weight: 600; font-size: 1.6rem; line-height: 1.1; color: var(--ph-color-navy-700); }
+.ph-portal-tile__label { font-size: var(--ph-type-small-size); color: var(--ph-color-muted); }
+.ph-portal-link { display: flex; align-items: center; justify-content: space-between; gap: var(--ph-space-4); text-decoration: none; color: inherit; }
+.ph-portal-link__text { display: flex; flex-direction: column; gap: 2px; }
+.ph-portal-link__text strong { color: var(--ph-color-navy-700); }
+.ph-portal-link__arrow { color: var(--ph-color-orange-700); font-size: 1.25rem; }
+.ph-portal-link:hover .ph-portal-link__arrow { transform: translateX(3px); }
+
+/* Session row (spec §3.9 security): device icon, label + signed-in time,
+   Current pill or per-session sign-out action. */
+.ph-session { display: flex; align-items: center; gap: var(--ph-space-3); }
+.ph-session__icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; inline-size: 2.25rem; block-size: 2.25rem; border-radius: 50%; background-color: var(--ph-color-mist); color: var(--ph-color-navy-700); }
+.ph-session__meta { flex: 1 1 auto; min-inline-size: 0; }
+.ph-session__action { flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .ph-portal-link:hover .ph-portal-link__arrow { transform: none; } }
+
 .ph-panel { background-color: var(--ph-color-mist); border-radius: var(--ph-radius-lg); padding: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); }
 .ph-panel--navy { background-color: var(--ph-color-navy-800); color: var(--ph-color-white); }
 .ph-panel--gold { background-color: var(--ph-color-gold-50); border: 1px solid var(--ph-color-gold-300); }

@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'POOLHALL_INTEGRATION_VERSION', '0.1.0' );
 define( 'POOLHALL_INTEGRATION_FILE', __FILE__ );
 define( 'POOLHALL_INTEGRATION_DIR', plugin_dir_path( __FILE__ ) );
+define( 'POOLHALL_INTEGRATION_URL', plugin_dir_url( __FILE__ ) );
 
 // Composer autoloader (dev) with a PSR-4 fallback for hosts deployed without
 // the vendor directory — the plugin has no production Composer dependencies.

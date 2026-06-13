@@ -79,6 +79,11 @@ final class PortalPages {
 				'post_status'  => 'publish',
 				'post_type'    => 'page',
 				'post_parent'  => $parent_id,
+				// Full-width canvas with the theme-builder header/footer (same
+				// template the marketing pages use), so the auth card's paper
+				// background and the portal column own the full content width
+				// instead of the theme's narrow default container.
+				'meta_input'   => array( '_wp_page_template' => 'elementor_header_footer' ),
 			);
 
 			if ( $existing instanceof \WP_Post ) {
