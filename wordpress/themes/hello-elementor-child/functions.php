@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'POOLHALL_CHILD_VERSION', '0.6.0' );
+define( 'POOLHALL_CHILD_VERSION', '0.7.0' );
 
 add_action(
 	'wp_enqueue_scripts',
@@ -21,6 +21,16 @@ add_action(
 			get_stylesheet_directory_uri() . '/assets/css/shared.css',
 			array(),
 			POOLHALL_CHILD_VERSION
+		);
+		// Progressive enhancement only: the jobs filters and mobile drawer
+		// work without it (GET forms + submit buttons). Deferred so it never
+		// blocks render.
+		wp_enqueue_script(
+			'poolhall-ui',
+			get_stylesheet_directory_uri() . '/assets/js/ui.js',
+			array(),
+			POOLHALL_CHILD_VERSION,
+			array( 'strategy' => 'defer' )
 		);
 	},
 	20

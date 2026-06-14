@@ -65,4 +65,57 @@ final class SearchRequestTest extends TestCase {
 
 		self::assertFalse( $request->is_filtered() );
 	}
+
+	public function test_work_mode_and_type_are_slugged(): void {
+		$request = SearchRequest::from_query(
+			array(
+				'work_mode' => 'Hybrid!!',
+				'type'      => 'Permanent',
+			)
+		);
+
+		self::assertSame( 'hybrid', $request->work_mode );
+		self::assertSame( 'permanent', $request->type );
+		self::assertTrue( $request->is_filtered() );
+	}
+
+	public function test_salary_min_is_clamped_to_a_non_negative_int(): void {
+		self::assertSame( 30000, SearchRequest::from_query( array( 'salary_min' => '30000' ) )->salary_min );
+		self::assertSame( 0, SearchRequest::from_query( array( 'salary_min' => '-5' ) )->salary_min );
+		self::assertSame( 0, SearchRequest::from_query( array( 'salary_min' => 'abc' ) )->salary_min );
+		self::assertSame( 1000000, SearchRequest::from_query( array( 'salary_min' => '99999999' ) )->salary_min );
+	}
+
+	public function test_sort_falls_back_to_recent_for_unknown_values(): void {
+		self::assertSame( 'salary', SearchRequest::from_query( array( 'sort' => 'salary' ) )->sort );
+		self::assertSame( 'recent', SearchRequest::from_query( array( 'sort' => 'bogus' ) )->sort );
+		self::assertSame( 'recent', SearchRequest::from_query( array() )->sort );
+	}
+
+	public function test_page_is_at_least_one(): void {
+		self::assertSame( 3, SearchRequest::from_query( array( 'pg' => '3' ) )->page );
+		self::assertSame( 1, SearchRequest::from_query( array( 'pg' => '0' ) )->page );
+		self::assertSame( 1, SearchRequest::from_query( array( 'pg' => '-2' ) )->page );
+	}
+
+	public function test_sort_alone_counts_as_filtered_but_page_does_not(): void {
+		self::assertTrue( SearchRequest::from_query( array( 'sort' => 'az' ) )->is_filtered() );
+		self::assertFalse( SearchRequest::from_query( array( 'pg' => '4' ) )->is_filtered() );
+	}
+
+	public function test_active_filters_excludes_sort_and_page(): void {
+		$request = SearchRequest::from_query(
+			array(
+				'sector'     => 'manufacturing',
+				'salary_min' => '40000',
+				'sort'       => 'salary',
+				'pg'         => '2',
+			)
+		);
+		$active = $request->active_filters();
+
+		self::assertSame( array( 'sector', 'salary_min' ), array_keys( $active ) );
+		self::assertSame( 'manufacturing', $active['sector'] );
+		self::assertSame( '40000', $active['salary_min'] );
+	}
 }

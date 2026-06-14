@@ -78,6 +78,7 @@ foreach ( $poolhall_demo_jobs as [ $poolhall_sid, $poolhall_title, $poolhall_sec
 
 	update_post_meta( $poolhall_post_id, 'source', 'demo' );
 	update_post_meta( $poolhall_post_id, 'source_job_id', $poolhall_sid );
+	update_post_meta( $poolhall_post_id, 'employment_type', 'Permanent' );
 	update_post_meta( $poolhall_post_id, 'location_display', $poolhall_loc );
 	update_post_meta( $poolhall_post_id, 'work_mode_raw', $poolhall_mode );
 	update_post_meta( $poolhall_post_id, 'salary_display', $poolhall_salary . ' /year' );

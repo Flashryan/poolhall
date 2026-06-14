@@ -347,22 +347,13 @@ $archive_data = array(
 					// §11 archive search: same server-rendered form as the
 					// home hero, full container width, values retained.
 					$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_search variant="wide"]' ) ),
-					$widget(
-						'loop-grid',
-						array(
-							'_skin'                => 'post',
-							'template_id'          => $result_row_id,
-							'posts_per_page'       => 10,
-							'columns'              => 1,
-							'columns_tablet'       => 1,
-							'columns_mobile'       => 1,
-							'pagination_type'      => 'numbers_and_prev_next',
-							'post_query_post_type' => 'poolhall_job',
-							'post_query_orderby'   => 'date',
-							'post_query_order'     => 'DESC',
-							'post_query_query_id'  => 'poolhall_jobs_archive',
-						)
-					),
+					// §3.2 listing UX: server-rendered filter sidebar + results
+					// (count, sort, applied chips, pagination, empty state,
+					// mobile drawer). Replaces the v3 Loop Grid so the empty
+					// state and chips can be fully controlled; the featured
+					// carousel still uses the Pro Loop Carousel. The result-row
+					// loop item ($result_row_id) is kept for any future reuse.
+					$widget( 'shortcode', array( 'shortcode' => '[poolhall_jobs_browser]' ) ),
 				),
 				true
 			),

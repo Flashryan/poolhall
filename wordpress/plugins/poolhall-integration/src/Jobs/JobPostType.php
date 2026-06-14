@@ -41,6 +41,7 @@ final class JobPostType {
 		'address_region',
 		'address_country',
 		'work_mode_raw',
+		'employment_type',
 		'experience_requirement',
 		'education_requirement',
 		'date_posted',

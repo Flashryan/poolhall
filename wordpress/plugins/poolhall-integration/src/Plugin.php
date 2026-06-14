@@ -110,6 +110,11 @@ final class Plugin {
 		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
 		( new \Poolhall\Integration\Jobs\SearchForm() )->register();
 		( new \Poolhall\Integration\Jobs\JobCardBits() )->register();
+		( new \Poolhall\Integration\Jobs\JobsArchive(
+			new \Poolhall\Integration\Jobs\ArchiveQuery(),
+			new \Poolhall\Integration\Jobs\JobFacets(),
+			new \Poolhall\Integration\Jobs\JobCardBits()
+		) )->register();
 
 		$enquiries = new \Poolhall\Integration\Enquiries\EnquiryService( new WpMailer(), new Logger() );
 		( new \Poolhall\Integration\Enquiries\EnquiryEndpoints( $enquiries ) )->register();
