@@ -248,12 +248,16 @@ In priority order, with the binding spec section:
    adverts, CV screening, ATS-ready shortlists, proof). Price needs
    Ryan's confirmation before it appears. Needs its own builder script
    + Site-setup step, modelled on `create-marketing-pages.php`.
-2. **Jobs archive filter/sort UX** — doc 01 §4, doc 10 §11/§13: filter
-   panel (keyword/location/sector/type/work-mode/salary-min), sort,
-   applied-filter chips, clear-all, result count, empty state, and the
-   **mobile filter drawer** (the prototype's fixed sidebar is banned on
-   mobile). Server side is ready for q/location/sector; type/work-mode/
-   salary/sort need ArchiveQuery extensions.
+2. **Jobs archive filter/sort UX** — DONE (directive §3.2, prototype
+   Jobs.jsx). `[poolhall_jobs_browser]` (`src/Jobs/JobsArchive.php`):
+   sticky filter sidebar (sector/job type/working pattern/min salary with
+   live counts from `JobFacets`), sort, applied chips + clear-all, result
+   count, numbered pagination, zero-result empty state, and the mobile
+   filter drawer (off-canvas, `assets/js/ui.js`, no-JS GET fallback).
+   `SearchRequest`/`ArchiveQuery.build_args()` carry
+   q/location/sector/work_mode/type/salary_min/sort; filtered URLs
+   noindex. Remaining jobs work: single-job enrichment (§3.3) and the
+   save-job control frontend.
 3. **Mobile drawer upgrades** — doc 10 §8: audience switch + account
    state inside the nav drawer below 900px (currently desktop-only).
 4. **Single job page enrichment** — doc 10 §14, doc 01 §5: meta cluster
