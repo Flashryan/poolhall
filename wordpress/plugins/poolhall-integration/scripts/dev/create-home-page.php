@@ -173,7 +173,7 @@ $eyebrow = static fn( string $text, bool $on_dark = false ): array => $widget(
 	'text-editor',
 	array(
 		'editor'     => '<p class="ph-eyebrow">' . esc_html( $text ) . '</p>',
-		'text_color' => $on_dark ? '#F4904A' : '#C45712',
+		'text_color' => $on_dark ? '#FECF87' : '#8A5E12',
 	)
 );
 
@@ -184,8 +184,8 @@ $heading = static fn( string $text, string $size, string $color, string $clamp )
 		'header_size'            => $size,
 		'title_color'            => $color,
 		'typography_typography'  => 'custom',
-		'typography_font_family' => 'Source Serif 4',
-		'typography_font_weight' => '500',
+		'typography_font_family' => 'Archivo',
+		'typography_font_weight' => '800',
 		'typography_font_size'   => array(
 			'unit' => 'custom',
 			'size' => $clamp,
@@ -215,7 +215,7 @@ $section_head = static fn( string $eyebrow_text, string $title, string $lede = '
 		array_filter(
 			array(
 				$eyebrow( $eyebrow_text, $on_dark ),
-				$heading( $title, 'h2', $on_dark ? '#FFFFFF' : '#1B3052', $h2_clamp ),
+				$heading( $title, 'h2', $on_dark ? '#FFFFFF' : '#1B4068', $h2_clamp ),
 				'' === $lede ? null : $widget(
 					'text-editor',
 					array( 'editor' => '<p class="ph-lede' . ( $on_dark ? ' ph-text-reversed-soft' : '' ) . '">' . esc_html( $lede ) . '</p>' )
@@ -244,7 +244,7 @@ $hero = $container(
 				'size' => 'clamp(32rem, 64svh, 40rem)',
 			),
 			'background_background'         => 'classic',
-			'background_color'              => '#14233F',
+			'background_color'              => '#0B2846',
 			'background_image'              => array(
 				'id'  => $poolhall_images['hero'],
 				'url' => (string) wp_get_attachment_image_url( $poolhall_images['hero'], 'full' ),
@@ -325,7 +325,7 @@ $featured = $container(
 					array(
 						'title'        => 'View all jobs',
 						'header_size'  => 'p',
-						'title_color'  => '#B9510E',
+						'title_color'  => '#8A5E12',
 						'_css_classes' => 'ph-link ph-link--arrow',
 						'link'         => array(
 							'url'         => $jobs_url,
@@ -383,7 +383,7 @@ foreach ( $poolhall_sectors as $poolhall_sector_name ) {
 				array(
 					'title'        => $poolhall_sector_name,
 					'header_size'  => 'h3',
-					'title_color'  => '#1B3052',
+					'title_color'  => '#1B4068',
 					'_css_classes' => 'ph-h4',
 					'link'         => array(
 						'url'         => $jobs_url,
@@ -452,7 +452,7 @@ foreach ( $poolhall_steps as [ $poolhall_step_num, $poolhall_step_title, $poolha
 				array(
 					'title'        => $poolhall_step_title,
 					'header_size'  => 'h3',
-					'title_color'  => '#1B3052',
+					'title_color'  => '#1B4068',
 					'_css_classes' => 'ph-h4',
 				)
 			),
@@ -496,7 +496,7 @@ $stats = $container(
 	$boxed(
 		array(
 			'background_background' => 'classic',
-			'background_color'      => '#14233F',
+			'background_color'      => '#0B2846',
 			'padding'               => $section_padding( 56 ),
 		)
 	),
@@ -542,7 +542,7 @@ $employer_cta = $container(
 	$boxed(
 		array(
 			'background_background' => 'classic',
-			'background_color'      => '#EEF1F5',
+			'background_color'      => '#F2F4F6',
 			'padding'               => $section_padding(),
 		)
 	),
@@ -561,7 +561,7 @@ $employer_cta = $container(
 					),
 					array(
 						$eyebrow( 'Looking to hire?' ),
-						$heading( 'We&rsquo;ll represent your business like it&rsquo;s our own', 'h2', '#1B3052', $h2_clamp ),
+						$heading( 'We&rsquo;ll represent your business like it&rsquo;s our own', 'h2', '#1B4068', $h2_clamp ),
 						$widget(
 							'text-editor',
 							array( 'editor' => '<p class="ph-lede">We work with PLCs and SMEs on exclusive and exciting roles. Tell us who you need and we&rsquo;ll find the right people.</p>' )
@@ -583,12 +583,12 @@ $employer_cta = $container(
 											'is_external' => '',
 											'nofollow'    => '',
 										),
-										'background_color'              => '#14233F',
-										'button_background_hover_color' => '#1B3052',
+										'background_color'              => '#0B2846',
+										'button_background_hover_color' => '#1B4068',
 										'button_text_color'             => '#FFFFFF',
 										'hover_color'                   => '#FFFFFF',
 										'typography_typography'         => 'custom',
-										'typography_font_family'        => 'Hanken Grotesk',
+										'typography_font_family'        => 'Source Sans 3',
 										'typography_font_weight'        => '700',
 									)
 								),
@@ -603,8 +603,8 @@ $employer_cta = $container(
 										),
 										'background_color'              => '#FFFFFF',
 										'button_background_hover_color' => '#F7F8FA',
-										'button_text_color'             => '#14233F',
-										'hover_color'                   => '#14233F',
+										'button_text_color'             => '#0B2846',
+										'hover_color'                   => '#0B2846',
 										'border_border'                 => 'solid',
 										'border_width'                  => array(
 											'unit'     => 'px',
@@ -616,7 +616,7 @@ $employer_cta = $container(
 										),
 										'border_color'                  => '#C9D0DA',
 										'typography_typography'         => 'custom',
-										'typography_font_family'        => 'Hanken Grotesk',
+										'typography_font_family'        => 'Source Sans 3',
 										'typography_font_weight'        => '700',
 									)
 								),

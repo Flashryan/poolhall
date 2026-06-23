@@ -204,7 +204,7 @@ $header_data = array(
 				'left'     => '0',
 				'isLinked' => false,
 			),
-			'border_color'          => '#E3E7ED',
+			'border_color'          => '#E6E9ED',
 			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '16',
@@ -219,7 +219,7 @@ $header_data = array(
 				'theme-site-title',
 				array(
 					'header_size' => 'p',
-					'title_color' => '#1B3052',
+					'title_color' => '#1B4068',
 					// Explicit dynamic tags + static fallbacks: the widget's
 					// own dynamic defaults only apply through the editor, not
 					// programmatic writes — without these the logo rendered
@@ -235,7 +235,7 @@ $header_data = array(
 						'link'  => $tag( 'site-url' ),
 					),
 					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Source Serif 4',
+					'typography_font_family' => 'Archivo',
 					'typography_font_weight' => '600',
 					'typography_font_size'   => array(
 						'unit' => 'rem',
@@ -250,19 +250,19 @@ $header_data = array(
 					'layout'                 => 'horizontal',
 					'pointer'                => 'underline',
 					'menu_typography_typography'  => 'custom',
-					'menu_typography_font_family' => 'Hanken Grotesk',
+					'menu_typography_font_family' => 'Source Sans 3',
 					'menu_typography_font_weight' => '600',
 					'menu_typography_font_size'   => array(
 						'unit' => 'rem',
 						'size' => 1,
 					),
-					'color_menu_item'        => '#16202F',
-					'color_menu_item_hover'  => '#1B3052',
-					'pointer_color_menu_item_hover' => '#EC6F1E',
+					'color_menu_item'        => '#11161B',
+					'color_menu_item_hover'  => '#1B4068',
+					'pointer_color_menu_item_hover' => '#FDBB5D',
 					// Mobile drawer (fixes the prototype's missing mobile nav).
 					'dropdown'               => 'tablet',
 					'toggle'                 => 'burger',
-					'toggle_color'           => '#1B3052',
+					'toggle_color'           => '#1B4068',
 					'full_width'             => 'stretch',
 					'text_align'             => 'aside',
 				)
@@ -283,10 +283,10 @@ $header_data = array(
 						'is_external' => '',
 						'nofollow'    => '',
 					),
-					'background_color'      => '#EC6F1E',
-					'button_background_hover_color' => '#D45F12',
-					'button_text_color'     => '#FFFFFF',
-					'hover_color'           => '#FFFFFF',
+					'background_color'      => '#FDBB5D',
+					'button_background_hover_color' => '#E0A33F',
+					'button_text_color'     => '#0B2846',
+					'hover_color'           => '#0B2846',
 					'border_radius'         => array(
 						'unit'     => 'px',
 						'top'      => '10',
@@ -296,7 +296,7 @@ $header_data = array(
 						'isLinked' => true,
 					),
 					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Hanken Grotesk',
+					'typography_font_family' => 'Source Sans 3',
 					'typography_font_weight' => '700',
 				)
 			),

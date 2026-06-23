@@ -149,7 +149,7 @@
 .ph-section--flush { padding-block: 0; }
 .ph-section--paper { background-color: var(--ph-color-paper); }
 .ph-section--white { background-color: var(--ph-color-white); }
-.ph-section--navy { background-color: var(--ph-color-navy-800); color: var(--ph-color-white); }
+.ph-section--navy { background-color: var(--ph-color-navy-900); color: var(--ph-color-white); }
 .ph-full-bleed { inline-size: 100%; max-inline-size: none; }
 
 /* Layout: stacks, clusters and grids (§6). Mobile-first; children are
@@ -298,7 +298,7 @@
 @media (prefers-reduced-motion: reduce) { .ph-portal-link:hover .ph-portal-link__arrow { transform: none; } }
 
 .ph-panel { background-color: var(--ph-color-mist); border-radius: var(--ph-radius-lg); padding: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); }
-.ph-panel--navy { background-color: var(--ph-color-navy-800); color: var(--ph-color-white); }
+.ph-panel--navy { background-color: var(--ph-color-navy-900); color: var(--ph-color-white); }
 .ph-panel--gold { background-color: var(--ph-color-gold-50); border: 1px solid var(--ph-color-gold-300); }
 .ph-badge {
   display: inline-flex; align-items: center; gap: var(--ph-space-1);
@@ -622,7 +622,7 @@ html, body {
 .ph-modal-overlay[hidden],
 .ph-modal [hidden] { display: none; }
 .ph-modal { inline-size: 100%; max-inline-size: 35rem; margin: auto; background-color: var(--ph-color-white); border-radius: var(--ph-radius-lg); box-shadow: var(--ph-shadow-raised); overflow: hidden; }
-.ph-modal__head { position: relative; background-color: var(--ph-color-navy-800); color: var(--ph-color-white); padding: 1.25rem 1.5rem; }
+.ph-modal__head { position: relative; background-color: var(--ph-color-navy-900); color: var(--ph-color-white); padding: 1.25rem 1.5rem; }
 .ph-modal__sector { font-family: var(--ph-font-data); font-weight: 600; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ph-color-gold-400); }
 .ph-modal__title { font-family: var(--ph-font-display); font-weight: 600; font-size: 1.2rem; color: var(--ph-color-white); margin: 0.3rem 2rem 0 0; }
 .ph-modal__facts { display: flex; flex-wrap: wrap; gap: 4px 1rem; margin: 0.6rem 0 0; font-size: 0.8125rem; color: #A7B4C8; }

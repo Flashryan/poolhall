@@ -115,7 +115,7 @@ $featured_card = array(
 				array(
 					'title'       => '',
 					'header_size' => 'h3',
-					'title_color' => '#1B3052',
+					'title_color' => '#1B4068',
 					'_css_classes' => 'ph-h3',
 					'__dynamic__' => array(
 						'title' => $tag( 'post-title' ),
@@ -124,7 +124,7 @@ $featured_card = array(
 				)
 			),
 			$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_card_meta]' ) ),
-			$widget( 'divider', array( 'color' => '#E3E7ED' ) ),
+			$widget( 'divider', array( 'color' => '#E6E9ED' ) ),
 			$container(
 				array(
 					'content_width'        => 'full',
@@ -154,7 +154,7 @@ $featured_card = array(
 						array(
 							'title'       => 'View job',
 							'header_size' => 'p',
-							'title_color' => '#B9510E',
+							'title_color' => '#8A5E12',
 							'_css_classes' => 'ph-link ph-link--arrow',
 							'__dynamic__' => array( 'link' => $tag( 'post-url' ) ),
 						)
@@ -204,7 +204,7 @@ $result_row = array(
 						array(
 							'title'       => '',
 							'header_size' => 'h3',
-							'title_color' => '#1B3052',
+							'title_color' => '#1B4068',
 							'_css_classes' => 'ph-h3',
 							'__dynamic__' => array(
 								'title' => $tag( 'post-title' ),
@@ -252,7 +252,7 @@ $result_row = array(
 						array(
 							'title'       => 'View job',
 							'header_size' => 'p',
-							'title_color' => '#B9510E',
+							'title_color' => '#8A5E12',
 							'_css_classes' => 'ph-link ph-link--arrow',
 							'__dynamic__' => array( 'link' => $tag( 'post-url' ) ),
 						)
@@ -406,7 +406,7 @@ $single_data = array(
 						array(
 							'title'       => '',
 							'header_size' => 'p',
-							'title_color' => '#F4904A',
+							'title_color' => '#FECF87',
 							'_css_classes' => 'ph-eyebrow',
 							'__dynamic__' => array( 'title' => $tag( 'post-terms', array( 'taxonomy' => 'poolhall_sector' ) ) ),
 						)
@@ -515,7 +515,7 @@ $single_data = array(
 								array(
 									'title'       => '',
 									'header_size' => 'p',
-									'title_color' => '#586375',
+									'title_color' => '#4A555F',
 									'_css_classes' => 'ph-data',
 									'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'job_reference' ) ) ),
 								)
@@ -525,12 +525,12 @@ $single_data = array(
 								array(
 									'title'       => '',
 									'header_size' => 'p',
-									'title_color' => '#586375',
+									'title_color' => '#4A555F',
 									'_css_classes' => 'ph-small',
 									'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'location_display' ) ) ),
 								)
 							),
-							$widget( 'divider', array( 'color' => '#E3E7ED' ) ),
+							$widget( 'divider', array( 'color' => '#E6E9ED' ) ),
 							// Apply CTA. The shortcode renders the popup trigger when
 							// the apply channel is on, and the safe contact-page CTA
 							// (also the no-JS fallback) when it is off. Styling lives

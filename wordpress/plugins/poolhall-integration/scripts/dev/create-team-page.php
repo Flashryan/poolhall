@@ -138,7 +138,7 @@ $eyebrow = static fn( string $text, bool $on_dark = false ): array => $widget(
 	'text-editor',
 	array(
 		'editor'      => '<p class="ph-eyebrow">' . esc_html( $text ) . '</p>',
-		'text_color'  => $on_dark ? '#F4904A' : '#C45712',
+		'text_color'  => $on_dark ? '#FECF87' : '#8A5E12',
 	)
 );
 
@@ -221,10 +221,10 @@ $team_card = static function ( int $photo_id, string $name, string $role, array 
 						array(
 							'title'       => $name,
 							'header_size' => 'h3',
-							'title_color' => '#1B3052',
+							'title_color' => '#1B4068',
 							'typography_typography'  => 'custom',
-							'typography_font_family' => 'Source Serif 4',
-							'typography_font_weight' => '600',
+							'typography_font_family' => 'Archivo',
+							'typography_font_weight' => '700',
 							'typography_font_size'   => array(
 								'unit' => 'rem',
 								'size' => 1.375,
@@ -235,7 +235,7 @@ $team_card = static function ( int $photo_id, string $name, string $role, array 
 						'text-editor',
 						array(
 							'editor'     => '<p class="ph-eyebrow">' . esc_html( $role ) . '</p>',
-							'text_color' => '#C45712',
+							'text_color' => '#8A5E12',
 						)
 					),
 					$widget(
@@ -269,7 +269,7 @@ $team_data = array(
 					'size' => 'clamp(24rem, 50svh, 32rem)',
 				),
 				'background_background'  => 'classic',
-				'background_color'       => '#14233F',
+				'background_color'       => '#0B2846',
 				'background_image'       => array(
 					'id'  => $poolhall_images['office'],
 					'url' => (string) wp_get_attachment_image_url( $poolhall_images['office'], 'full' ),
@@ -317,8 +317,8 @@ $team_data = array(
 							'header_size' => 'h1',
 							'title_color' => '#FFFFFF',
 							'typography_typography'  => 'custom',
-							'typography_font_family' => 'Source Serif 4',
-							'typography_font_weight' => '500',
+							'typography_font_family' => 'Archivo',
+							'typography_font_weight' => '800',
 							'typography_font_size'   => array(
 								'unit' => 'custom',
 								'size' => 'clamp(2.4rem, 1.9rem + 2.2vw, 3.6rem)',
@@ -381,10 +381,10 @@ $team_data = array(
 								array(
 									'title'       => 'Independent, and proud of it',
 									'header_size' => 'h2',
-									'title_color' => '#1B3052',
+									'title_color' => '#1B4068',
 									'typography_typography'  => 'custom',
-									'typography_font_family' => 'Source Serif 4',
-									'typography_font_weight' => '500',
+									'typography_font_family' => 'Archivo',
+									'typography_font_weight' => '800',
 									'typography_font_size'   => array(
 										'unit' => 'custom',
 										'size' => 'clamp(1.7rem, 1.45rem + 1vw, 2.25rem)',
@@ -466,10 +466,10 @@ $team_data = array(
 						array(
 							'title'       => 'Meet the team',
 							'header_size' => 'h2',
-							'title_color' => '#1B3052',
+							'title_color' => '#1B4068',
 							'typography_typography'  => 'custom',
-							'typography_font_family' => 'Source Serif 4',
-							'typography_font_weight' => '500',
+							'typography_font_family' => 'Archivo',
+							'typography_font_weight' => '800',
 							'typography_font_size'   => array(
 								'unit' => 'custom',
 								'size' => 'clamp(1.7rem, 1.45rem + 1vw, 2.25rem)',
@@ -519,7 +519,7 @@ $team_data = array(
 		$boxed(
 			array(
 				'background_background' => 'classic',
-				'background_color'      => '#14233F',
+				'background_color'      => '#0B2846',
 				'flex_direction'        => 'row',
 				'flex_align_items'      => 'center',
 				'flex_justify_content'  => 'space-between',
@@ -564,8 +564,8 @@ $team_data = array(
 							'header_size' => 'h2',
 							'title_color' => '#FFFFFF',
 							'typography_typography'  => 'custom',
-							'typography_font_family' => 'Source Serif 4',
-							'typography_font_weight' => '500',
+							'typography_font_family' => 'Archivo',
+							'typography_font_weight' => '800',
 							'typography_font_size'   => array(
 								'unit' => 'custom',
 								'size' => 'clamp(1.7rem, 1.45rem + 1vw, 2.25rem)',
@@ -587,10 +587,10 @@ $team_data = array(
 						'is_external' => '',
 						'nofollow'    => '',
 					),
-					'background_color'      => '#EC6F1E',
-					'button_text_color'     => '#FFFFFF',
-					'hover_color'           => '#FFFFFF',
-					'button_background_hover_color' => '#C45712',
+					'background_color'      => '#FDBB5D',
+					'button_text_color'     => '#0B2846',
+					'hover_color'           => '#0B2846',
+					'button_background_hover_color' => '#E0A33F',
 					'border_radius'         => array(
 						'unit'     => 'px',
 						'top'      => '10',
@@ -600,7 +600,7 @@ $team_data = array(
 						'isLinked' => true,
 					),
 					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Hanken Grotesk',
+					'typography_font_family' => 'Source Sans 3',
 					'typography_font_weight' => '700',
 				)
 			),

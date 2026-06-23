@@ -145,7 +145,7 @@ $eyebrow = static fn( string $text, bool $on_dark = false ): array => $widget(
 	'text-editor',
 	array(
 		'editor'     => '<p class="ph-eyebrow">' . esc_html( $text ) . '</p>',
-		'text_color' => $on_dark ? '#F4904A' : '#C45712',
+		'text_color' => $on_dark ? '#FECF87' : '#8A5E12',
 	)
 );
 
@@ -156,8 +156,8 @@ $heading = static fn( string $text, string $size, string $color, string $clamp )
 		'header_size'            => $size,
 		'title_color'            => $color,
 		'typography_typography'  => 'custom',
-		'typography_font_family' => 'Source Serif 4',
-		'typography_font_weight' => '500',
+		'typography_font_family' => 'Archivo',
+		'typography_font_weight' => '800',
 		'typography_font_size'   => array(
 			'unit' => 'custom',
 			'size' => $clamp,
@@ -187,9 +187,9 @@ $body = static fn( string $text ): array => $widget(
 
 $button = static function ( string $text, string $url, string $style = 'primary' ) use ( $widget ): array {
 	$colors = array(
-		'primary' => array( '#EC6F1E', '#D45F12', '#FFFFFF', '#FFFFFF' ),
-		'navy'    => array( '#14233F', '#1B3052', '#FFFFFF', '#FFFFFF' ),
-		'ghost'   => array( '#FFFFFF', '#F7F8FA', '#14233F', '#14233F' ),
+		'primary' => array( '#FDBB5D', '#E0A33F', '#0B2846', '#0B2846' ),
+		'navy'    => array( '#0B2846', '#1B4068', '#FFFFFF', '#FFFFFF' ),
+		'ghost'   => array( '#FFFFFF', '#F7F8FA', '#0B2846', '#0B2846' ),
 	);
 	[ $bg, $bg_hover, $fg, $fg_hover ] = $colors[ $style ] ?? $colors['primary'];
 
@@ -205,7 +205,7 @@ $button = static function ( string $text, string $url, string $style = 'primary'
 		'button_text_color'             => $fg,
 		'hover_color'                   => $fg_hover,
 		'typography_typography'         => 'custom',
-		'typography_font_family'        => 'Hanken Grotesk',
+		'typography_font_family'        => 'Source Sans 3',
 		'typography_font_weight'        => '700',
 	);
 	if ( 'ghost' === $style ) {
@@ -247,7 +247,7 @@ $section_head = static fn( string $eyebrow_text, string $title, string $lede_tex
 		array_filter(
 			array(
 				$eyebrow( $eyebrow_text, $on_dark ),
-				$heading( $title, 'h2', $on_dark ? '#FFFFFF' : '#1B3052', $h2_clamp ),
+				$heading( $title, 'h2', $on_dark ? '#FFFFFF' : '#1B4068', $h2_clamp ),
 				'' === $lede_text ? null : $lede( $lede_text, $on_dark ),
 			)
 		)
@@ -308,7 +308,7 @@ $card = static fn( string $title, string $body_text ) => $container(
 			array(
 				'title'        => $title,
 				'header_size'  => 'h3',
-				'title_color'  => '#1B3052',
+				'title_color'  => '#1B4068',
 				'_css_classes' => 'ph-h4',
 			)
 		),
@@ -431,7 +431,7 @@ $employers_data = array(
 					$column(
 						array(
 							$eyebrow( 'Why Poolhall' ),
-							$heading( 'Quality and ethics, not quotas', 'h2', '#1B3052', $h2_clamp ),
+							$heading( 'Quality and ethics, not quotas', 'h2', '#1B4068', $h2_clamp ),
 							$lede( 'We&rsquo;re an independent agency, so you get a more personable service and a partner genuinely invested in the right outcome.' ),
 							$check_list(
 								array(
@@ -451,7 +451,7 @@ $employers_data = array(
 
 	// Sectors strip.
 	$section(
-		'#14233F',
+		'#0B2846',
 		array(
 			$section_head( 'Sectors we recruit in', 'Specialists where it counts', '', true ),
 			$widget(
@@ -491,7 +491,7 @@ $employers_data = array(
 					$column(
 						array(
 							$eyebrow( 'Better Job Adverts' ),
-							$heading( 'Prefer to run the hiring yourself?', 'h2', '#1B3052', $h2_clamp ),
+							$heading( 'Prefer to run the hiring yourself?', 'h2', '#1B4068', $h2_clamp ),
 							$lede( 'Fixed-fee job advertising across the major boards, with branded adverts, CV screening and an organised, interview-ready shortlist.' ),
 						),
 						10
@@ -518,7 +518,7 @@ $employers_data = array(
 					$column(
 						array(
 							$eyebrow( 'Looking to hire?' ),
-							$heading( 'Tell us who you need', 'h2', '#1B3052', $h2_clamp ),
+							$heading( 'Tell us who you need', 'h2', '#1B4068', $h2_clamp ),
 							$lede( 'Send us a few details and we&rsquo;ll come back to you within one working day. No obligation, no hard sell.' ),
 							$contact_details(),
 						)
@@ -568,7 +568,7 @@ foreach ( $poolhall_sector_sections as $i => [ $poolhall_s_name, $poolhall_s_led
 					$column(
 						array(
 							$eyebrow( 'Core sector' ),
-							$heading( $poolhall_s_name, 'h2', '#1B3052', $h2_clamp ),
+							$heading( $poolhall_s_name, 'h2', '#1B4068', $h2_clamp ),
 							$lede( $poolhall_s_lede ),
 							$widget( 'text-editor', array( 'editor' => $chips ) ),
 						)
@@ -609,7 +609,7 @@ $sectors_data = array_merge(
 	$sector_blocks,
 	array(
 		$section(
-			'#14233F',
+			'#0B2846',
 			array(
 				$container(
 					array(
@@ -675,7 +675,7 @@ $services_data = array(
 					$column(
 						array(
 							$eyebrow( 'Fixed-fee advertising' ),
-							$heading( 'Better Job Adverts', 'h2', '#1B3052', $h2_clamp ),
+							$heading( 'Better Job Adverts', 'h2', '#1B4068', $h2_clamp ),
 							$lede( 'Keep recruitment in-house and let us do the heavy lifting: professionally written, branded adverts across the major job boards.' ),
 							$check_list(
 								array(
@@ -705,7 +705,7 @@ $services_data = array(
 		)
 	),
 	$section(
-		'#14233F',
+		'#0B2846',
 		array(
 			$container(
 				array(
@@ -752,7 +752,7 @@ $contact_data = array(
 				array(
 					$column(
 						array(
-							$heading( 'Talk to a real person', 'h2', '#1B3052', $h2_clamp ),
+							$heading( 'Talk to a real person', 'h2', '#1B4068', $h2_clamp ),
 							$body( 'No call centres, no ticket queues — you&rsquo;ll get one of the team every time.' ),
 							$contact_details(),
 						)
@@ -797,7 +797,7 @@ $join_data = array(
 								array(
 									'title'        => 'Senior Recruitment Consultant',
 									'header_size'  => 'h2',
-									'title_color'  => '#1B3052',
+									'title_color'  => '#1B4068',
 									'_css_classes' => 'ph-h3',
 								)
 							),
@@ -826,7 +826,7 @@ $join_data = array(
 								array(
 									'title'        => 'Partner model',
 									'header_size'  => 'h2',
-									'title_color'  => '#1B3052',
+									'title_color'  => '#1B4068',
 									'_css_classes' => 'ph-h3',
 								)
 							),
@@ -847,7 +847,7 @@ $join_data = array(
 		)
 	),
 	$section(
-		'#14233F',
+		'#0B2846',
 		array(
 			$container(
 				array(
@@ -912,7 +912,7 @@ foreach ( $poolhall_bja_steps as [ $poolhall_step_num, $poolhall_step_title, $po
 				array(
 					'title'        => $poolhall_step_title,
 					'header_size'  => 'h3',
-					'title_color'  => '#1B3052',
+					'title_color'  => '#1B4068',
 					'_css_classes' => 'ph-h4',
 				)
 			),
@@ -1022,7 +1022,7 @@ $bja_data = array(
 	),
 	// CTA band.
 	$section(
-		'#14233F',
+		'#0B2846',
 		array(
 			$container(
 				array(
