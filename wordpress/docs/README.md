@@ -28,6 +28,7 @@ When sources disagree, use this order:
 - `09-PENETRATION-TEST-PLAN.md` - authorised test scope, test script, evidence, remediation, retest and launch gate.
 - `10-ELEMENTOR-DESIGN-SYSTEM.md` - prototype-derived variables, Atomic classes, components, loop templates, fluid sizing and responsive rules.
 - `11-AS-BUILT-SCAFFOLD.md` - living as-built inventory: stack diagram, annotated repo tree, site/template map, dynamic seams, and the open design gaps for the visual pass.
+- `12-FULL-BUILD-SPEC-v2.md` - the v2 "Engineered" build directive (latest scope authority; supersedes the earlier directive). Giig credentials redacted; they live only in wp-config/environment. Drives the upcoming visual redesign and the Giig live-integration work.
 - `CLAUDE.md` - concise standing context for the coding agent.
 
 ## Non-negotiable decisions
