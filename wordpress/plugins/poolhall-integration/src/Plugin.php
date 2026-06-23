@@ -163,11 +163,34 @@ final class Plugin {
 		$security     = new SecurityService( $candidates, $passwords, $tokens, $resends, $limiter, $failures, $mailer, $logger );
 		$sessions     = new SessionRegistry();
 
+		// Push verified candidates into Giig (never-lose: emails Poolhall when
+		// the live endpoint is not configured). Hooked to verification.
+		$exporter = new \Poolhall\Integration\Accounts\CandidateExporter( $candidates, $this->candidate_sink(), $mailer, $logger );
+		add_action( 'poolhall_candidate_verified', array( $exporter, 'export' ) );
+
 		( new PortalGuard( $candidates, $returns ) )->register();
 		( new AuthEndpoints( $login, $registration, $verification, $recovery, $returns ) )->register();
 		( new SecurityEndpoints( $security, $sessions, $candidates ) )->register();
 		( new AuthForms( $verification, $security, $sessions, new SessionDescriber(), new SavedJobsRepository(), new JobRepository() ) )->register();
 		( new SavedJobsController( new SavedJobsRepository(), new JobRepository(), $candidates, $returns ) )->register();
+	}
+
+	/**
+	 * Build the candidate sink. Filterable (`poolhall_candidate_sink`) so a
+	 * fixture can stand in on staging; otherwise the Giig sink when configured,
+	 * else the null sink that triggers the email fallback.
+	 */
+	private function candidate_sink(): \Poolhall\Integration\Source\CandidateSink {
+		$sink = apply_filters( 'poolhall_candidate_sink', null );
+		if ( $sink instanceof \Poolhall\Integration\Source\CandidateSink ) {
+			return $sink;
+		}
+		try {
+			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment(), $company );
+		} catch ( \Poolhall\Integration\Source\SourceException ) {
+			return new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
+		}
 	}
 
 	public function run_scheduled_sync(): void {

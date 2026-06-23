@@ -86,14 +86,20 @@ final class AuthEndpoints {
 
 		$result = $this->registration->register(
 			array(
-				'first_name'      => $this->field( 'first_name' ),
-				'last_name'       => $this->field( 'last_name' ),
-				'email'           => $this->field( 'email' ),
-				'password'        => $this->raw_password( 'password' ),
-				'accept_terms'    => '1' === $this->field( 'accept_terms' ),
-				'alert_consent'   => '1' === $this->field( 'alert_consent' ),
-				'terms_version'   => $this->field( 'terms_version' ),
-				'privacy_version' => $this->field( 'privacy_version' ),
+				'first_name'          => $this->field( 'first_name' ),
+				'last_name'           => $this->field( 'last_name' ),
+				'email'               => $this->field( 'email' ),
+				'password'            => $this->raw_password( 'password' ),
+				'accept_terms'        => '1' === $this->field( 'accept_terms' ),
+				'alert_consent'       => '1' === $this->field( 'alert_consent' ),
+				'terms_version'       => $this->field( 'terms_version' ),
+				'privacy_version'     => $this->field( 'privacy_version' ),
+				'phone'               => $this->field( 'phone' ),
+				'role_title'          => $this->field( 'role_title' ),
+				'location'            => $this->field( 'location' ),
+				'salary_expectations' => $this->field( 'salary_expectations' ),
+				'linkedin'            => $this->field( 'linkedin' ),
+				'summary'             => $this->field( 'summary' ),
 			),
 			$this->now()
 		);

@@ -31,6 +31,13 @@ final class CandidateRepository {
 	public const META_PENDING_EMAIL_ISSUED = 'poolhall_pending_email_token_issued_at';
 	public const META_EMAIL_CHANGE_SENDS   = 'poolhall_email_change_sends';
 
+	public const META_PROFILE      = 'poolhall_candidate_profile';
+	public const META_GIIG_ID      = 'poolhall_giig_candidate_id';
+	public const META_GIIG_PENDING = 'poolhall_giig_export_pending';
+
+	/** Candidate profile fields captured at registration (for Giig + the portal). */
+	public const PROFILE_FIELDS = array( 'phone', 'role_title', 'location', 'salary_expectations', 'linkedin', 'summary' );
+
 	public function find_by_email( string $email ): ?\WP_User {
 		$user = get_user_by( 'email', EmailAddress::normalize( $email ) );
 		return $user instanceof \WP_User ? $user : null;
@@ -61,6 +68,49 @@ final class CandidateRepository {
 			throw new \RuntimeException( 'Failed to create candidate: ' . $result->get_error_message() );
 		}
 		return (int) $result;
+	}
+
+	/**
+	 * Store the candidate's profile details (known PROFILE_FIELDS only).
+	 * Marks the record pending export so verification can push it to Giig.
+	 *
+	 * @param array<string,string> $profile Raw profile fields.
+	 */
+	public function save_profile( int $user_id, array $profile ): void {
+		$clean = array();
+		foreach ( self::PROFILE_FIELDS as $field ) {
+			$value = isset( $profile[ $field ] ) ? trim( (string) $profile[ $field ] ) : '';
+			if ( '' !== $value ) {
+				$clean[ $field ] = $value;
+			}
+		}
+		update_user_meta( $user_id, self::META_PROFILE, $clean );
+	}
+
+	/** @return array<string,string> */
+	public function profile( int $user_id ): array {
+		$stored = get_user_meta( $user_id, self::META_PROFILE, true );
+		return is_array( $stored ) ? array_map( 'strval', $stored ) : array();
+	}
+
+	public function giig_candidate_id( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_GIIG_ID, true );
+	}
+
+	public function set_giig_candidate_id( int $user_id, string $candidate_id ): void {
+		update_user_meta( $user_id, self::META_GIIG_ID, $candidate_id );
+	}
+
+	public function mark_export_pending( int $user_id ): void {
+		update_user_meta( $user_id, self::META_GIIG_PENDING, '1' );
+	}
+
+	public function clear_export_pending( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_GIIG_PENDING );
+	}
+
+	public function is_export_pending( int $user_id ): bool {
+		return '1' === (string) get_user_meta( $user_id, self::META_GIIG_PENDING, true );
 	}
 
 	/**

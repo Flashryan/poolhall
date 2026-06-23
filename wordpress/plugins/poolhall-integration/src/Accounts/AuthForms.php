@@ -142,6 +142,18 @@ final class AuthForms {
 			. $this->text_field( 'last_name', __( 'Last name', 'poolhall-integration' ), 'text', 'family-name', $codes, array( 'last_name_required' ) )
 			. '</div>'
 			. $this->text_field( 'email', __( 'Email address', 'poolhall-integration' ), 'email', 'email', $codes, array( 'email_invalid' ) )
+			. '<p class="ph-eyebrow" style="margin-top:0.5rem;">' . esc_html__( 'Help us match you', 'poolhall-integration' ) . '</p>'
+			. '<p class="ph-small ph-text-muted" style="margin-top:-0.25rem;">' . esc_html__( 'These are optional and go to our team to match you to roles. You can add them later from your profile.', 'poolhall-integration' ) . '</p>'
+			. '<div class="ph-form-grid">'
+			. $this->optional_field( 'phone', __( 'Phone number', 'poolhall-integration' ), 'tel', 'tel' )
+			. $this->optional_field( 'location', __( 'Location', 'poolhall-integration' ), 'text', 'address-level2' )
+			. '</div>'
+			. '<div class="ph-form-grid">'
+			. $this->optional_field( 'role_title', __( 'Desired role or job title', 'poolhall-integration' ), 'text', 'organization-title' )
+			. $this->optional_field( 'salary_expectations', __( 'Salary expectations', 'poolhall-integration' ), 'text', 'off' )
+			. '</div>'
+			. $this->optional_field( 'linkedin', __( 'LinkedIn profile', 'poolhall-integration' ), 'url', 'url' )
+			. $this->optional_textarea( 'summary', __( 'About you', 'poolhall-integration' ), __( 'A short summary of your experience and the roles you are looking for', 'poolhall-integration' ) )
 			. $this->password_field( 'password', __( 'Choose a password', 'poolhall-integration' ), 'new-password', __( 'At least 12 characters. A few unrelated words make a strong, memorable password.', 'poolhall-integration' ), $codes, array( 'too_short', 'too_long', 'common_password', 'low_variety', 'contains_email' ) )
 			. $this->checkbox_field( 'accept_terms', __( 'I accept the Terms of Use and Privacy Notice.', 'poolhall-integration' ), $codes, 'terms_required' )
 			. '<label class="ph-checkbox"><input type="checkbox" name="alert_consent" value="1" /> <span class="ph-body">' . esc_html__( 'Email me job alerts I set up. Optional, and you can change this anytime.', 'poolhall-integration' ) . '</span></label>'
@@ -492,6 +504,26 @@ final class AuthForms {
 	 * @param string[] $codes        Active error codes from the query string.
 	 * @param string[] $field_errors Codes that belong to this field.
 	 */
+	/** An optional (not HTML-required) text input, no validation highlighting. */
+	private function optional_field( string $name, string $label, string $type, string $autocomplete, string $placeholder = '' ): string {
+		$id = 'ph-auth-' . $name;
+		return '<div class="ph-field">'
+			. '<label class="ph-field__label" for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label>'
+			. '<input class="ph-field__control" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '" type="' . esc_attr( $type ) . '" autocomplete="' . esc_attr( $autocomplete ) . '"'
+			. ( '' !== $placeholder ? ' placeholder="' . esc_attr( $placeholder ) . '"' : '' ) . ' />'
+			. '</div>';
+	}
+
+	/** An optional multi-line input for the candidate's summary. */
+	private function optional_textarea( string $name, string $label, string $placeholder = '' ): string {
+		$id = 'ph-auth-' . $name;
+		return '<div class="ph-field">'
+			. '<label class="ph-field__label" for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label>'
+			. '<textarea class="ph-field__control" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '" rows="3"'
+			. ( '' !== $placeholder ? ' placeholder="' . esc_attr( $placeholder ) . '"' : '' ) . '></textarea>'
+			. '</div>';
+	}
+
 	private function text_field( string $name, string $label, string $type, string $autocomplete, array $codes = array(), array $field_errors = array() ): string {
 		$active = array_values( array_intersect( $codes, $field_errors ) );
 		$id     = 'ph-auth-' . $name;

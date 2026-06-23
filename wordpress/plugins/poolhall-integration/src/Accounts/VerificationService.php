@@ -47,6 +47,14 @@ final class VerificationService {
 		$this->candidates->mark_verified( $user_id, $now );
 		$this->logger->log( 'candidate_verified', array( 'user_id' => $user_id ) );
 
+		/**
+		 * Fires once a candidate's email is verified and the account is active.
+		 * CandidateExporter listens here to push the candidate into Giig.
+		 *
+		 * @param int $user_id Verified candidate user id.
+		 */
+		do_action( 'poolhall_candidate_verified', $user_id );
+
 		return array( 'status' => 'verified' );
 	}
 

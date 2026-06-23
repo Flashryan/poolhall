@@ -29,7 +29,7 @@ final class RegistrationService {
 	) {}
 
 	/**
-	 * @param array{first_name?:string,last_name?:string,email?:string,password?:string,accept_terms?:bool,alert_consent?:bool,terms_version?:string,privacy_version?:string} $input Submitted fields.
+	 * @param array{first_name?:string,last_name?:string,email?:string,password?:string,accept_terms?:bool,alert_consent?:bool,terms_version?:string,privacy_version?:string,phone?:string,role_title?:string,location?:string,salary_expectations?:string,linkedin?:string,summary?:string} $input Submitted fields.
 	 * @return array{status:'check_email'|'invalid',errors:string[]}
 	 */
 	public function register( array $input, \DateTimeImmutable $now ): array {
@@ -37,6 +37,16 @@ final class RegistrationService {
 		$last_name  = sanitize_text_field( $input['last_name'] ?? '' );
 		$email      = EmailAddress::normalize( $input['email'] ?? '' );
 		$password   = (string) ( $input['password'] ?? '' );
+
+		// Extended profile (all optional; pushed to Giig once verified).
+		$profile = array(
+			'phone'               => sanitize_text_field( $input['phone'] ?? '' ),
+			'role_title'          => sanitize_text_field( $input['role_title'] ?? '' ),
+			'location'            => sanitize_text_field( $input['location'] ?? '' ),
+			'salary_expectations' => sanitize_text_field( $input['salary_expectations'] ?? '' ),
+			'linkedin'            => sanitize_text_field( $input['linkedin'] ?? '' ),
+			'summary'             => sanitize_textarea_field( $input['summary'] ?? '' ),
+		);
 
 		$errors = array();
 		if ( '' === $first_name ) {
@@ -79,6 +89,10 @@ final class RegistrationService {
 			),
 			$now
 		);
+		// Store the profile and flag for Giig export; the push happens once the
+		// candidate verifies their email (CandidateExporter on that action).
+		$this->candidates->save_profile( $user_id, $profile );
+		$this->candidates->mark_export_pending( $user_id );
 		$this->send_verification( $user_id, $email, $now );
 		$this->logger->log( 'candidate_registered', array( 'user_id' => $user_id ) );
 
