@@ -128,6 +128,9 @@ final class Plugin {
 		) )->register();
 		( new \Poolhall\Integration\Applications\ApplicationForm( new Options() ) )->register();
 
+		// Marketing components consumed by Elementor templates (§11.6 tiers).
+		( new \Poolhall\Integration\Marketing\ServiceTiers() )->register();
+
 		$scheduler = new Scheduler();
 		$scheduler->register();
 		add_action( Scheduler::HOOK, array( $this, 'run_scheduled_sync' ) );

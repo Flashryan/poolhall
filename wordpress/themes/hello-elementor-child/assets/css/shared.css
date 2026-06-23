@@ -238,9 +238,11 @@
 .ph-job-flair { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ph-space-3); }
 .ph-job-flair .ph-eyebrow { color: var(--ph-color-gold-ink); }
 .ph-job-meta { display: flex; flex-wrap: wrap; gap: var(--ph-space-2) var(--ph-space-4); }
+/* Mono "data" meta row — the engineered signature (§11.5/§11.2). */
 .ph-job-meta__item {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: var(--ph-type-small-size); color: var(--ph-color-muted);
+  font-family: var(--ph-font-data); font-size: var(--ph-type-data-size);
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--ph-color-muted);
 }
 .ph-job-meta__item svg { flex-shrink: 0; color: var(--ph-color-muted-soft); }
 .ph-job-summary {
@@ -391,7 +393,7 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-search-trust__item svg { flex-shrink: 0; color: var(--ph-color-gold-500); }
 
 /* Job card internals (§12/§14): salary uses display type, never form/nav. */
-.ph-job-salary { font-family: var(--ph-font-display); font-weight: 600; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-700); }
+.ph-job-salary { font-family: var(--ph-font-display); font-weight: 700; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-900); }
 
 /* Jobs archive browser (directive §3.2, prototype Jobs.jsx): sticky filter
    sidebar + results column, applied chips, sort, pagination, empty state,
@@ -651,3 +653,35 @@ html, body {
 .ph-modal__success { display: flex; flex-direction: column; align-items: center; gap: var(--ph-space-3); padding: 2.25rem 1.875rem; text-align: center; }
 .ph-modal__tick { display: inline-flex; align-items: center; justify-content: center; inline-size: 4rem; block-size: 4rem; border-radius: 50%; background-color: var(--ph-color-success-50); color: var(--ph-color-success); }
 @media (prefers-reduced-motion: reduce) { .ph-modal__bar i { transition: none; } }
+
+/* Service tiers (§11.6): Bronze / Silver / Gold pricing grid, rendered by
+   [poolhall_service_tiers]. Gold is the featured tier (gold border + ribbon
+   + gold primary CTA). The pricing note is the mandatory indicative-fee
+   disclaimer. */
+.ph-tiers { display: grid; grid-template-columns: 1fr; gap: var(--ph-space-6); align-items: stretch; }
+@media (min-width: 56.25em) { .ph-tiers { grid-template-columns: repeat(3, 1fr); } }
+.ph-tier { position: relative; display: flex; flex-direction: column; gap: var(--ph-space-5); background-color: var(--ph-color-white); border: 1px solid var(--ph-color-border); border-radius: var(--ph-radius-lg); padding: clamp(1.5rem, 1.2rem + 1vw, 2rem); box-shadow: var(--ph-shadow-card); overflow: hidden; }
+.ph-tier.is-featured { border: 2px solid var(--ph-color-gold-500); box-shadow: var(--ph-shadow-raised); }
+.ph-tier__ribbon { position: absolute; inset-block-start: 0; inset-inline-end: 0; background-color: var(--ph-color-gold-500); color: var(--ph-color-on-accent); font-family: var(--ph-font-data); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 12px; border-end-start-radius: var(--ph-radius-md); }
+.ph-tier__head { display: flex; flex-direction: column; gap: 6px; }
+.ph-tier__name { display: inline-flex; align-items: center; gap: 8px; font-family: var(--ph-font-data); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ph-color-muted); }
+/* Metallic badge dots are literal metals, not palette tokens. */
+.ph-tier__dot { inline-size: 0.625rem; block-size: 0.625rem; border-radius: 50%; }
+.ph-tier--bronze .ph-tier__dot { background: linear-gradient(135deg, #C88E54, #9C6A38); }
+.ph-tier--silver .ph-tier__dot { background: linear-gradient(135deg, #CDD3DB, #9AA4B2); }
+.ph-tier--gold .ph-tier__dot { background: linear-gradient(135deg, var(--ph-color-gold-400), var(--ph-color-gold-600)); }
+.ph-tier__product { margin: 2px 0 0; }
+.ph-tier__sub { margin: 0; }
+.ph-tier__price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; }
+.ph-tier__figure { font-family: var(--ph-font-display); font-weight: 800; font-size: clamp(2rem, 1.6rem + 1.4vw, 2.75rem); line-height: 1; letter-spacing: -0.02em; color: var(--ph-color-navy-900); }
+.ph-tier__unit { color: var(--ph-color-muted); }
+.ph-tier__price--enquire { color: var(--ph-color-muted); font-size: var(--ph-type-small-size); text-transform: none; letter-spacing: 0; }
+.ph-tier-feats { list-style: none; margin: 0; padding: var(--ph-space-4) 0 0; border-block-start: 1px solid var(--ph-color-border); display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
+.ph-tier-feat { display: flex; align-items: flex-start; gap: 9px; font-size: var(--ph-type-small-size); line-height: 1.4; color: var(--ph-color-ink); }
+.ph-tier-feat__icon { flex-shrink: 0; margin-block-start: 1px; }
+.ph-tier-feat__icon--on { color: var(--ph-color-success); }
+.ph-tier-feat__icon--off { color: var(--ph-color-muted-soft); }
+.ph-tier-feat--off { color: var(--ph-color-muted-soft); }
+.ph-tier-feat--head { font-family: var(--ph-font-body); font-weight: 700; color: var(--ph-color-navy-900); margin-block-start: 2px; }
+.ph-tier .ph-button { margin-block-start: auto; }
+.ph-pricing-note { margin: var(--ph-space-5) auto 0; max-inline-size: 64ch; text-align: center; color: var(--ph-color-muted); }
