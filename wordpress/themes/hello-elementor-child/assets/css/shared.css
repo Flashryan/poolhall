@@ -559,3 +559,43 @@ html, body {
   white-space: nowrap;
   border: 0;
 }
+
+/* Application popup (apply journey, spec §7.4): two-step modal over the
+   single-job page. Uses the design-system tokens; restyled with the v2
+   palette in the global repalette pass. */
+.ph-modal-overlay { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; background-color: rgba(11, 22, 38, 0.6); }
+/* The overlay and several inner elements set display:flex, which beats the UA
+   [hidden] rule; restore it so the hidden panel, progress and success states
+   (and the whole modal with no JS) actually stay hidden until toggled. */
+.ph-modal-overlay[hidden],
+.ph-modal [hidden] { display: none; }
+.ph-modal { inline-size: 100%; max-inline-size: 35rem; margin: auto; background-color: var(--ph-color-white); border-radius: var(--ph-radius-lg); box-shadow: var(--ph-shadow-raised); overflow: hidden; }
+.ph-modal__head { position: relative; background-color: var(--ph-color-navy-800); color: var(--ph-color-white); padding: 1.25rem 1.5rem; }
+.ph-modal__sector { font-family: var(--ph-font-body); font-weight: 700; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ph-color-orange-500); }
+.ph-modal__title { font-family: var(--ph-font-display); font-weight: 600; font-size: 1.2rem; color: var(--ph-color-white); margin: 0.3rem 2rem 0 0; }
+.ph-modal__facts { display: flex; flex-wrap: wrap; gap: 4px 1rem; margin: 0.6rem 0 0; font-size: 0.8125rem; color: #A7B4C8; }
+.ph-modal__facts > span { display: inline-flex; align-items: center; gap: 5px; }
+.ph-modal__close { position: absolute; top: 1rem; right: 1rem; inline-size: 2rem; block-size: 2rem; border: 0; border-radius: 50%; cursor: pointer; background-color: rgba(255, 255, 255, 0.12); color: var(--ph-color-white); font-size: 1.25rem; line-height: 1; }
+.ph-modal__close:hover { background-color: rgba(255, 255, 255, 0.22); }
+.ph-modal__progress { display: flex; align-items: center; gap: 10px; padding: 1rem 1.5rem 0; }
+.ph-modal__step { display: inline-flex; align-items: center; gap: 8px; font-family: var(--ph-font-body); font-weight: 700; font-size: 0.78rem; color: var(--ph-color-muted); }
+.ph-modal__dot { display: inline-flex; align-items: center; justify-content: center; inline-size: 1.375rem; block-size: 1.375rem; border-radius: 50%; background-color: var(--ph-color-mist); color: var(--ph-color-muted); font-size: 0.75rem; }
+.ph-modal__step.is-on { color: var(--ph-color-navy-700); } .ph-modal__step.is-on .ph-modal__dot { background-color: var(--ph-color-orange-500); color: var(--ph-color-white); }
+.ph-modal__step.is-done { color: var(--ph-color-navy-700); } .ph-modal__step.is-done .ph-modal__dot { background-color: var(--ph-color-success); color: var(--ph-color-white); }
+.ph-modal__bar { flex: 1; block-size: 3px; border-radius: 99px; background-color: var(--ph-color-mist); overflow: hidden; }
+.ph-modal__bar i { display: block; block-size: 100%; inline-size: 50%; background-color: var(--ph-color-orange-500); transition: width 0.25s ease; }
+.ph-modal__body { display: flex; flex-direction: column; gap: var(--ph-space-4); padding: 1.25rem 1.5rem 1.5rem; }
+.ph-modal__foot { display: flex; align-items: center; gap: 10px; margin-top: var(--ph-space-2); }
+.ph-modal__spacer { flex: 1; }
+.ph-modal__secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0.5rem 0 0; font-size: 0.75rem; color: var(--ph-color-muted); }
+.ph-dropzone { display: block; padding: 1.375rem; border: 2px dashed #C9D0DA; border-radius: var(--ph-radius-md); text-align: center; cursor: pointer; background-color: var(--ph-color-paper); transition: border-color 0.15s, background-color 0.15s; }
+.ph-dropzone:hover, .ph-dropzone.is-drag { border-color: var(--ph-color-blue-600); background-color: #EAF3FB; }
+.ph-dropzone.has-file { border-style: solid; border-color: var(--ph-color-success); background-color: #E4F3EC; }
+.ph-dropzone svg { color: #9AA4B2; margin-bottom: 4px; }
+.ph-dropzone.has-file svg { color: var(--ph-color-success); }
+.ph-dropzone__main { display: block; font-weight: 700; color: var(--ph-color-ink); }
+.ph-dropzone__sub { display: block; font-size: 0.75rem; color: var(--ph-color-muted); margin-top: 3px; }
+.ph-field--invalid-input { border-color: var(--ph-color-error) !important; }
+.ph-modal__success { display: flex; flex-direction: column; align-items: center; gap: var(--ph-space-3); padding: 2.25rem 1.875rem; text-align: center; }
+.ph-modal__tick { display: inline-flex; align-items: center; justify-content: center; inline-size: 4rem; block-size: 4rem; border-radius: 50%; background-color: #E4F3EC; color: var(--ph-color-success); }
+@media (prefers-reduced-motion: reduce) { .ph-modal__bar i { transition: none; } }

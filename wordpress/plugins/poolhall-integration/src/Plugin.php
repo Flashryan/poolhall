@@ -120,6 +120,14 @@ final class Plugin {
 		( new \Poolhall\Integration\Enquiries\EnquiryEndpoints( $enquiries ) )->register();
 		( new \Poolhall\Integration\Enquiries\EnquiryForm() )->register();
 
+		// Candidate application popup: first-party capture emailed to Poolhall
+		// (build reference applypopupjourney.html). Not a Giig push.
+		( new \Poolhall\Integration\Applications\ApplicationRecord() )->register();
+		( new \Poolhall\Integration\Applications\ApplicationEndpoints(
+			new \Poolhall\Integration\Applications\ApplicationService( new Logger() )
+		) )->register();
+		( new \Poolhall\Integration\Applications\ApplicationForm( new Options() ) )->register();
+
 		$scheduler = new Scheduler();
 		$scheduler->register();
 		add_action( Scheduler::HOOK, array( $this, 'run_scheduled_sync' ) );

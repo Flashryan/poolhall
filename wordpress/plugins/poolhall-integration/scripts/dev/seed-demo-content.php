@@ -128,5 +128,14 @@ update_option(
 );
 update_option( 'poolhall_demo_content', '1', false );
 
+// Switch the first-party apply popup on for staging so it can be tested
+// end to end. Applications email to the inbox option (falls back to
+// admin_email), with the CV attached. Production stays on the safe contact
+// CTA until this is flipped deliberately and the inbox is confirmed
+// (hard rule 4: never put real candidate data on staging — test with fake
+// applicants only). Never proxies Giig's hosted form (hard rules 5/15).
+update_option( \Poolhall\Integration\Support\Options::APPLY_CHANNEL, 'email', false );
+
 printf( "Demo jobs in place: %d (source=demo). Demo reviews stored; poolhall_demo_content=1.\n", $poolhall_count );
+echo "Apply popup enabled for staging (poolhall_apply_channel=email; inbox falls back to admin_email).\n";
 echo "OK: staging demo content seeded. Never run this on production.\n";

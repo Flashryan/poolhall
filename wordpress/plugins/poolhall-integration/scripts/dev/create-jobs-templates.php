@@ -9,8 +9,10 @@
  * repeated content (§1/§12), classes mirror the v4 registry instead of raw
  * values (§12), archive grid is one column with query ID
  * `poolhall_jobs_archive` (§13), single job uses the navy hero and apply
- * sidebar (§14). Apply remains a contact CTA while the application mode is
- * unset (hard rules 5/15 — no fake apply, no Giig hosted-form proxy).
+ * sidebar (§14). The apply CTA is the [poolhall_apply_button] shortcode: it
+ * opens the first-party application popup (emails Poolhall) when the apply
+ * channel is on, else a contact CTA. It never proxies Giig's hosted form or
+ * claims a Giig submission (hard rules 5/15).
  *
  * Idempotent: templates are found by title and updated, with an
  * _elementor_data backup taken before every write (hard rule 11).
@@ -373,8 +375,8 @@ update_post_meta( $jobs_page->ID, '_elementor_data', wp_slash( wp_json_encode( $
 
 // ------------------------------------------------- single job template ----
 // §14: navy hero with sector/title/meta, content + apply-card sidebar.
-// The sidebar CTA routes to Contact while the application mode is unset.
-$contact_url = get_permalink( get_page_by_path( 'contact' )->ID ?? 0 );
+// The sidebar CTA is the [poolhall_apply_button] shortcode (resolves its own
+// contact fallback), so no contact URL is needed here.
 
 $single_data = array(
 	$container(
@@ -529,22 +531,14 @@ $single_data = array(
 								)
 							),
 							$widget( 'divider', array( 'color' => '#E3E7ED' ) ),
+							// Apply CTA. The shortcode renders the popup trigger when
+							// the apply channel is on, and the safe contact-page CTA
+							// (also the no-JS fallback) when it is off. Styling lives
+							// in the .ph-button classes, not Elementor widget settings.
 							$widget(
-								'button',
+								'shortcode',
 								array(
-									'text'                          => 'Contact us about this role',
-									'link'                          => array(
-										'url'         => $contact_url,
-										'is_external' => '',
-										'nofollow'    => '',
-									),
-									'background_color'              => '#EC6F1E',
-									'button_background_hover_color' => '#D45F12',
-									'button_text_color'             => '#FFFFFF',
-									'hover_color'                   => '#FFFFFF',
-									'typography_typography'         => 'custom',
-									'typography_font_family'        => 'Hanken Grotesk',
-									'typography_font_weight'        => '700',
+									'shortcode' => '[poolhall_apply_button]',
 								)
 							),
 						),

@@ -16,11 +16,28 @@ namespace Poolhall\Integration\Support;
 final class Options {
 
 	public const APPLICATION_MODE = 'poolhall_application_mode';
+	public const APPLY_CHANNEL    = 'poolhall_apply_channel';
 
 	/** Mode values: 'unset' until Phase 1 proves the contract; then 'a' or 'b'. */
 	public function application_mode(): string {
 		$mode = (string) get_option( self::APPLICATION_MODE, 'unset' );
 		return in_array( $mode, array( 'a', 'b' ), true ) ? $mode : 'unset';
+	}
+
+	/**
+	 * How the Apply CTA behaves. `email` = first-party popup that emails the
+	 * application (with CV) to Poolhall; `contact` = route to the contact
+	 * page (the safe default before the channel is switched on). Separate
+	 * from the Giig `application_mode`: emailing Poolhall never proxies
+	 * Giig's hosted form (hard rule 5) and leaves schema directApply off.
+	 */
+	public function apply_channel(): string {
+		$channel = (string) get_option( self::APPLY_CHANNEL, 'contact' );
+		return in_array( $channel, array( 'email', 'contact' ), true ) ? $channel : 'contact';
+	}
+
+	public function apply_to_poolhall_enabled(): bool {
+		return 'email' === $this->apply_channel();
 	}
 
 	/** First-party application UI may only render in proven Mode A. */

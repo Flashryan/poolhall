@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'POOLHALL_CHILD_VERSION', '0.7.0' );
+define( 'POOLHALL_CHILD_VERSION', '0.8.0' );
 
 add_action(
 	'wp_enqueue_scripts',
