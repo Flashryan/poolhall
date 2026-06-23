@@ -11,15 +11,25 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'POOLHALL_CHILD_VERSION', '0.8.0' );
+define( 'POOLHALL_CHILD_VERSION', '0.9.0' );
 
 add_action(
 	'wp_enqueue_scripts',
 	function () {
+		// v2 "Engineered" fonts (docs/12 §11.2): Archivo for display/headings,
+		// Source Sans 3 for body, IBM Plex Mono for job meta / reference IDs.
+		// Loaded explicitly so the families render on every surface (the apply
+		// modal, shared.css classes) without depending on Elementor.
+		wp_enqueue_style(
+			'poolhall-fonts',
+			'https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap',
+			array(),
+			null
+		);
 		wp_enqueue_style(
 			'hello-elementor-child',
 			get_stylesheet_directory_uri() . '/assets/css/shared.css',
-			array(),
+			array( 'poolhall-fonts' ),
 			POOLHALL_CHILD_VERSION
 		);
 		// Progressive enhancement only: the jobs filters and mobile drawer
@@ -44,6 +54,7 @@ add_filter(
 	'wp_resource_hints',
 	function ( array $urls, string $relation_type ): array {
 		if ( 'preconnect' === $relation_type ) {
+			$urls[] = 'https://fonts.googleapis.com';
 			$urls[] = array(
 				'href'        => 'https://fonts.gstatic.com',
 				'crossorigin' => 'anonymous',
