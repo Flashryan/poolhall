@@ -68,6 +68,10 @@ final class JobPostType {
 					'slug'       => 'jobs',
 					'with_front' => false,
 				),
+				// Nest under the "Poolhall Jobs" top-level menu (the Health /
+				// Site setup screen) rather than creating a second top-level
+				// menu, so there is one place for everything jobs-related.
+				'show_in_menu' => 'poolhall-jobs',
 				'menu_icon'    => 'dashicons-businessman',
 				'supports'     => array( 'title', 'editor', 'custom-fields' ),
 				'show_in_rest' => true,
