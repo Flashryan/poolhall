@@ -662,6 +662,19 @@ $services_data = array(
 			),
 		)
 	),
+	// Service tiers (11.6): Bronze/Silver/Gold engagement levels, rendered by
+	// the plugin shortcode (per-tier pricing gated off until fees are signed off).
+	$section(
+		'#F7F8FA',
+		array(
+			$section_head(
+				'How we work with you',
+				'Three levels of partnership',
+				'Choose the level of support that fits the role. Pricing is confirmed when you enquire, with no obligation.'
+			),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_service_tiers]' ) ),
+		)
+	),
 	// Better Job Adverts gets its own prominent band (spec §8: not buried).
 	$section(
 		'#F7F8FA',
