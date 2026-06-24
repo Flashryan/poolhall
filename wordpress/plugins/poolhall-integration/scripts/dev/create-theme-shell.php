@@ -156,7 +156,7 @@ $header_data = array(
 				'row'    => '16',
 			),
 			'background_background' => 'classic',
-			'background_color'      => '#0F1D33',
+			'background_color'      => '#06182B',
 			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '8',
@@ -431,7 +431,7 @@ $footer_data = array(
 				'row'    => '0',
 			),
 			'background_background' => 'classic',
-			'background_color'      => '#0F1D33',
+			'background_color'      => '#06182B',
 			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '64',

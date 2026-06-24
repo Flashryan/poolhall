@@ -947,7 +947,7 @@ $bja_data = array(
 					'size' => 'clamp(24rem, 50svh, 32rem)',
 				),
 				'background_background'         => 'classic',
-				'background_color'              => '#0F1D33',
+				'background_color'              => '#06182B',
 				'background_image'              => array(
 					'id'  => $poolhall_office_img,
 					'url' => (string) wp_get_attachment_image_url( $poolhall_office_img, 'full' ),
@@ -955,11 +955,12 @@ $bja_data = array(
 				'background_size'               => 'cover',
 				'background_position'           => 'center center',
 				'background_overlay_background' => 'classic',
-				'background_overlay_color'      => '#0F1D33',
+				'background_overlay_color'      => '#06182B',
 				'background_overlay_opacity'    => array(
 					'unit' => 'px',
 					'size' => 0.82,
 				),
+				'css_classes'                   => 'ph-goldedge',
 				'padding'                       => $section_padding( 96 ),
 			)
 		),

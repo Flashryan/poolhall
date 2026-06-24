@@ -276,8 +276,9 @@ $team_data = array(
 				),
 				'background_size'        => 'cover',
 				'background_position'    => 'center center',
+				'css_classes'            => 'ph-goldedge',
 				'background_overlay_background' => 'classic',
-				'background_overlay_color'      => '#0F1D33',
+				'background_overlay_color'      => '#06182B',
 				'background_overlay_opacity'    => array(
 					'unit' => 'px',
 					'size' => 0.78,
