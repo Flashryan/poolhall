@@ -280,7 +280,7 @@ $archive_data = array(
 	$container(
 		array(
 			'content_width' => 'full',
-			'css_classes'   => 'ph-section--navy ph-hero--slim',
+			'css_classes'   => 'ph-section--navy ph-hero--slim ph-pagehead',
 		),
 		array(
 			$container(
@@ -382,7 +382,7 @@ $single_data = array(
 	$container(
 		array(
 			'content_width' => 'full',
-			'css_classes'   => 'ph-section--navy ph-hero--job',
+			'css_classes'   => 'ph-section--navy ph-hero--job ph-pagehead',
 		),
 		array(
 			$container(

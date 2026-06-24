@@ -359,6 +359,12 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 /* Hero system (§9): solid navy heroes. */
 .ph-hero--slim { padding-block: clamp(3rem, 3vw + 2rem, 5rem); }
 .ph-hero--job { padding-block: clamp(3.5rem, 4vw + 2rem, 6rem); }
+/* v2 interior page-header (docs/12 §7): brand-navy ground under a 100deg
+   gradient with a 4px gold left edge. Photo-ready: drop an <img>/background
+   into .ph-pagehead__photo at ~0.5 opacity later; the gradient sits above it. */
+.ph-pagehead { position: relative; overflow: hidden; border-inline-start: 4px solid var(--ph-color-gold-500); background-image: linear-gradient(100deg, var(--ph-color-navy-950) 0%, var(--ph-color-navy-800) 100%); }
+.ph-pagehead > * { position: relative; z-index: 1; }
+.ph-pagehead__photo { position: absolute; inset: 0; z-index: 0; object-fit: cover; inline-size: 100%; block-size: 100%; opacity: 0.5; }
 
 /* Search module (§11): home search panel. White card, Mist fields,
    one control per row on mobile, three fields + action on desktop. */

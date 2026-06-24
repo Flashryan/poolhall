@@ -259,7 +259,7 @@ $section_head = static fn( string $eyebrow_text, string $title, string $lede_tex
 $hero_slim = static fn( string $eyebrow_text, string $title, string $lede_text, array $extra = array() ): array => $container(
 	array(
 		'content_width' => 'full',
-		'css_classes'   => 'ph-section--navy ph-hero--slim',
+		'css_classes'   => 'ph-section--navy ph-hero--slim ph-pagehead',
 	),
 	array(
 		$container(
