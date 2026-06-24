@@ -33,6 +33,13 @@ $pages = array(
 	'team'               => 'Meet the Team',
 	'join-our-team'      => 'Join Our Team',
 	'contact'            => 'Contact',
+	// v2 secondary pages (docs/12 §7.5/§7.7/§7.9).
+	'delivery-options'   => 'Delivery Options',
+	'why-us'             => 'Why Us',
+	'bespoke-search'     => 'Bespoke Search',
+	'hr-services'        => 'HR Services',
+	'commitment'         => 'Our Commitment',
+	'candidates'         => 'For Candidates',
 );
 
 $page_ids = array();
@@ -99,8 +106,8 @@ $ensure_menu = static function ( string $name, array $slugs ) use ( $page_ids ):
 	return $id;
 };
 
-$primary_menu = $ensure_menu( 'Primary', array( 'jobs', 'employers', 'sectors', 'team', 'contact' ) );
-$footer_menu  = $ensure_menu( 'Footer', array( 'services', 'better-job-adverts', 'join-our-team', 'contact' ) );
+$primary_menu = $ensure_menu( 'Primary', array( 'jobs', 'employers', 'candidates', 'sectors', 'team', 'contact' ) );
+$footer_menu  = $ensure_menu( 'Footer', array( 'services', 'delivery-options', 'better-job-adverts', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'join-our-team', 'contact' ) );
 echo "Menus: Primary #{$primary_menu}, Footer #{$footer_menu}.\n";
 
 // ------------------------------------------------------------ templates ----

@@ -365,6 +365,10 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-pagehead { position: relative; overflow: hidden; border-inline-start: 4px solid var(--ph-color-gold-500); background-image: linear-gradient(100deg, var(--ph-color-navy-950) 0%, var(--ph-color-navy-800) 100%); }
 .ph-pagehead > * { position: relative; z-index: 1; }
 .ph-pagehead__photo { position: absolute; inset: 0; z-index: 0; object-fit: cover; inline-size: 100%; block-size: 100%; opacity: 0.5; }
+/* Home hero "world" markers (§7.1): mono labels, active gets a gold top rule. */
+.ph-hero-worlds { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-block-start: 1.25rem; font-family: var(--ph-font-data); font-size: var(--ph-type-data-size); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ph-color-steel-200); }
+.ph-hero-worlds span { padding-block-start: 8px; border-block-start: 2px solid transparent; }
+.ph-hero-worlds span.is-active { color: var(--ph-color-white); border-block-start-color: var(--ph-color-gold-500); }
 
 /* Search module (§11): home search panel. White card, Mist fields,
    one control per row on mobile, three fields + action on desktop. */

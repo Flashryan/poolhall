@@ -230,7 +230,9 @@ $section_head = static fn( string $eyebrow_text, string $title, string $lede = '
 $jobs_url      = (string) get_permalink( get_page_by_path( 'jobs' ) );
 $employers_url = (string) get_permalink( get_page_by_path( 'employers' ) );
 
-// 1. Image hero (§9): office photo over navy, search panel + trust row.
+// 1. Hero (§7.1): office photo over brand navy, eyebrow, gold-emphasis H1,
+// lead, gold "Find work" + ghost-light "Hire talent" CTAs, world markers.
+// No search box in the hero (Poolhall is a partner, not a job board).
 $star_icon   = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
 $shield_icon = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>';
 
@@ -272,21 +274,28 @@ $hero = $container(
 				),
 			),
 			array(
-				$eyebrow( 'Independent recruitment · West Midlands', true ),
-				$heading( 'Find your next job with us', 'h1', '#FFFFFF', 'clamp(2.4rem, 1.9rem + 2.2vw, 3.5rem)' ),
+				$eyebrow( 'Recruitment, done well', true ),
 				$widget(
 					'text-editor',
-					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">We match incredible roles with amazing people. Honest advice, exclusive roles and a process that puts you first.</p>' )
+					array( 'editor' => '<h1 class="ph-display" style="color:#FFFFFF;margin:0">West Midlands roots. <span style="color:var(--ph-color-gold-500)">National</span> recruitment reach.</h1>' )
 				),
-				$widget( 'shortcode', array( 'shortcode' => '[poolhall_job_search]' ) ),
+				$widget(
+					'text-editor',
+					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">Specialist recruitment across construction, manufacturing and digital. Honest advice, thorough vetting and a process that puts people first.</p>' )
+				),
 				$widget(
 					'text-editor',
 					array(
-						'editor' => '<div class="ph-search-trust">'
-							. '<span class="ph-search-trust__item">' . $star_icon . '5.0 on Google Reviews</span>'
-							. '<span class="ph-search-trust__item">' . $shield_icon . 'Quality &amp; ethical, since 2021</span>'
-							. '[poolhall_live_roles]'
+						'editor' => '<div class="ph-cluster" style="gap:14px;margin-top:6px">'
+							. '<a class="ph-button ph-button--primary ph-button--lg" href="' . esc_url( home_url( '/jobs/' ) ) . '">Find work</a>'
+							. '<a class="ph-button ph-button--inverse ph-button--lg" href="' . esc_url( home_url( '/employers/' ) ) . '">Hire talent</a>'
 							. '</div>',
+					)
+				),
+				$widget(
+					'text-editor',
+					array(
+						'editor' => '<div class="ph-hero-worlds"><span class="is-active">Construction</span><span>Manufacturing</span><span>Digital</span><span>Team</span></div>',
 					)
 				),
 			),

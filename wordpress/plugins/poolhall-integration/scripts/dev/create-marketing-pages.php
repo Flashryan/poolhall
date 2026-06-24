@@ -34,7 +34,7 @@ if ( ! did_action( 'elementor/loaded' ) ) {
 	exit( 1 );
 }
 $poolhall_pages = array();
-foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs' ) as $poolhall_slug ) {
+foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates' ) as $poolhall_slug ) {
 	$poolhall_page = get_page_by_path( $poolhall_slug );
 	if ( ! $poolhall_page instanceof WP_Post ) {
 		printf( "FAIL: /%s/ page missing — run create-theme-shell.php first.\n", $poolhall_slug );
@@ -1063,6 +1063,187 @@ $bja_data = array(
 	),
 );
 
+// -------------------------------------------- v2 secondary pages (§7) ----
+// Composed from the same helpers the existing marketing pages use, so they
+// render identically. Photo page-header (ph-pagehead via $hero_slim) + a
+// points grid + a navy CTA band. British English, sentence case, no figures
+// or invented contacts (guardrails).
+$register_url = home_url( '/candidate/register/' );
+
+$cta_band = static function ( string $title, string $lede_text, string $cta_text, string $cta_url ) use ( $section, $container, $boxed, $gap, $heading, $lede, $button, $h2_clamp ): array {
+	return $section(
+		'#0B2846',
+		array(
+			$container(
+				$boxed(
+					array(
+						'flex_direction' => 'column',
+						'flex_gap'       => $gap( 16 ),
+						'width'          => array(
+							'unit' => 'custom',
+							'size' => 'min(100%, 42rem)',
+						),
+					)
+				),
+				array(
+					$heading( $title, 'h2', '#FFFFFF', $h2_clamp ),
+					$lede( $lede_text, true ),
+					$button( $cta_text, $cta_url, 'primary' ),
+				),
+				true
+			),
+		),
+		72
+	);
+};
+
+$points_page = static function ( string $he, string $ht, string $hl, string $se, string $st, array $cards, string $ct, string $cl, string $cta_text, string $cta_url ) use ( $hero_slim, $section, $section_head, $container, $card, $cta_band ): array {
+	return array(
+		$hero_slim( $he, $ht, $hl ),
+		$section(
+			'#FFFFFF',
+			array(
+				$section_head( $se, $st ),
+				$container(
+					array(
+						'content_width' => 'full',
+						'css_classes'   => 'ph-grid-3',
+					),
+					array_map( static fn( array $c ): array => $card( $c[0], $c[1] ), $cards ),
+					true
+				),
+			)
+		),
+		$cta_band( $ct, $cl, $cta_text, $cta_url ),
+	);
+};
+
+$write_page(
+	$poolhall_pages['delivery-options'],
+	$points_page(
+		'Delivery options',
+		'Flexible ways to work with us',
+		'Choose the model that fits the role, the timeline and the budget. We will recommend the right approach when you enquire.',
+		'How we deliver',
+		'Five ways to hire',
+		array(
+			array( 'Temporary', 'Cover peaks, projects and absence with vetted temporary staff, managed end to end.' ),
+			array( 'Permanent', 'A thorough, committed search for permanent hires, from sourcing to offer management.' ),
+			array( 'Scale', 'Volume and multi-site hiring with the structure and reporting to keep it on track.' ),
+			array( 'Pay monthly', 'Spread the cost of a permanent hire across manageable monthly payments.' ),
+			array( 'On-site', 'An embedded, on-site resourcing partner for high-volume or ongoing requirements.' ),
+		),
+		'Not sure which fits?',
+		'Tell us about the role and we will recommend the right approach, with no obligation.',
+		'Talk to our team',
+		$employers_url . '#enquiry'
+	)
+);
+
+$write_page(
+	$poolhall_pages['why-us'],
+	$points_page(
+		'Why us',
+		'Recruitment built on relationships, not transactions',
+		'West Midlands roots, national reach, and a genuine commitment to doing right by candidates and clients.',
+		'Why us',
+		'What sets us apart',
+		array(
+			array( 'Specialist consultants', 'Sector specialists who understand the roles, not generalists working from a script.' ),
+			array( 'Honest advice', 'Straight answers, even when they are not what you hoped to hear.' ),
+			array( 'Thorough vetting', 'Proper screening and referencing, so shortlists are genuinely interview-ready.' ),
+			array( 'Long-term partnerships', 'We invest in relationships that last well beyond a single placement.' ),
+		),
+		'See it for yourself',
+		'Tell us what you are hiring for and judge us on the shortlist.',
+		'Start a conversation',
+		$contact_url
+	)
+);
+
+$write_page(
+	$poolhall_pages['bespoke-search'],
+	$points_page(
+		'Bespoke search',
+		'A dedicated search for your most important hires',
+		'For senior, confidential or hard-to-fill roles, we run a focused, proactive search built around your brief.',
+		'Bespoke search',
+		'How a search works',
+		array(
+			array( 'Dedicated consultant', 'One point of contact who owns the brief from first call to offer.' ),
+			array( 'Proactive headhunting', 'We approach the people who are not actively looking, discreetly.' ),
+			array( 'Confidential by default', 'Sensitive and senior searches handled with full discretion.' ),
+			array( 'Market insight', 'Salary benchmarking and availability data to inform your decision.' ),
+		),
+		'Have a critical role to fill?',
+		'Tell us about it and we will scope the search with you.',
+		'Discuss a search',
+		$employers_url . '#enquiry'
+	)
+);
+
+$write_page(
+	$poolhall_pages['hr-services'],
+	$points_page(
+		'HR services',
+		'Practical HR support for growing teams',
+		'Beyond hiring, we help with the people side of running a business.',
+		'HR services',
+		'Support beyond hiring',
+		array(
+			array( 'Contracts and policies', 'Practical, compliant documents tailored to how your business works.' ),
+			array( 'Onboarding', 'Help new starters settle in quickly, and stay.' ),
+			array( 'Compliance', 'Right-to-work and record-keeping support to keep you covered.' ),
+			array( 'On-hand advice', 'A sounding board for the day-to-day people questions.' ),
+		),
+		'Need a hand with HR?',
+		'Tell us what you are dealing with and we will point you the right way.',
+		'Ask us about HR',
+		$contact_url
+	)
+);
+
+$write_page(
+	$poolhall_pages['commitment'],
+	$points_page(
+		'Our commitment',
+		'How we hold ourselves accountable',
+		'The standards we work to, for every candidate and every client.',
+		'Our commitment',
+		'The standards we work to',
+		array(
+			array( 'Ethical recruitment', 'We place people in roles that are right for them, not just easy to fill.' ),
+			array( 'Clear communication', 'You always know where things stand.' ),
+			array( 'Confidentiality', 'Your data and your search are handled with care.' ),
+			array( 'No pushy tactics', 'Advice over pressure, every time.' ),
+		),
+		'Recruitment, done well',
+		'Whether you are hiring or looking, we would like to help.',
+		'Get in touch',
+		$contact_url
+	)
+);
+
+$write_page(
+	$poolhall_pages['candidates'],
+	$points_page(
+		'For candidates',
+		'Find work that fits',
+		'Roles across construction, manufacturing and digital, with a team that listens and keeps you informed.',
+		'For candidates',
+		'How it works',
+		array(
+			array( '1. Register', 'Tell us about your experience and the kind of roles you are after.' ),
+			array( '2. We match you', 'We line you up with roles that genuinely fit, and prepare you properly.' ),
+			array( '3. You get hired', 'We support you through interviews, the offer and your first weeks.' ),
+		),
+		'Ready to find your next role?',
+		'Create an account and we will be in touch about roles that match.',
+		'Register your CV',
+		$register_url
+	)
+);
+
 // ----------------------------------------------------------- write all ----
 $write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
@@ -1075,7 +1256,7 @@ $write_page( $poolhall_pages['join-our-team'], $join_data );
 \Elementor\Plugin::instance()->files_manager->clear_cache();
 
 $poolhall_ids = (array) get_option( 'poolhall_template_ids', array() );
-foreach ( array( 'better-job-adverts', 'employers', 'sectors', 'services', 'contact', 'join-our-team' ) as $poolhall_slug ) {
+foreach ( array( 'better-job-adverts', 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates' ) as $poolhall_slug ) {
 	$poolhall_ids[ str_replace( '-', '_', $poolhall_slug ) . '_page' ] = $poolhall_pages[ $poolhall_slug ]->ID;
 }
 update_option( 'poolhall_template_ids', $poolhall_ids, false );
@@ -1089,4 +1270,5 @@ printf(
 	$poolhall_pages['contact']->ID,
 	$poolhall_pages['join-our-team']->ID
 );
+echo "Secondary pages: delivery-options, why-us, bespoke-search, hr-services, commitment, candidates built.\n";
 echo "OK: marketing pages created. Verify the frontend before treating this as done.\n";
