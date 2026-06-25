@@ -367,64 +367,98 @@ $featured = $container(
 	)
 );
 
-// 3. Sectors (§25 step 5, v4 static sector cards): one accessible link per
-// card (the title); live per-sector links arrive with the results widget.
-$poolhall_sectors = array(
-	'Construction & Skilled Trade',
-	'Manufacturing',
-	'Marketing & PR',
-	'Sales',
-	'Insurance',
-	'Automotive',
-);
-$sector_cards     = array();
-foreach ( $poolhall_sectors as $poolhall_sector_name ) {
-	$sector_cards[] = $container(
+// 3. Sectors (§7.1 #4): three photo tiles (overlay + gold tag + Explore
+// link). The office photo is a placeholder until per-sector photography is
+// supplied; the heavy navy overlay keeps the three reading as a set.
+$sector_tile = static function ( string $name, string $tag, string $desc ) use ( $container, $widget, $poolhall_images, $jobs_url ): array {
+	return $container(
 		array(
-			'content_width'  => 'full',
-			'flex_direction' => 'column',
-			'flex_gap'       => $gap( 6 ),
-			'css_classes'    => 'ph-card ph-card--interactive',
+			'content_width'                 => 'full',
+			'flex_direction'                => 'column',
+			'flex_justify_content'          => 'flex-end',
+			'min_height'                    => array(
+				'unit' => 'custom',
+				'size' => '24rem',
+			),
+			'background_background'          => 'classic',
+			'background_color'              => '#0B2846',
+			'background_image'              => array(
+				'id'  => $poolhall_images['hero'],
+				'url' => (string) wp_get_attachment_image_url( $poolhall_images['hero'], 'full' ),
+			),
+			'background_size'               => 'cover',
+			'background_position'           => 'center center',
+			'background_overlay_background' => 'classic',
+			'background_overlay_color'      => '#06182B',
+			'background_overlay_opacity'    => array(
+				'unit' => 'px',
+				'size' => 0.74,
+			),
+			'border_radius'                 => array(
+				'unit'     => 'px',
+				'top'      => '6',
+				'right'    => '6',
+				'bottom'   => '6',
+				'left'     => '6',
+				'isLinked' => true,
+			),
+			'padding'                       => array(
+				'unit'     => 'px',
+				'top'      => '28',
+				'right'    => '28',
+				'bottom'   => '28',
+				'left'     => '28',
+				'isLinked' => false,
+			),
+			'flex_gap'                      => array(
+				'unit'   => 'px',
+				'size'   => 8,
+				'column' => '8',
+				'row'    => '8',
+			),
+			'css_classes'                   => 'ph-sector-tile',
+			'link'                          => array(
+				'url'         => $jobs_url,
+				'is_external' => '',
+				'nofollow'    => '',
+			),
 		),
 		array(
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__count">' . esc_html( $tag ) . '</p>' ) ),
 			$widget(
 				'heading',
 				array(
-					'title'        => $poolhall_sector_name,
+					'title'        => $name,
 					'header_size'  => 'h3',
-					'title_color'  => '#1B4068',
-					'_css_classes' => 'ph-h4',
-					'link'         => array(
-						'url'         => $jobs_url,
-						'is_external' => '',
-						'nofollow'    => '',
-					),
+					'_css_classes' => 'ph-h3 ph-sector-tile__name',
+					'title_color'  => '#FFFFFF',
 				)
 			),
-			$widget(
-				'text-editor',
-				array(
-					'editor'     => '<p class="ph-small">Live roles and exclusive vacancies</p>',
-					'text_color' => '#5A6678',
-				)
-			),
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__desc">' . esc_html( $desc ) . '</p>' ) ),
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__more">Explore sector &rarr;</p>' ) ),
 		),
 		true
 	);
-}
+};
+
+$sector_cards = array(
+	$sector_tile( 'Construction', 'Live roles', 'Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally.' ),
+	$sector_tile( 'Manufacturing', 'Live roles', 'Welders, fabricators, production and engineering talent for the region&rsquo;s manufacturing heartland.' ),
+	$sector_tile( 'Digital', 'Live roles', 'Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams.' ),
+);
 
 $sectors = $container(
 	$boxed(
 		array(
 			'background_background' => 'classic',
-			'background_color'      => '#FFFFFF',
+			'background_color'      => '#F2F4F6',
 			'flex_direction'        => 'column',
 			'flex_gap'              => $gap( 40 ),
 			'padding'               => $section_padding(),
 		)
 	),
 	array(
-		$section_head( 'Sectors we cover', 'Specialists in the work that builds Britain', 'Decades of combined experience across the industries we know best.' ),
+		$section_head( 'Where we work', 'Three sectors. Deep expertise.', 'We don&rsquo;t recruit for everything. We recruit brilliantly for the industries that build, make and market British business.' ),
 		$container(
 			array(
 				'content_width' => 'full',
