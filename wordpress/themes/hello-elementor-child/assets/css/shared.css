@@ -233,13 +233,15 @@
 .ph-card--interactive { transition: transform 180ms ease, box-shadow 180ms ease; }
 .ph-card--interactive:hover, .ph-card--interactive:focus-within { transform: translateY(-2px); box-shadow: var(--ph-shadow-raised); }
 .ph-card--job { padding: 22px 24px; }
-/* Featured = full gold left rule (§11.5). */
+/* Featured = gold top rule (3px), per the JobCard design component. */
 .ph-card--job.is-featured,
-.ph-card--job:has(.ph-badge--featured) { border-inline-start: 4px solid var(--ph-color-gold-500); }
+.ph-card--job:has(.ph-badge--featured) { border-block-start: 3px solid var(--ph-color-gold-500); }
 
 /* Job card fragments (directive 4.1, rendered by [poolhall_job_card_*]). */
 .ph-job-flair { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ph-space-3); }
 .ph-job-flair .ph-eyebrow { color: var(--ph-color-gold-ink); }
+/* The job-card sector is a plain label, not a ticked section eyebrow. */
+.ph-job-flair .ph-eyebrow::before { display: none; }
 .ph-job-meta { display: flex; flex-wrap: wrap; gap: var(--ph-space-2) var(--ph-space-4); }
 /* Mono "data" meta row — the engineered signature (§11.5/§11.2). */
 .ph-job-meta__item {
@@ -411,7 +413,7 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-search-trust__item svg { flex-shrink: 0; color: var(--ph-color-gold-500); }
 
 /* Job card internals (§12/§14): salary uses display type, never form/nav. */
-.ph-job-salary { font-family: var(--ph-font-display); font-weight: 700; font-size: var(--ph-type-h3-size); line-height: 1.2; color: var(--ph-color-navy-900); }
+.ph-job-salary { font-family: var(--ph-font-display); font-weight: 800; font-size: 1.2rem; line-height: 1.2; color: var(--ph-color-navy-900); }
 
 /* Jobs archive browser (directive §3.2, prototype Jobs.jsx): sticky filter
    sidebar + results column, applied chips, sort, pagination, empty state,
