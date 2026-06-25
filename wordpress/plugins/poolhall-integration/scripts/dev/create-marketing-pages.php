@@ -34,7 +34,7 @@ if ( ! did_action( 'elementor/loaded' ) ) {
 	exit( 1 );
 }
 $poolhall_pages = array();
-foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates' ) as $poolhall_slug ) {
+foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies' ) as $poolhall_slug ) {
 	$poolhall_page = get_page_by_path( $poolhall_slug );
 	if ( ! $poolhall_page instanceof WP_Post ) {
 		printf( "FAIL: /%s/ page missing — run create-theme-shell.php first.\n", $poolhall_slug );
@@ -624,7 +624,7 @@ $sectors_data = array_merge(
 						$column(
 							array(
 								$heading( 'Don&rsquo;t see your specialism?', 'h2', '#FFFFFF', $h2_clamp ),
-								$lede( 'Our live board covers more than our core sectors &mdash; and we&rsquo;re always happy to talk.', true ),
+								$lede( 'Our live board covers more than our core sectors, and we&rsquo;re always happy to talk.', true ),
 							),
 							10
 						),
@@ -785,7 +785,7 @@ $join_data = array(
 	$hero_slim(
 		'Join our team',
 		'Recruit the way you&rsquo;ve always wanted to',
-		'We&rsquo;re building a team of recruiters who care about doing the job properly. Two ways in &mdash; pick the one that fits your ambitions.'
+		'We&rsquo;re building a team of recruiters who care about doing the job properly. Two ways in: pick the one that fits your ambitions.'
 	),
 	$section(
 		'#FFFFFF',
@@ -1245,6 +1245,81 @@ $write_page(
 	)
 );
 
+// ------------------------------------------------------ legal pages (§7.9) ----
+// Concise, accurate notices in the v2 design. Factual company details only;
+// no fabricated clauses. Full wording is the client's to confirm.
+$privacy_url = (string) get_permalink( $poolhall_pages['privacy-policy'] );
+
+$legal_page = static function ( string $title, string $intro, string $body_html ) use ( $hero_slim, $section, $container, $widget ): array {
+	return array(
+		$hero_slim( 'Legal', $title, $intro ),
+		$section(
+			'#FFFFFF',
+			array(
+				$container(
+					array(
+						'content_width' => 'full',
+						'width'         => array(
+							'unit' => 'custom',
+							'size' => 'min(100%, 46rem)',
+						),
+					),
+					array( $widget( 'text-editor', array( 'editor' => $body_html ) ) ),
+					true
+				),
+			)
+		),
+	);
+};
+
+$write_page(
+	$poolhall_pages['privacy-policy'],
+	$legal_page(
+		'Privacy policy',
+		'How we collect, use and protect your personal data.',
+		'<div class="ph-stack-sm">'
+		. '<p class="ph-body">Poolhall Recruitment Limited (&ldquo;Poolhall&rdquo;, &ldquo;we&rdquo;) is the controller of the personal data described here. We are registered in England and Wales, company number 13319338, at Grosvenor House, 11 St Pauls Square, Birmingham, B3 1RB.</p>'
+		. '<h3 class="ph-h3">What we collect</h3><p class="ph-body">When you register, apply for a role or contact us, we collect your name and contact details, your CV and the information within it, and details of the roles and sectors you are interested in.</p>'
+		. '<h3 class="ph-h3">How we use it</h3><p class="ph-body">We use your data to match you with suitable roles, to provide recruitment services to our clients, and to keep you informed about relevant opportunities. Our lawful bases are your consent and our legitimate interest in operating a recruitment service.</p>'
+		. '<h3 class="ph-h3">Who we share it with</h3><p class="ph-body">We share your details with clients you ask us to represent you to, and with the providers that help us run our service, such as our applicant tracking system. We do not sell your personal data.</p>'
+		. '<h3 class="ph-h3">How long we keep it</h3><p class="ph-body">We keep your data only for as long as it is needed for the purposes above, after which it is securely deleted.</p>'
+		. '<h3 class="ph-h3">Your rights</h3><p class="ph-body">You can ask us to access, correct or delete your data, or object to how we use it, at any time. You can also complain to the Information Commissioner&rsquo;s Office.</p>'
+		. '<p class="ph-meta">Last reviewed June 2026. For any questions about your data, please <a class="ph-link" href="' . esc_url( $contact_url ) . '">get in touch</a>.</p>'
+		. '</div>'
+	)
+);
+
+$write_page(
+	$poolhall_pages['terms'],
+	$legal_page(
+		'Terms of use',
+		'The terms on which you may use this website.',
+		'<div class="ph-stack-sm">'
+		. '<p class="ph-body">These terms govern your use of the Poolhall Recruitment website. By using the site, you accept them.</p>'
+		. '<h3 class="ph-h3">Using the site</h3><p class="ph-body">You may use this site for lawful purposes only. You must not misuse it, attempt to gain unauthorised access, or disrupt its operation.</p>'
+		. '<h3 class="ph-h3">Our content</h3><p class="ph-body">The content on this site is owned by or licensed to Poolhall Recruitment Limited. You may view and print pages for your own use, but not reproduce them commercially without our permission.</p>'
+		. '<h3 class="ph-h3">No warranty</h3><p class="ph-body">We work to keep the information here accurate and up to date, but provide it without warranties of any kind. Job listings are subject to change.</p>'
+		. '<h3 class="ph-h3">Governing law</h3><p class="ph-body">These terms are governed by the laws of England and Wales.</p>'
+		. '<p class="ph-meta">Last reviewed June 2026. Any questions? Please <a class="ph-link" href="' . esc_url( $contact_url ) . '">contact us</a>.</p>'
+		. '</div>'
+	)
+);
+
+$write_page(
+	$poolhall_pages['cookies'],
+	$legal_page(
+		'Cookie policy',
+		'How and why we use cookies on this site.',
+		'<div class="ph-stack-sm">'
+		. '<p class="ph-body">This site uses cookies to work properly and to help us understand how it is used.</p>'
+		. '<h3 class="ph-h3">Essential cookies</h3><p class="ph-body">These are needed for core features such as signing in and submitting forms. The site cannot work properly without them.</p>'
+		. '<h3 class="ph-h3">Analytics cookies</h3><p class="ph-body">With your consent, we use analytics cookies to measure how the site is used so we can improve it. You can decline these without affecting core features.</p>'
+		. '<h3 class="ph-h3">Managing cookies</h3><p class="ph-body">You can control or delete cookies through your browser settings at any time.</p>'
+		. '<p class="ph-meta">Last reviewed June 2026. For more on how we handle data, see our <a class="ph-link" href="' . esc_url( $privacy_url ) . '">privacy policy</a>.</p>'
+		. '</div>'
+	)
+);
+
 // ----------------------------------------------------------- write all ----
 $write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
@@ -1257,7 +1332,7 @@ $write_page( $poolhall_pages['join-our-team'], $join_data );
 \Elementor\Plugin::instance()->files_manager->clear_cache();
 
 $poolhall_ids = (array) get_option( 'poolhall_template_ids', array() );
-foreach ( array( 'better-job-adverts', 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates' ) as $poolhall_slug ) {
+foreach ( array( 'better-job-adverts', 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies' ) as $poolhall_slug ) {
 	$poolhall_ids[ str_replace( '-', '_', $poolhall_slug ) . '_page' ] = $poolhall_pages[ $poolhall_slug ]->ID;
 }
 update_option( 'poolhall_template_ids', $poolhall_ids, false );

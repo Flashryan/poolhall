@@ -40,6 +40,10 @@ $pages = array(
 	'hr-services'        => 'HR Services',
 	'commitment'         => 'Our Commitment',
 	'candidates'         => 'For Candidates',
+	// Legal (docs/12 §7.9). Concise notices; full wording confirmed with the client.
+	'privacy-policy'     => 'Privacy Policy',
+	'terms'              => 'Terms of Use',
+	'cookies'            => 'Cookie Policy',
 );
 
 $page_ids = array();
@@ -397,6 +401,8 @@ $footer_columns = '<div class="ph-footer-grid">'
 	. $poolhall_footer_link( 'join-our-team', 'Join our team' )
 	. $poolhall_footer_link( 'contact', 'Contact' )
 	. $poolhall_footer_link( 'privacy-policy', 'Privacy policy' )
+	. $poolhall_footer_link( 'terms', 'Terms of use' )
+	. $poolhall_footer_link( 'cookies', 'Cookie policy' )
 	. '</ul></div>'
 	. '</div>';
 
