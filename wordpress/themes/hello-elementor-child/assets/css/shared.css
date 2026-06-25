@@ -74,13 +74,14 @@
   --ph-color-focus: #3E6E8E;
 
   /* --- Typography: fluid sizes (§3, clamp-capped, never bare vw) --- */
-  --ph-type-display-size: clamp(2.4rem, 1.7rem + 2.8vw, 3.5rem);
-  --ph-type-h1-size: clamp(2.25rem, 1.75rem + 2vw, 2.75rem);
-  --ph-type-h2-size: clamp(2rem, 1.65rem + 1.5vw, 2.125rem);
-  --ph-type-h3-size: clamp(1.35rem, 1.15rem + 0.65vw, 1.5rem);
-  --ph-type-h4-size: clamp(1.05rem, 0.98rem + 0.3vw, 1.125rem);
-  --ph-type-body-lg-size: clamp(1.125rem, 1.02rem + 0.4vw, 1.1875rem);
-  --ph-type-body-size: 1.0625rem; /* 17px (§11.2) */
+  /* Scale from the design system colors_and_type.css: big engineered display. */
+  --ph-type-display-size: clamp(2.75rem, 1.55rem + 5vw, 4.6rem); /* ~74px */
+  --ph-type-h1-size: clamp(2.25rem, 1.6rem + 2.7vw, 3.1rem);     /* ~50px */
+  --ph-type-h2-size: clamp(1.9rem, 1.5rem + 1.7vw, 2.4rem);      /* ~38px */
+  --ph-type-h3-size: clamp(1.2rem, 1.12rem + 0.35vw, 1.32rem);   /* ~21px */
+  --ph-type-h4-size: clamp(1.05rem, 1rem + 0.22vw, 1.1rem);      /* ~18px */
+  --ph-type-body-lg-size: clamp(1.125rem, 1.04rem + 0.36vw, 1.2rem); /* lead ~19px */
+  --ph-type-body-size: 1.0625rem; /* 17px */
   --ph-type-small-size: 0.875rem;
   --ph-type-eyebrow-size: 0.75rem;
   --ph-type-data-size: 0.8125rem;
@@ -123,20 +124,22 @@
 }
 
 /* --- Global class layer (doc §6) — fluid type applied via classes only --- */
-.ph-display { font-family: var(--ph-font-display); font-weight: 800; font-size: var(--ph-type-display-size); line-height: 1.08; letter-spacing: -0.02em; }
+.ph-display { font-family: var(--ph-font-display); font-weight: 900; font-size: var(--ph-type-display-size); line-height: 1.02; letter-spacing: -0.03em; }
 /* The ph-h* classes are also set on Elementor widget wrappers via the
    Advanced tab, so each rule targets the inner heading element too —
    otherwise the parent theme reset (h3 = 1.75rem) wins on card titles.
    Archivo weights per §11.2: display/H1/H2 = 800, H3/card titles = 700. */
-.ph-h1, .ph-h1 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 800; font-size: var(--ph-type-h1-size); line-height: 1.12; letter-spacing: -0.02em; }
-.ph-h2, .ph-h2 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 800; font-size: var(--ph-type-h2-size); line-height: 1.15; letter-spacing: -0.015em; }
+.ph-h1, .ph-h1 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 800; font-size: var(--ph-type-h1-size); line-height: 1.05; letter-spacing: -0.025em; }
+.ph-h2, .ph-h2 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 800; font-size: var(--ph-type-h2-size); line-height: 1.1; letter-spacing: -0.015em; }
 .ph-h3, .ph-h3 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 700; font-size: var(--ph-type-h3-size); line-height: 1.2; letter-spacing: -0.01em; }
 .ph-h4, .ph-h4 .elementor-heading-title { font-family: var(--ph-font-display); font-weight: 700; font-size: var(--ph-type-h4-size); line-height: 1.3; }
 .ph-body-lg { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-lg-size); line-height: 1.65; }
 .ph-body { font-family: var(--ph-font-body); font-weight: 400; font-size: var(--ph-type-body-size); line-height: 1.6; }
 .ph-small { font-family: var(--ph-font-body); font-weight: 500; font-size: var(--ph-type-small-size); line-height: 1.45; }
 /* Eyebrow = mono "data" treatment, the engineered signature (§11.2). */
-.ph-eyebrow { font-family: var(--ph-font-data); font-weight: 600; font-size: var(--ph-type-eyebrow-size); line-height: 1.3; letter-spacing: 0.12em; text-transform: uppercase; }
+/* Engineered eyebrow: mono label preceded by a gold tick (design system). */
+.ph-eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--ph-font-data); font-weight: 600; font-size: var(--ph-type-eyebrow-size); line-height: 1.3; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ph-color-steel-600); }
+.ph-eyebrow::before { content: ""; inline-size: 22px; block-size: 2px; background-color: var(--ph-color-accent); flex-shrink: 0; }
 .ph-data { font-family: var(--ph-font-data); font-weight: 500; font-size: var(--ph-type-data-size); line-height: 1.4; }
 
 /* Layout: container pattern from doc §4 approved examples. */
@@ -369,9 +372,11 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
    their own background image and must keep it (no gradient override). */
 .ph-goldedge { border-inline-start: 4px solid var(--ph-color-gold-500); }
 /* Home hero "world" markers (§7.1): mono labels, active gets a gold top rule. */
-.ph-hero-worlds { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-block-start: 1.25rem; font-family: var(--ph-font-data); font-size: var(--ph-type-data-size); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ph-color-steel-200); }
-.ph-hero-worlds span { padding-block-start: 8px; border-block-start: 2px solid transparent; }
+.ph-hero-worlds { display: flex; flex-wrap: wrap; gap: 0 1.75rem; margin-block-start: 2rem; font-family: var(--ph-font-data); font-size: var(--ph-type-data-size); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ph-color-steel-200); }
+.ph-hero-worlds span { display: inline-flex; align-items: baseline; gap: 9px; padding-block-start: 10px; border-block-start: 2px solid rgba(255, 255, 255, 0.18); min-inline-size: 8rem; }
+.ph-hero-worlds b { font-weight: 700; color: var(--ph-color-steel-400); }
 .ph-hero-worlds span.is-active { color: var(--ph-color-white); border-block-start-color: var(--ph-color-gold-500); }
+.ph-hero-worlds span.is-active b { color: var(--ph-color-gold-500); }
 
 /* Search module (§11): home search panel. White card, Mist fields,
    one control per row on mobile, three fields + action on desktop. */

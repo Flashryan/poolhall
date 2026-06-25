@@ -274,14 +274,14 @@ $hero = $container(
 				),
 			),
 			array(
-				$eyebrow( 'Recruitment, done well', true ),
+				$eyebrow( 'Recruitment, done properly', true ),
 				$widget(
 					'text-editor',
 					array( 'editor' => '<h1 class="ph-display" style="color:#FFFFFF;margin:0">West Midlands roots. <span style="color:var(--ph-color-gold-500)">National</span> recruitment reach.</h1>' )
 				),
 				$widget(
 					'text-editor',
-					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">Specialist recruitment across construction, manufacturing and digital. Honest advice, thorough vetting and a process that puts people first.</p>' )
+					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">We place the people who build, make and market British business, across Construction, Manufacturing and Digital. Independent, practical and human. We actually answer the phone.</p>' )
 				),
 				$widget(
 					'text-editor',
@@ -295,7 +295,7 @@ $hero = $container(
 				$widget(
 					'text-editor',
 					array(
-						'editor' => '<div class="ph-hero-worlds"><span class="is-active">Construction</span><span>Manufacturing</span><span>Digital</span><span>Team</span></div>',
+						'editor' => '<div class="ph-hero-worlds"><span class="is-active"><b>01</b> Construction</span><span><b>02</b> Manufacturing</span><span><b>03</b> Digital</span><span><b>04</b> Team</span></div>',
 					)
 				),
 			),

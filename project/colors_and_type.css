@@ -1,121 +1,122 @@
 /* ==========================================================================
    POOLHALL RECRUITMENT — Colour & Type Foundations
-   v0.2 — Trustworthy & established. Navy anchor · Orange energy · Blue support
+   v2 "Engineered" direction · West Midlands roots. National reach.
    --------------------------------------------------------------------------
-   Fonts are loaded from Google Fonts (CDN). See README "Visual Foundations".
-   Headlines: Source Serif 4 (refined transitional serif — matches the PRL
-   monogram). Body/UI: Hanken Grotesk (clean, warm grotesque).
+   Industrial slate ground · engineering steel · hi-vis signal accent.
+   Display: Archivo (heavy, engineered grotesque). Body: Source Sans 3.
+   Data/utility: IBM Plex Mono (job meta only — nods to engineering specs).
+   Mirrors ui_kits/website/kit.css. Fonts via Google Fonts CDN (see README).
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* ---------------------------------------------------------------- PALETTE */
 
-  /* Navy — the anchor. Trust, authority, dark sections. */
-  --navy-950: #0B1626;
-  --navy-900: #0F1D33;
-  --navy-800: #14233F;
-  --navy-700: #1B3052;   /* primary brand navy */
-  --navy-600: #274169;
-  --navy-500: #38567F;
+  /* Navy — the brand ground (sampled from the PRL logo). Headings, dark sections, footer. */
+  --slate-950: #06182B;
+  --slate-900: #0B2846;   /* primary brand navy (logo) */
+  --slate-800: #123255;
+  --slate-700: #1B4068;
+  --slate-600: #2A5078;
 
-  /* Orange — energy & action. Primary CTA colour (from Poolhall socials). */
-  --orange-700: #B9510E;
-  --orange-600: #D45F12;   /* CTA hover / pressed */
-  --orange-500: #EC6F1E;   /* primary CTA */
-  --orange-400: #F4904A;
-  --orange-200: #F9C9A3;
-  --orange-50:  #FDF1E7;   /* warm tint background */
+  /* Steel — engineering blue. Secondary + EMPLOYER journey cue. */
+  --steel-700: #2C566F;
+  --steel-600: #345D79;
+  --steel-500: #3E6E8E;   /* employer cue */
+  --steel-400: #5E8AA6;
+  --steel-200: #AFC8D6;
+  --steel-100: #D7E3EA;
+  --steel-50:  #EDF3F6;
 
-  /* Blue — secondary / informational. The "support" half of orange+blue. */
-  --blue-700: #155389;
-  --blue-600: #1F6FB2;
-  --blue-500: #2E83C9;
-  --blue-200: #AAD2EE;
-  --blue-50:  #EAF3FB;
+  /* Gold — the brand action accent (sampled from the PRL logo).
+     Bright gold for fills + accents on navy; deep gold (--accent-ink) for text on white. */
+  --hivis-700: #6E4A0E;   /* deepest — text on light if needed */
+  --hivis-600: #E0A33F;   /* CTA hover / pressed fill */
+  --hivis-500: #FDBB5D;   /* primary brand gold (logo) */
+  --hivis-400: #FECF87;
+  --hivis-200: #FBE4BC;
+  --hivis-100: #FCEFD7;
+  --hivis-50:  #FEF8EC;
+  --gold-ink:  #8A5E12;   /* readable gold for small accent TEXT on white */
 
-  /* Gold — premium accent lifted from the logo divider. Use sparingly: rules,
-     small flourishes, "featured" markers. Never large fills. */
-  --gold-600: #B08A3C;
-  --gold-500: #C6A052;
-  --gold-300: #DCC58A;
-  --gold-50:  #FAF4E6;
+  /* Signal yellow — rare highlight / hazard accent (optional). */
+  --signal-500: #F5B301;
+  --signal-100: #FCEBB6;
 
-  /* Neutrals — warm-cool slate. */
-  --white:    #FFFFFF;
-  --paper:    #F7F8FA;   /* default page background */
-  --mist:     #EEF1F5;   /* subtle section / input fill */
-  --cloud:    #E3E7ED;   /* hairline borders */
-  --slate-400:#9AA4B2;   /* muted / placeholder */
-  --slate-500:#6B7686;
-  --slate-600:#586375;
-  --slate-700:#3C4658;
-  --ink:      #16202F;   /* near-black body ink */
+  /* Concrete / neutrals — cool industrial greys. */
+  --white:       #FFFFFF;
+  --concrete-50: #F7F8FA;   /* default page tint */
+  --concrete-100:#F2F4F6;   /* light section background */
+  --concrete-200:#E6E9ED;   /* hairline borders */
+  --concrete-300:#D4DAE0;   /* strong borders */
+  --mist-400:    #8893A0;   /* muted / placeholder */
+  --mist-500:    #5B6670;   /* secondary text */
+  --mist-600:    #4A555F;
+  --ink-700:     #2B343D;
+  --ink-900:     #11161B;   /* body ink */
 
   /* --------------------------------------------------------- SEMANTIC STATUS */
-  --success-600:#1F8A5B;
-  --success-50: #E6F4EC;
-  --warning-600:#C9881F;
-  --warning-50: #FBF1DC;
-  --error-600:  #C9382E;
-  --error-50:   #FBE9E7;
-  --info-600:   var(--blue-600);
-  --info-50:    var(--blue-50);
+  --success-600:#1E7A52; --success-50:#E7F3EC;
+  --warning-600:#B5740C; --warning-50:#FBF1DD;
+  --error-600:  #C23A2B; --error-50:  #FBEAE7;
+  --info-600:   var(--steel-600); --info-50: var(--steel-50);
 
-  /* ---------------------------------------------- SEMANTIC ROLE TOKENS (use these) */
-  --fg-1: var(--ink);          /* primary text */
-  --fg-2: var(--slate-600);    /* secondary text */
-  --fg-3: var(--slate-400);    /* muted / meta */
-  --fg-on-dark: #EEF2F8;       /* text on navy */
-  --fg-on-dark-2: #A7B4C8;     /* secondary text on navy */
+  /* ------------------------------------ SEMANTIC ROLE TOKENS (use these) */
+  --fg-1: var(--ink-900);        /* primary text */
+  --fg-2: var(--mist-500);       /* secondary text */
+  --fg-3: var(--mist-400);       /* muted / meta */
+  --fg-on-dark: #EAEEF2;
+  --fg-on-dark-2: #9FB0BD;
 
-  --bg-1: var(--white);        /* cards / surfaces */
-  --bg-2: var(--paper);        /* page */
-  --bg-3: var(--mist);         /* recessed / input */
-  --bg-dark: var(--navy-800);  /* dark sections */
+  --bg-1: var(--white);          /* cards / surfaces */
+  --bg-2: var(--concrete-100);   /* alt sections */
+  --bg-3: var(--concrete-50);    /* recessed / input */
+  --bg-dark: var(--slate-900);
 
-  --brand: var(--navy-700);
-  --accent: var(--orange-500); /* CTAs, key actions */
-  --accent-hover: var(--orange-600);
-  --accent-2: var(--blue-600); /* secondary actions, links, info */
-  --premium: var(--gold-500);
+  --brand: var(--slate-900);
+  --accent: var(--hivis-500);    /* gold fills + accents on navy */
+  --accent-hover: var(--hivis-600);
+  --accent-ink: var(--gold-ink); /* gold accent TEXT on white (legible) */
+  --on-accent: var(--slate-900); /* text/icon colour ON gold fills (navy, like the logo) */
+  --employer: var(--steel-500);  /* employer cue */
+  --candidate: var(--hivis-500);
 
-  --border: var(--cloud);
-  --border-strong: #CBD2DC;
-  --link: var(--blue-700);
+  --border: var(--concrete-200);
+  --border-strong: var(--concrete-300);
+  --link: var(--steel-600);
 
   /* ------------------------------------------------------------- TYPE FAMILIES */
-  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-body: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Archivo', system-ui, -apple-system, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* ------------------------------------------------------------- TYPE SCALE */
-  --text-display: 3.5rem;   /* 56 — hero */
-  --text-h1: 2.75rem;       /* 44 */
-  --text-h2: 2.125rem;      /* 34 */
-  --text-h3: 1.5rem;        /* 24 */
-  --text-h4: 1.25rem;       /* 20 */
-  --text-lead: 1.1875rem;   /* 19 — intro paragraphs */
-  --text-body: 1rem;        /* 16 */
+  --text-display: 4.6rem;   /* ~74 — hero */
+  --text-h1: 3.1rem;        /* ~50 */
+  --text-h2: 2.4rem;        /* ~38 */
+  --text-h3: 1.32rem;       /* ~21 */
+  --text-h4: 1.1rem;        /* ~18 */
+  --text-lead: 1.2rem;      /* ~19 — intro paragraphs */
+  --text-body: 1.0625rem;   /* ~17 */
   --text-sm: 0.875rem;      /* 14 */
-  --text-xs: 0.75rem;       /* 12 — eyebrows, meta */
+  --text-xs: 0.75rem;       /* 12 — mono labels, meta */
 
-  --leading-tight: 1.12;
-  --leading-snug: 1.3;
+  --leading-tight: 1.02;
+  --leading-snug: 1.18;
   --leading-normal: 1.6;
-  --tracking-eyebrow: 0.14em;
-  --tracking-tight: -0.01em;
+  --tracking-display: -0.03em;
+  --tracking-tight: -0.015em;
+  --tracking-mono: 0.16em;   /* mono eyebrows */
 
-  /* ------------------------------------------------------------- RADII */
-  --r-xs: 4px;
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-  --r-xl: 24px;
+  /* ------------------------------------------------------------- RADII (engineered, near-square) */
+  --r-xs: 2px;
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-lg: 6px;
   --r-pill: 999px;
 
-  /* ------------------------------------------------------------- SPACING (4px base) */
+  /* ------------------------------------------------------------- SPACING (8px base) */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -125,48 +126,54 @@
   --sp-7: 48px;
   --sp-8: 64px;
   --sp-9: 96px;
-  --sp-10: 128px;
+  --sp-10: 120px;
 
-  /* ------------------------------------------------------------- ELEVATION */
-  /* Soft, cool-navy-tinted shadows. Low spread, never harsh. */
-  --shadow-xs: 0 1px 2px rgba(15, 29, 51, 0.06);
-  --shadow-sm: 0 2px 6px rgba(15, 29, 51, 0.08);
-  --shadow-md: 0 8px 20px rgba(15, 29, 51, 0.10);
-  --shadow-lg: 0 18px 40px rgba(15, 29, 51, 0.14);
-  --shadow-focus: 0 0 0 3px rgba(46, 131, 201, 0.35); /* blue focus ring */
+  /* ------------------------------------------------------------- ELEVATION (subtle, structural) */
+  --shadow-xs: 0 1px 2px rgba(16, 33, 43, 0.06);
+  --shadow-sm: 0 1px 2px rgba(16, 33, 43, 0.06);
+  --shadow-md: 0 10px 30px -12px rgba(16, 33, 43, 0.22);
+  --shadow-lg: 0 24px 60px -20px rgba(16, 33, 43, 0.32);
+  --shadow-focus: 0 0 0 3px rgba(62, 110, 142, 0.40); /* steel focus ring */
 
-  --container: 1200px;
+  --container: 1240px;
 }
 
 /* ==========================================================================
-   SEMANTIC ELEMENT STYLES — opt-in via .ph-prose / utility classes
+   SEMANTIC ELEMENT STYLES — opt-in via .ph-* classes
    ========================================================================== */
 
+/* engineered section label: mono, hi-vis tick, optional index */
 .ph-eyebrow {
-  font-family: var(--font-body);
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-mono);
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--steel-600);
 }
+.ph-eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); }
 
 h1, .ph-h1, h2, .ph-h2, h3, .ph-h3, h4, .ph-h4 {
   font-family: var(--font-display);
   color: var(--brand);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
-  font-weight: 600;
+  font-weight: 800;
   margin: 0;
 }
-.ph-display { font-family: var(--font-display); font-weight: 700; font-size: var(--text-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); color: var(--brand); margin: 0; }
-h1, .ph-h1 { font-size: var(--text-h1); font-weight: 700; }
+.ph-display { font-family: var(--font-display); font-weight: 900; font-size: var(--text-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-display); color: var(--brand); margin: 0; }
+h1, .ph-h1 { font-size: var(--text-h1); }
 h2, .ph-h2 { font-size: var(--text-h2); }
-h3, .ph-h3 { font-size: var(--text-h3); }
-h4, .ph-h4 { font-size: var(--text-h4); font-family: var(--font-body); font-weight: 700; letter-spacing: 0; }
+h3, .ph-h3 { font-size: var(--text-h3); font-weight: 700; }
+h4, .ph-h4 { font-size: var(--text-h4); font-weight: 700; }
 
-.ph-lead { font-family: var(--font-body); font-size: var(--text-lead); line-height: var(--leading-normal); color: var(--fg-2); margin: 0; }
+.ph-lead { font-family: var(--font-body); font-size: var(--text-lead); line-height: 1.55; color: var(--fg-2); margin: 0; }
 .ph-body { font-family: var(--font-body); font-size: var(--text-body); line-height: var(--leading-normal); color: var(--fg-2); margin: 0; }
 .ph-sm { font-size: var(--text-sm); line-height: var(--leading-snug); color: var(--fg-2); }
-.ph-meta { font-family: var(--font-body); font-size: var(--text-sm); color: var(--fg-3); }
+.ph-meta { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--fg-3); }
+
+/* mono data row — the engineered signature, for job meta */
+.ph-data { font-family: var(--font-mono); font-size: 0.8rem; color: var(--slate-700); letter-spacing: 0.02em; }
+
 code, .ph-mono { font-family: var(--font-mono); font-size: 0.9em; }
