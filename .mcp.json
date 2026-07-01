@@ -6,6 +6,15 @@
       "env": {
         "API_TOKEN": "${HOSTINGER_API_TOKEN}"
       }
+    },
+    "novamira-lightslategrey-h": {
+      "command": "npx",
+      "args": ["-y", "@automattic/mcp-wordpress-remote@latest"],
+      "env": {
+        "WP_API_URL": "https://lightslategrey-hare-335761.hostingersite.com/wp-json/mcp/novamira",
+        "WP_API_USERNAME": "poolhall-admin",
+        "WP_API_PASSWORD": "${NOVAMIRA_WP_APP_PASSWORD}"
+      }
     }
   }
 }

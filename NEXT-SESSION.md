@@ -192,7 +192,28 @@ Remaining:
 | GitHub PAT | you paste it when pushing | active |
 | Hostinger API token | `HOSTINGER_API_TOKEN` env var | ✅ active, API deploy verified 12 June |
 | Staging wp-admin (`poolhall-admin`) | Ryan holds it; paste into chat when the session asks (needed to drive staging Site setup over HTTP) | active |
-| Giig API token + secret | wp-config constants on staging | waiting on you/Matt |
+| Giig API token + secret | `POOLHALL_GIIG_*` wp-config constants on staging | ✅ added to staging wp-config (base URL, token, secret; secret-header left at the `Access-Secret-Key` default) |
 | Google Places API key | wp-config constants on staging | not yet created |
 | Elementor Pro licence | elementor.com account | zip uploaded per session (forgotten 11 June); installed manually on staging by Ryan |
-| Novamira | Ryan installs manually on staging/local only | never production (hard rule 13) |
+| Novamira (page builder) | Ryan installs manually on staging/local only | never production (hard rule 13) |
+| Novamira MCP server (`NOVAMIRA_WP_APP_PASSWORD`) | web environment env var; referenced by `.mcp.json` | set it in the environment settings so the `novamira-lightslategrey-h` MCP server can authenticate — the password is never committed |
+
+## MCP servers (Claude Code)
+
+Both `.mcp.json` servers (`hostinger-mcp`, `novamira-lightslategrey-h`) are
+pre-approved in `.claude/settings.json` (`enabledMcpjsonServers`). This
+matters on the **web/remote environment**: without pre-approval, project
+`.mcp.json` servers sit in "Pending approval" (there is no interactive
+trust prompt on the web) and silently never connect — restarting the
+session does not help. To connect Novamira:
+
+1. Set `NOVAMIRA_WP_APP_PASSWORD` in the environment settings (its value is
+   the `poolhall-admin` application password; verified working against
+   `…/wp-json/mcp/novamira` — server reports `Novamira v1.0.0`).
+2. Confirm `*.hostingersite.com` is allowlisted in the network policy.
+3. Reboot the container (env-var/config changes only take effect on boot).
+
+The server is the Automattic WordPress remote MCP proxy
+(`@automattic/mcp-wordpress-remote`, a stdio server launched via `npx`).
+In **Claude Desktop** the usual failure is that the GUI app can't find
+`npx` on its PATH — use the absolute path from `which npx` as `command`.
