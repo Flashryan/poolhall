@@ -64,7 +64,7 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
 ## Build status (docs/03-BUILD-PLAN.md)
 
 - **Phase 0 — repo & environments:** ✅ scaffolds, tests, lint, local WP loop.
-- **Phase 1 — prove Giig contracts:** 🟡 **live contract recorded (2026-07-01);
+- **Phase 1 — prove Giig contracts:** 🟢 **live on staging (2026-07-01);
   enum legend pending.** Verified end to end against the live API
   (`https://giigapi.com`, company 166598): the `Access-Secret-Key` auth header
   works, responses arrive wrapped in a `{status,body}` transport envelope
@@ -73,13 +73,19 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   response (`tests/fixtures/giig-getjobs.live.json`, sanitised). All 16 live
   jobs normalize (title, salary range from `SalaryFrom`/`SalaryTo`, location,
   sector, company, date). Giig also serialises empty fields as the literal
-  strings `"null"`/`"undefined"`, now treated as absent. **Still open:** five
-  integer-enum fields (`JobType`, `Experience`, `EducationRequirement`,
-  `SalaryPeriod`, `CandidateRemote`) are deliberately left unmapped until
-  Giig's enum legend is supplied — no guessed labels (work mode, job type,
-  experience, education, salary period/currency). Application Mode A/B still
-  undecided (`poolhall_application_mode` stays `unset`; first-party apply UI
-  and `directApply: true` hard-gated behind Mode A).
+  strings `"null"`/`"undefined"`, now treated as absent. The fixed adapter is
+  **deployed to staging and a real sync has run** — 16 fetched/created, 8
+  published (the rest aged out by `ExpiryPolicy`); the jobs archive, home
+  featured carousel and single-job page render real roles.
+  **Still open:** (1) five integer-enum fields (`JobType`, `Experience`,
+  `EducationRequirement`, `SalaryPeriod`, `CandidateRemote`) are deliberately
+  left unmapped until Giig's enum legend is supplied — no guessed labels (work
+  mode, job type, experience, education, salary period/currency); (2) the
+  `ExpiryPolicy` window hides open roles whose post date is old — confirm
+  with Matt whether Giig's open-jobs list, not local post-age, should govern
+  visibility. Application Mode A/B still undecided
+  (`poolhall_application_mode` stays `unset`; first-party apply UI and
+  `directApply: true` hard-gated behind Mode A).
 - **Phase 2 — core plugin and sync:** ✅ code + unit tests + integration
   verification (idempotent sync, duplicate prevention, update-in-place,
   unpublish-on-removal, failure preserves jobs, mass-unpublish guard).

@@ -155,18 +155,27 @@ Remaining:
 
 ## What the next session can do
 
-- **Phase 1 — prove the Giig API:** 🟡 mostly done (2026-07-01). Constants
-  are on staging; the live contract was recorded and `GiigNormalizer::KEYS`
-  + the `Access-Secret-Key` header + the `{status,body}` envelope are locked
-  against `tests/fixtures/giig-getjobs.live.json`. All 16 live jobs
-  normalize. **Remaining:** get Giig's enum legend for the five integer
-  fields (`JobType`, `Experience`, `EducationRequirement`, `SalaryPeriod`,
-  `CandidateRemote`) — currently left unmapped, not guessed — then finish
-  work mode / job type / experience / education / salary period+currency in
-  `GiigNormalizer` and run a real sync so the home featured carousel, jobs
-  archive, sector taxonomy/search select and live-roles trust item come
-  alive. (Sanity check: the live `Industry` field sometimes carries a raw
-  id like `"109"` instead of a label — confirm sector mapping with Matt.)
+- **Phase 1 — prove the Giig API:** 🟢 live on staging (2026-07-01).
+  Constants are on staging; the live contract is locked
+  (`GiigNormalizer::KEYS` + `Access-Secret-Key` header + `{status,body}`
+  envelope) against `tests/fixtures/giig-getjobs.live.json`. The fixed
+  adapter (`GiigClient.php` + `GiigNormalizer.php`) is **deployed to staging**
+  (via Novamira `execute-php`; originals backed up to `*.pre-giigfix.bak`
+  in the plugin's `src/Source/Giig/` — restore those to roll back) and a
+  **real sync has run**: 16 fetched/created, 8 published, 14 aged out by
+  `ExpiryPolicy`. Jobs archive, home carousel and single-job page render
+  real roles. NOTE: staging's plugin now differs from a clean Hostinger
+  deploy by exactly those two files — do a full `build-deploy-zips.sh` +
+  Hostinger deploy when convenient to reconcile. **Remaining:**
+  1. Get Giig's enum legend for the five integer fields (`JobType`,
+     `Experience`, `EducationRequirement`, `SalaryPeriod`, `CandidateRemote`)
+     — currently unmapped, not guessed — then finish work mode / job type /
+     experience / education / salary period+currency in `GiigNormalizer`.
+  2. Decide expiry behaviour: `ExpiryPolicy` hid 14 of 16 open roles by post
+     age; confirm with Matt whether Giig's open-jobs list should govern
+     visibility instead of local post-age.
+  3. Sanity check: the live `Industry` field sometimes carries a raw id like
+     `"109"` instead of a label — confirm sector mapping with Matt.
 - **Continue Phase 4** (needs the Elementor Pro zip uploaded) — jobs
   filter/sort widgets (type, work mode, salary, sort, applied chips,
   mobile filter drawer), expired-job state, similar roles, save control
