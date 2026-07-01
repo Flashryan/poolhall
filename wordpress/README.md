@@ -77,15 +77,17 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
   **deployed to staging and a real sync has run** — 16 fetched/created, 8
   published (the rest aged out by `ExpiryPolicy`); the jobs archive, home
   featured carousel and single-job page render real roles.
-  **Still open:** (1) five integer-enum fields (`JobType`, `Experience`,
-  `EducationRequirement`, `SalaryPeriod`, `CandidateRemote`) are deliberately
-  left unmapped until Giig's enum legend is supplied — no guessed labels (work
-  mode, job type, experience, education, salary period/currency); (2) the
-  `ExpiryPolicy` window hides open roles whose post date is old — confirm
-  with Matt whether Giig's open-jobs list, not local post-age, should govern
-  visibility. Application Mode A/B still undecided
-  (`poolhall_application_mode` stays `unset`; first-party apply UI and
-  `directApply: true` hard-gated behind Mode A).
+  **Update (v2 handoff, same day):** the v2 directive's §2.2 legend resolved
+  `JobType` (0=Perm 1=Temp), `Currency` (0=£ 1=$ 2=€) and `SalaryPeriod`
+  (0=year 1=month 2=week 3=day 4=hour) — mapped, tested and live on staging
+  (salaries "£50,000–£55,000 / year", `baseSalary` JSON-LD, job-type
+  taxonomy). Expiry flipped: source presence governs visibility (16/16 open
+  roles published). **Still open:** (1) `CandidateRemote` (work mode),
+  `Experience`, `EducationRequirement` and `DisplaySalary` have no legend —
+  unmapped, not guessed; (2) live `Industry` sometimes carries a raw id
+  (`"109"`) — confirm sector mapping with Matt. Application Mode A/B still
+  undecided (`poolhall_application_mode` stays `unset`; first-party apply UI
+  and `directApply: true` hard-gated behind Mode A).
 - **Phase 2 — core plugin and sync:** ✅ code + unit tests + integration
   verification (idempotent sync, duplicate prevention, update-in-place,
   unpublish-on-removal, failure preserves jobs, mass-unpublish guard).

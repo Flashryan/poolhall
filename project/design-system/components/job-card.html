@@ -1,0 +1,27 @@
+<!-- @dsCard group="Components" name="JobCard" subtitle="Live job listing card with featured edge" viewport="700x300" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;font-family:var(--font-body);background:var(--bg-2,#F4F6F8);padding:24px}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../_ds_bundle.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const { JobCard } = window.PoolhallRecruitmentDesignSystem_8a6e74;
+  const job = {
+    id: 27499, title: "Project Manager, Multi-Storey Construction",
+    sector: "Construction", location: "Cheltenham", type: "Permanent", work: "Onsite",
+    salaryMin: 60000, salaryMax: 75000, posted: "3 days ago", featured: true,
+    summary: "Lead a technically complex build from design stage through to completion, on a predominantly site-based role."
+  };
+  ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(JobCard, { job }));
+  setTimeout(() => window.lucide && window.lucide.createIcons(), 30);
+</script>
+</body>
+</html>

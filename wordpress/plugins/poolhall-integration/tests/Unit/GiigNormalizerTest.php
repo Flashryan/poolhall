@@ -104,19 +104,52 @@ final class GiigNormalizerTest extends TestCase {
 		self::assertSame( '2026-06-15', $job->date_posted?->format( 'Y-m-d' ) );
 	}
 
-	public function test_live_salary_range_is_numeric_but_not_reliable(): void {
+	public function test_live_salary_range_decodes_currency_and_period(): void {
 		$range = $this->normalizer->normalize( $this->live_job( 27499 ) );
 		self::assertSame( 55000.0, $range->salary->min );
 		self::assertSame( 65000.0, $range->salary->max );
-		self::assertSame( '55,000 - 65,000', $range->salary->display );
-		// Currency and period are unmapped enums, so the salary must not be
-		// treated as reliable (no schema baseSalary from assumptions).
-		self::assertFalse( $range->salary->is_reliable() );
+		self::assertSame( 'GBP', $range->salary->currency );
+		self::assertSame( 'YEAR', $range->salary->period );
+		self::assertSame( "£55,000\u{2013}£65,000 / year", $range->salary->display );
+		// Directive legend §2.2: Currency 0=£, SalaryPeriod 0=year — with
+		// both resolved the salary is schema-reliable (baseSalary emitted).
+		self::assertTrue( $range->salary->is_reliable() );
 
 		$single = $this->normalizer->normalize( $this->live_job( 28084 ) );
 		self::assertSame( 35000.0, $single->salary->min );
 		self::assertSame( 35000.0, $single->salary->max );
-		self::assertSame( '35,000', $single->salary->display );
+		self::assertSame( '£35,000 / year', $single->salary->display );
+	}
+
+	public function test_temp_job_enums_decode_hourly_rate(): void {
+		$raw = $this->live_job( 28084 );
+		// Synthetic variant per directive legend: temp job paid hourly in $.
+		$raw['JobType']      = 1;
+		$raw['SalaryPeriod'] = 4;
+		$raw['Currency']     = 1;
+		$raw['SalaryFrom']   = '18.7500';
+		$raw['SalaryTo']     = '18.7500';
+
+		$job = $this->normalizer->normalize( $raw );
+
+		self::assertSame( 'Temporary', $job->job_type );
+		self::assertSame( 'USD', $job->salary->currency );
+		self::assertSame( 'HOUR', $job->salary->period );
+		self::assertSame( '$19 / hour', $job->salary->display );
+	}
+
+	public function test_out_of_legend_enum_values_resolve_to_null(): void {
+		$raw = $this->live_job( 28084 );
+		$raw['JobType']      = 9;
+		$raw['SalaryPeriod'] = 9;
+		$raw['Currency']     = 9;
+
+		$job = $this->normalizer->normalize( $raw );
+
+		self::assertNull( $job->job_type );
+		self::assertNull( $job->salary->currency );
+		self::assertNull( $job->salary->period );
+		self::assertFalse( $job->salary->is_reliable() );
 	}
 
 	public function test_live_null_string_fields_are_treated_as_absent(): void {
@@ -130,15 +163,15 @@ final class GiigNormalizerTest extends TestCase {
 		self::assertSame( 'Windsor', $job->location_display );
 	}
 
-	public function test_live_enum_fields_are_not_guessed(): void {
+	public function test_live_enums_without_a_legend_are_not_guessed(): void {
 		$job = $this->normalizer->normalize( $this->live_job( 28084 ) );
 
-		// CandidateRemote / JobType / Experience / EducationRequirement are
-		// integer enums with no published legend — they must not be mapped
-		// to fabricated labels.
+		// JobType is now decoded per the directive legend (0=Permanent), but
+		// CandidateRemote / Experience / EducationRequirement still have no
+		// published legend — they must not be mapped to fabricated labels.
+		self::assertSame( 'Permanent', $job->job_type );
 		self::assertSame( WorkMode::Unknown, $job->work_mode );
 		self::assertNull( $job->work_mode_raw );
-		self::assertNull( $job->job_type );
 		self::assertNull( $job->experience_requirement );
 		self::assertNull( $job->education_requirement );
 	}

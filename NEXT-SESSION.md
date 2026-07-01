@@ -167,15 +167,31 @@ Remaining:
   real roles. NOTE: staging's plugin now differs from a clean Hostinger
   deploy by exactly those two files — do a full `build-deploy-zips.sh` +
   Hostinger deploy when convenient to reconcile. **Remaining:**
-  1. Get Giig's enum legend for the five integer fields (`JobType`,
-     `Experience`, `EducationRequirement`, `SalaryPeriod`, `CandidateRemote`)
-     — currently unmapped, not guessed — then finish work mode / job type /
-     experience / education / salary period+currency in `GiigNormalizer`.
-  2. Decide expiry behaviour: `ExpiryPolicy` hid 14 of 16 open roles by post
-     age; confirm with Matt whether Giig's open-jobs list should govern
-     visibility instead of local post-age.
+  1. DONE (second pass, 2026-07-01): the v2 design handoff
+     (CLAUDE-CODE-DIRECTIVE.md §2.2, mirrored redacted as docs/12) published
+     the legend for `JobType` (0=Perm 1=Temp), `Currency` (0=£ 1=$ 2=€) and
+     `SalaryPeriod` (0=year 1=month 2=week 3=day 4=hour), now mapped in
+     `GiigNormalizer` and live on staging: salaries render
+     "£50,000–£55,000 / year", `baseSalary` JSON-LD is emitted and the
+     job-type taxonomy is populated. Still unmapped (no legend, do not
+     guess): `CandidateRemote` (work mode), `Experience`,
+     `EducationRequirement`, `DisplaySalary` — ask Giig/Matt.
+  2. DONE: expiry flipped (client decision 2026-07-01) — source presence
+     governs visibility; 16/16 open roles published; demo jobs trashed.
   3. Sanity check: the live `Industry` field sometimes carries a raw id like
      `"109"` instead of a label — confirm sector mapping with Matt.
+  4. Directive §8 (not started): application push — two-step
+     candidate+applicant write, CV stored locally + emailed to Matthew
+     (Giig has no CV-upload endpoint), local retry queue.
+- **v2 design status (2026-07-01):** staging fully rebuilt to the v2
+  "Engineered" design — kit, theme shell (new nav, no Home), home
+  (four-stage hero, feature strip, real featured carousel, reviews band,
+  sector tiles, paired CTAs), jobs templates, team, marketing pages. The
+  v2 prototype now lives in the repo at `project/ui_kits/website/`
+  (replaced the retired v1 copy) with tokens/components under
+  `project/design-system/`. The uploaded handoff zip's
+  CLAUDE-CODE-DIRECTIVE.md contains live credentials — NEVER commit it;
+  docs/12 is the redacted mirror.
 - **Continue Phase 4** (needs the Elementor Pro zip uploaded) — jobs
   filter/sort widgets (type, work mode, salary, sort, applied chips,
   mobile filter drawer), expired-job state, similar roles, save control

@@ -2,17 +2,14 @@ window.PH_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJkAAACZCAYAAAA8
 /* Poolhall Recruitment — sample data for the UI kit (not production data) */
 window.PH_DATA = {
   sectors: [
-    { name: "Construction & Skilled Trade", icon: "hard-hat", count: 8 },
-    { name: "Manufacturing", icon: "factory", count: 5 },
-    { name: "Marketing & PR", icon: "megaphone", count: 4 },
-    { name: "Sales", icon: "trending-up", count: 3 },
-    { name: "Insurance", icon: "shield-check", count: 2 },
-    { name: "Automotive", icon: "car", count: 1 },
+    { name: "Construction", key: "con", icon: "hard-hat", count: 9, blurb: "Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally." },
+    { name: "Manufacturing", key: "man", icon: "factory", count: 6, blurb: "Welders, fabricators, production and engineering talent for the Black Country's manufacturing heartland." },
+    { name: "Digital", key: "dig", icon: "monitor", count: 5, blurb: "Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams." },
   ],
   jobs: [
     {
       id: 27499, title: "Project Manager, Multi-Storey Construction",
-      sector: "Construction & Skilled Trade", location: "Cheltenham", region: "Gloucestershire",
+      sector: "Construction", location: "Cheltenham", region: "Gloucestershire",
       type: "Permanent", work: "Must be onsite", salaryMin: 60000, salaryMax: 75000,
       posted: "3 days ago", featured: true, experience: "5+ years", education: "Degree preferred",
       summary: "Lead a technically complex, multi-storey build from design stage through to completion on a predominantly site-based role.",
@@ -28,7 +25,7 @@ window.PH_DATA = {
     },
     {
       id: 27475, title: "Head of Paid Media",
-      sector: "Marketing & PR", location: "Brighton", region: "East Sussex",
+      sector: "Digital", location: "Brighton", region: "East Sussex",
       type: "Permanent", work: "Part Remote", salaryMin: 50000, salaryMax: 55000,
       posted: "2 days ago", featured: true, experience: "6+ years", education: "",
       summary: "Own paid strategy across search and social for a fast-growing agency. Hybrid, two days from home.",
@@ -36,7 +33,7 @@ window.PH_DATA = {
     },
     {
       id: 27466, title: "Mobile HVAC / Refrigeration Engineer",
-      sector: "Construction & Skilled Trade", location: "Dudley", region: "West Midlands",
+      sector: "Construction", location: "Dudley", region: "West Midlands",
       type: "Permanent", work: "Must be onsite", salaryMin: 50000, salaryMax: 50000,
       posted: "4 days ago", featured: false, experience: "Qualified", education: "NVQ / equivalent",
       summary: "Mobile engineering role across the Midlands with van, door-to-door pay and overtime (OTE £60k+).",
@@ -44,7 +41,7 @@ window.PH_DATA = {
     },
     {
       id: 27452, title: "SEO Manager",
-      sector: "Marketing & PR", location: "Brighton", region: "East Sussex",
+      sector: "Digital", location: "Brighton", region: "East Sussex",
       type: "Permanent", work: "Part Remote", salaryMin: 30000, salaryMax: 38000,
       posted: "5 days ago", featured: false, experience: "4+ years", education: "",
       summary: "Take ownership of organic growth for a growing marketing agency where quality matters and decisions are trusted.",
@@ -52,7 +49,7 @@ window.PH_DATA = {
     },
     {
       id: 27440, title: "Highways General Operative",
-      sector: "Construction & Skilled Trade", location: "South East", region: "UK",
+      sector: "Construction", location: "South East", region: "UK",
       type: "Permanent", work: "Must be onsite", salaryMin: 26000, salaryMax: 32000,
       posted: "1 week ago", featured: false, experience: "Entry / trained", education: "",
       summary: "Build a long-term career in highways maintenance, with training and progression through pay bandings.",
@@ -60,17 +57,17 @@ window.PH_DATA = {
     },
   ],
   reviews: [
-    { name: "Daniel R.", role: "Placed as Site Manager", rating: 5, text: "From first call to offer, Poolhall kept me informed at every step. Genuinely felt like they were on my side." },
-    { name: "Sarah T.", role: "HR Director, Manufacturing", rating: 5, text: "They took time to understand our culture, not just the spec. Two strong hires in six weeks." },
-    { name: "Marcus L.", role: "Placed in Paid Media", rating: 5, text: "Honest advice even when it wasn't the easy answer. That's rare in recruitment." },
-    { name: "Priya N.", role: "Operations Lead", rating: 5, text: "Responsive, ethical and no pushy tactics. Exactly how recruitment should be." },
-    { name: "James W.", role: "Placed as Welder/Fabricator", rating: 5, text: "Sorted a permanent role close to home with a great firm. Couldn't ask for more." },
+    { name: "Daniel R.", date: "2 weeks ago", role: "Placed as Site Manager", rating: 5, text: "From first call to offer, Poolhall kept me informed at every step. Genuinely felt like they were on my side." },
+    { name: "Sarah T.", date: "1 month ago", role: "HR Director, Manufacturing", rating: 5, text: "They took time to understand our culture, not just the spec. Two strong hires in six weeks." },
+    { name: "Marcus L.", date: "3 weeks ago", role: "Placed in Paid Media", rating: 5, text: "Honest advice even when it wasn't the easy answer. That's rare in recruitment." },
+    { name: "Priya N.", date: "2 months ago", role: "Operations Lead", rating: 5, text: "Responsive, ethical and no pushy tactics. Exactly how recruitment should be." },
+    { name: "James W.", date: "1 month ago", role: "Placed as Welder/Fabricator", rating: 5, text: "Sorted a permanent role close to home with a great firm. Couldn't ask for more." },
   ],
   stats: [
-    { value: "30yrs", label: "Combined experience" },
-    { value: "5.0", label: "Average Google rating" },
-    { value: "6", label: "Specialist sectors" },
-    { value: "2021", label: "Independent since" },
+    { value: "30", suffix: "yrs", label: "Combined experience" },
+    { value: "5.0", suffix: "", label: "Average Google rating" },
+    { value: "3", suffix: "", label: "Specialist sectors" },
+    { value: "2021", suffix: "", label: "Independent since" },
   ],
 };
 
@@ -87,12 +84,49 @@ window.PH_FMT = {
    OR drop a file in ui_kits/website/img/ and use "img/your-photo.jpg".
    Keep them landscape, high-res, and documentary in feel (people at work).
    ========================================================================== */
+/* ============================================================================
+   PHOTOGRAPHY — §13 pending. Real Poolhall photos (office/story/team) are
+   embedded; the four hero "worlds" + sector/blog images are tasteful Unsplash
+   placeholders. SWAP for Poolhall's own four hero shots + three sector images.
+   ========================================================================== */
+const U = (id, w) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w||1400}&q=72`;
 window.PH_IMG = {
-  // Real Poolhall photography (embedded in images.js)
-  hero:          window.PH_PHOTO.office,
-  candidateCta:  window.PH_PHOTO.story,
-  employersHero: window.PH_PHOTO.story,
-  whyPoolhall:   window.PH_PHOTO.office,
+  // four-stage hero worlds (order shown in hero) — real Poolhall sector photos
+  // (PH_SECTOR_IMG holds embedded data URIs for the standalone export; fall back to file paths)
+  heroConstruction: (window.PH_SECTOR_IMG||{}).construction || "img/construction.webp",
+  heroManufacturing: (window.PH_SECTOR_IMG||{}).manufacturing || "img/manufacturing.webp",
+  heroDigital: (window.PH_SECTOR_IMG||{}).digital || "img/digital.webp",
+  heroTeam: window.PH_PHOTO.office,
+  // sector tiles — real Poolhall sector photos
+  sectorCon: (window.PH_SECTOR_IMG||{}).construction || "img/construction.webp",
+  sectorMan: (window.PH_SECTOR_IMG||{}).manufacturing || "img/manufacturing.webp",
+  sectorDig: (window.PH_SECTOR_IMG||{}).digital || "img/digital.webp",
+  // about / why collage
+  aboutA: window.PH_PHOTO.story,
+  aboutB: U("1600880292203-757bb62b4baf", 800),
+  aboutC: U("1497032205916-ac775f0649ae", 800),
+  // CTA + page photos
+  ctaPhoto: U("1541888946425-d81bb19240f5"),
+  employersHero: U("1600880292089-90a7e086ee0c"),
+  candidateHero: U("1521737604893-d14cc237f11d"),
+  // blog
+  blog1: U("1556157382-97eda2d62296", 800),
+  blog2: U("1454165804606-c3d57bc86b40", 800),
+  blog3: U("1581092160562-40aa08e78837", 800),
+};
+/* rotating photo pool for service / guide cards (slim headers) */
+window.PH_IMG.svcPool = [
+  window.PH_IMG.aboutA, window.PH_IMG.sectorMan, window.PH_IMG.sectorDig,
+  window.PH_IMG.heroTeam, window.PH_IMG.employersHero, window.PH_IMG.aboutB,
+  window.PH_IMG.candidateHero, window.PH_IMG.aboutC, window.PH_IMG.heroConstruction,
+];
+window.PH_SVCIMG = i => window.PH_IMG.svcPool[i % window.PH_IMG.svcPool.length];
+
+/* sector → tag-class + image, for cards */
+window.PH_SECTOR = {
+  "Construction": { key: "con", img: () => window.PH_IMG.sectorCon },
+  "Manufacturing": { key: "man", img: () => window.PH_IMG.sectorMan },
+  "Digital": { key: "dig", img: () => window.PH_IMG.sectorDig },
 };
 
 /* Team — bios from poolhallrecruitment.co.uk/team */
@@ -102,7 +136,7 @@ window.PH_TEAM = [
     bio: "Matthew founded Poolhall to do recruitment differently, built on honesty, hard work and genuine relationships. With over a decade in the industry, he specialises in Manufacturing and Construction and leads the team's quality-first, ethical approach." },
   { name: "Jay Thornton", role: "Recruitment Partner", photo: window.PH_PHOTO.jay,
     tags: ["Marketing & PR", "Digital"],
-    bio: "Jay heads up our Marketing, PR and Digital desk. He takes the time to really understand both clients and candidates, so every introduction is the right one, never a numbers game." },
+    bio: "Jay heads up our Marketing, PR and Digital desk. He takes the time to really get to know both clients and candidates, so every introduction is a thoughtful one." },
   { name: "Sam Ogle", role: "Marketing Specialist", photo: window.PH_PHOTO.sam,
     tags: ["Brand", "Content"],
     bio: "Sam looks after Poolhall's brand and marketing. With ten years' experience and a marathon runner's discipline, he keeps our voice clear, consistent and genuinely human." },

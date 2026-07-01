@@ -25,14 +25,48 @@ use Poolhall\Integration\Support\WorkMode;
  * below leads with the confirmed live names; the earlier camelCase guesses
  * are kept so the synthetic fixture and any other source shape still work.
  *
- * Deliberately NOT mapped yet: work mode, job type, experience and education
- * arrive as integer enums (CandidateRemote, JobType, Experience,
- * EducationRequirement) whose legend is not published — mapping them without
- * Giig's enum table would fabricate labels (e.g. job #28084 is described as
- * hybrid yet CandidateRemote=0), so per the exit gate they stay unmapped
- * until the legend is locked rather than guessed.
+ * Integer enums: the v2 build directive (CLAUDE-CODE-DIRECTIVE.md §2.2 /
+ * docs/12 §2.2) publishes the legend for JobType (0=Permanent 1=Temporary),
+ * Currency (0=£ 1=$ 2=€) and SalaryPeriod (perm 0=year 1=month 2=week,
+ * temp 3=day 4=hour) — now mapped below. Deliberately still NOT mapped:
+ * CandidateRemote, Experience, EducationRequirement and DisplaySalary have
+ * no published legend (e.g. job #28084 is described as hybrid yet
+ * CandidateRemote=0), so they stay unmapped rather than guessed.
  */
 final class GiigNormalizer {
+
+	private const JOB_TYPES = array(
+		0 => 'Permanent',
+		1 => 'Temporary',
+	);
+
+	private const CURRENCIES = array(
+		0 => 'GBP',
+		1 => 'USD',
+		2 => 'EUR',
+	);
+
+	private const CURRENCY_SYMBOLS = array(
+		'GBP' => '£',
+		'USD' => '$',
+		'EUR' => '€',
+	);
+
+	private const SALARY_PERIODS = array(
+		0 => 'YEAR',
+		1 => 'MONTH',
+		2 => 'WEEK',
+		3 => 'DAY',
+		4 => 'HOUR',
+	);
+
+	private const PERIOD_LABELS = array(
+		'YEAR'  => 'year',
+		'MONTH' => 'month',
+		'WEEK'  => 'week',
+		'DAY'   => 'day',
+		'HOUR'  => 'hour',
+	);
 
 	private const KEYS = array(
 		'id'          => array( 'JobId', 'jobId', 'id', 'Id' ),
@@ -94,7 +128,7 @@ final class GiigNormalizer {
 			address_region: $this->str( $raw, 'region' ),
 			address_country: $this->str( $raw, 'country' ),
 			sector: $this->str( $raw, 'sector' ),
-			job_type: $this->str( $raw, 'job_type' ),
+			job_type: $this->enum( $raw, 'JobType', self::JOB_TYPES ) ?? $this->str( $raw, 'job_type' ),
 			experience_requirement: $this->str( $raw, 'experience' ),
 			education_requirement: $this->str( $raw, 'education' ),
 			date_posted: $date_posted,
@@ -137,11 +171,12 @@ final class GiigNormalizer {
 	 * Build the salary.
 	 *
 	 * Live Giig sends numeric SalaryFrom/SalaryTo (strings like "35000.0000")
-	 * with SalaryPeriod, Currency and DisplaySalary as integer enums whose
-	 * legend is not yet locked. We build the numeric range so the salary filter
-	 * works, but leave currency and period null so Salary::is_reliable() stays
-	 * false and no schema baseSalary is emitted from unverified assumptions.
-	 * Other sources still flow through the display-string parser.
+	 * plus Currency and SalaryPeriod integer enums, decoded per the v2
+	 * directive legend (§2.2). With currency and period resolved the salary
+	 * is schema-reliable (baseSalary can be emitted). Display follows the
+	 * design contract's "£60,000–£75,000 / year" shape — an en-dash inside a
+	 * numeric range is allowed by guardrail #3. Other sources still flow
+	 * through the display-string parser.
 	 *
 	 * @param array<string,mixed> $raw Raw payload.
 	 */
@@ -155,14 +190,36 @@ final class GiigNormalizer {
 			if ( $max < $min ) {
 				[ $min, $max ] = array( $max, $min );
 			}
-			$display = number_format( $min ) === number_format( $max )
-				? number_format( $min )
-				: number_format( $min ) . ' - ' . number_format( $max );
 
-			return new Salary( $display, null, $min, $max, null );
+			$currency = $this->enum( $raw, 'Currency', self::CURRENCIES );
+			$period   = $this->enum( $raw, 'SalaryPeriod', self::SALARY_PERIODS );
+
+			$symbol  = null !== $currency ? ( self::CURRENCY_SYMBOLS[ $currency ] ?? '' ) : '';
+			$amount  = number_format( $min ) === number_format( $max )
+				? $symbol . number_format( $min )
+				: $symbol . number_format( $min ) . "\u{2013}" . $symbol . number_format( $max );
+			$display = null !== $period
+				? $amount . ' / ' . self::PERIOD_LABELS[ $period ]
+				: $amount;
+
+			return new Salary( $display, $currency, $min, $max, $period );
 		}
 
 		return $this->salary_parser->parse( $this->str( $raw, 'salary' ) );
+	}
+
+	/**
+	 * Decode an integer enum via a directive-published legend. Values outside
+	 * the legend (or non-numeric) resolve to null — unknown, never guessed.
+	 *
+	 * @param array<string,mixed>   $raw    Raw payload.
+	 * @param array<int,string>     $legend Enum legend.
+	 */
+	private function enum( array $raw, string $key, array $legend ): ?string {
+		if ( ! array_key_exists( $key, $raw ) || ! is_numeric( $raw[ $key ] ) ) {
+			return null;
+		}
+		return $legend[ (int) $raw[ $key ] ] ?? null;
 	}
 
 	/**

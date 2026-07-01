@@ -1,10 +1,14 @@
-/* Poolhall UI kit — content blocks */
+/* Poolhall UI kit v2 — content blocks */
 
-function SectionHead({ eyebrow, title, lead, action, dark }) {
+function Label({ idx, children, dark }) {
+  return <p className={"label" + (dark ? " on-dark" : "")}>{idx && <span className="idx">{idx}</span>} {children}</p>;
+}
+
+function SectionHead({ idx, label, title, lead, action, dark, center }) {
   return (
-    <div className="section-head">
+    <div className={"section-head" + (center ? " center" : "")}>
       <div className={dark ? "on-dark" : ""}>
-        {eyebrow && <p className={"eyebrow" + (dark ? " on-dark" : "")}>{eyebrow}</p>}
+        {label && <Label idx={idx} dark={dark}>{label}</Label>}
         <h2 className={"h2" + (dark ? " on-dark" : "")}>{title}</h2>
         {lead && <p className={"lead" + (dark ? " on-dark" : "")}>{lead}</p>}
       </div>
@@ -13,194 +17,194 @@ function SectionHead({ eyebrow, title, lead, action, dark }) {
   );
 }
 
-function Stars({ n = 5 }) {
-  return <div className="stars">{Array.from({ length: n }).map((_, i) => <Icon key={i} name="star" />)}</div>;
+/* ---- four-stage animated hero (the signature) ---- */
+const HERO_WORLDS = [
+  { key: "con", label: "Construction", img: () => window.PH_IMG.heroConstruction },
+  { key: "man", label: "Manufacturing", img: () => window.PH_IMG.heroManufacturing },
+  { key: "dig", label: "Digital", img: () => window.PH_IMG.heroDigital },
+  { key: "team", label: "Our Team", img: () => window.PH_IMG.heroTeam },
+];
+function Hero({ go }) {
+  const [active, setActive] = useState(0);
+  const reduce = useRef(false);
+  useEffect(() => {
+    reduce.current = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce.current) return;
+    const t = setInterval(() => setActive(a => (a + 1) % HERO_WORLDS.length), 4200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <section className="hero">
+      <div className="hero-stage">
+        {HERO_WORLDS.map((w, i) => (
+          <div key={w.key} className={"hero-slide" + (i === active ? " on" : "")}>
+            <img src={w.img()} alt={w.label} onError={e => { e.target.style.display = "none"; }} />
+          </div>
+        ))}
+      </div>
+      <div className="container">
+        <div className="hero-inner">
+          <Label dark idx="//">Recruitment, done well</Label>
+          <h1 className="display on-dark">West Midlands roots.<br /><em>National</em> recruitment reach.</h1>
+          <p className="lead on-dark">We help the people who build, make and market British business find their next move, across Construction, Manufacturing and Digital. Independent, down-to-earth and always happy to talk things through.</p>
+          <div className="hero-cta">
+            <Button variant="primary" size="lg" iconRight="arrow-right" onClick={() => go("candidate")}>Find work</Button>
+            <Button variant="ghost-light" size="lg" onClick={() => go("employers")}>Hire talent</Button>
+          </div>
+        </div>
+      </div>
+      <div className="worlds">
+        <div className="container">
+          {HERO_WORLDS.map((w, i) => (
+            <div key={w.key} className={"world" + (i === active ? " on" : "")} onClick={() => setActive(i)}>
+              <div className="wi">{String(i + 1).padStart(2, "0")}</div>
+              <div className="wn">{w.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
+
+/* feature strip overlapping hero */
+function FeatureStrip() {
+  const items = [
+    { icon: "target", t: "Specialist, not generalist", d: "Three sectors we know inside out, so the conversation starts in the right place." },
+    { icon: "phone-call", t: "A friendly voice on the phone", d: "Consultants who pick up, take the time to listen, and offer genuine advice." },
+    { icon: "map", t: "National reach", d: "Black Country roots, helping people find roles the length of the country." },
+  ];
+  return (
+    <div className="feature-strip">
+      <div className="container">
+        <div className="grid ticks">
+          {items.map(f => (
+            <div className="feat" key={f.t}>
+              <span className="fi"><Icon name={f.icon} /></span>
+              <div><h4>{f.t}</h4><p>{f.d}</p></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stars({ n = 5 }) { return <div className="stars">{Array.from({ length: n }).map((_, i) => <Icon key={i} name="star" />)}</div>; }
 
 function JobCard({ job, go }) {
   const F = window.PH_FMT;
+  const sec = window.PH_SECTOR[job.sector] || { key: "dig" };
   return (
     <article className={"jobcard" + (job.featured ? " feat" : "")} onClick={() => go("job", job)}>
-      <div className="jc-top">
-        <div>
-          <div className="jc-sector">{job.sector}</div>
-          <h3 className="jc-title">{job.title}</h3>
-        </div>
+      <div className="jc-photo">
+        {sec.img && <img src={sec.img()} alt="" onError={e => { e.target.style.display = "none"; }} />}
+        <span className={"jc-tag " + sec.key}>{job.sector}</span>
         {job.featured && <span className="jc-feat"><Icon name="star" /> Featured</span>}
       </div>
+      <h3 className="jc-title">{job.title}</h3>
       <div className="jc-meta">
-        <span><Icon name="map-pin" /> {job.location}</span>
-        <span><Icon name="briefcase" /> {job.type}</span>
-        <span><Icon name="house" /> {job.work}</span>
-        <span><Icon name="clock" /> {job.posted}</span>
+        <span className="m"><Icon name="map-pin" /> {job.location}, {job.region}</span>
+        <span className="m"><Icon name="building" /> {job.work}</span>
+        <span className="m"><Icon name="banknote" /> <span className="sal">{F.salary(job)}</span> · {job.type}</span>
       </div>
-      <p className="jc-summary">{job.summary}</p>
+      <p className="jc-snip">{job.summary}</p>
       <div className="jc-foot">
-        <div className="jc-sal">{F.salary(job)} <small>/ year</small></div>
-        <span className="jc-link">View job <Icon name="arrow-right" /></span>
+        <span className="jc-view">View job <Icon name="arrow-right" /></span>
+        <span className="jc-ref">#{job.id}</span>
       </div>
     </article>
   );
 }
 
-/* Horizontal swipe carousel with prev/next */
-function Carousel({ children, navId }) {
+function Carousel({ children, light }) {
   const ref = useRef(null);
-  const scroll = dir => {
-    const el = ref.current;
-    if (el) el.scrollBy({ left: dir * (el.clientWidth * 0.8), behavior: "smooth" });
-  };
+  const scroll = dir => { const el = ref.current; if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" }); };
   return (
     <div className="carousel">
       <div className="carousel-track" ref={ref}>{children}</div>
-      <div className="carousel-nav" style={{ marginTop: 18 }} id={navId}>
-        <button className="cbtn" onClick={() => scroll(-1)} aria-label="Previous"><Icon name="arrow-left" /></button>
-        <button className="cbtn" onClick={() => scroll(1)} aria-label="Next"><Icon name="arrow-right" /></button>
+      <div className="carousel-nav" style={{ marginTop: 22 }}>
+        <button className={"cbtn" + (light ? " light" : "")} onClick={() => scroll(-1)} aria-label="Previous"><Icon name="arrow-left" /></button>
+        <button className={"cbtn" + (light ? " light" : "")} onClick={() => scroll(1)} aria-label="Next"><Icon name="arrow-right" /></button>
       </div>
     </div>
   );
 }
 
-function GoogleG({ size = 26 }) {
+function ReviewCard({ r, glass }) {
   return (
-    <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" width={size} height={size} style={{ display: "block", flexShrink: 0 }}>
-      <path fill="#4285f4" d="M533.5 278.4c0-18.5-1.5-37.1-4.7-55.3H272.1v104.8h147c-6.1 33.8-25.7 63.7-54.4 82.7v68h87.7c51.5-47.4 81.1-117.4 81.1-200.2z"/>
-      <path fill="#34a853" d="M272.1 544.3c73.4 0 135.3-24.1 180.4-65.7l-87.7-68c-24.4 16.6-55.9 26-92.6 26-71 0-131.2-47.9-152.8-112.3H28.9v70.1c46.2 91.9 140.3 149.9 243.2 149.9z"/>
-      <path fill="#fbbc04" d="M119.3 324.3c-11.4-33.8-11.4-70.4 0-104.2V150H28.9c-38.6 76.9-38.6 167.5 0 244.4l90.4-70.1z"/>
-      <path fill="#ea4335" d="M272.1 107.7c38.8-.6 76.3 14 104.4 40.8l77.7-77.7C405 24.6 339.7-.8 272.1 0 169.2 0 75.1 58 28.9 150l90.4 70.1c21.5-64.5 81.8-112.4 152.8-112.4z"/>
-    </svg>
-  );
-}
-
-function ReviewCard({ r }) {
-  return (
-    <div className="review">
+    <div className={"review" + (glass ? " on-glass" : "")}>
       <Stars n={r.rating} />
       <p>"{r.text}"</p>
       <div className="who">
         <span className="av">{r.name.split(" ").map(s => s[0]).join("").slice(0, 2)}</span>
-        <span>
-          <span className="nm">{r.name}</span><br />
-          <span className="rl">{r.role}</span>
-        </span>
-      </div>
-      <div className="review-goog-badge">
-        <GoogleG size={14} />
-        <span>Reviewed on Google</span>
-      </div>
-    </div>
-  );
-}
-
-function ReviewsSlider() {
-  const reviews = window.PH_DATA.reviews;
-  const n = reviews.length;
-  const [idx, setIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const trackRef = useRef(null);
-
-  const scrollTo = (i) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const card = el.children[i];
-    if (card) el.scrollTo({ left: card.offsetLeft - 20, behavior: "smooth" });
-  };
-
-  const go = (raw) => {
-    const i = ((raw % n) + n) % n;
-    setIdx(i);
-    scrollTo(i);
-  };
-
-  useEffect(() => {
-    if (paused) return;
-    const t = setInterval(() => {
-      setIdx(i => {
-        const next = ((i + 1) % n + n) % n;
-        scrollTo(next);
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(t);
-  }, [paused, n]);
-
-  return (
-    <div className="reviews-slider" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="rgs-header">
-        <div className="rgs-brand">
-          <GoogleG size={28} />
-          <div>
-            <span className="rgs-label">Google Reviews</span>
-            <div className="rgs-rating">
-              <span className="rgs-score">5.0</span>
-              <Stars n={5} />
-              <span className="rgs-total">{n} reviews</span>
-            </div>
-          </div>
-        </div>
-        <a href="#" onClick={e => e.preventDefault()} className="jc-link">See all reviews <Icon name="arrow-right" /></a>
-      </div>
-
-      <div className="carousel">
-        <div className="carousel-track" ref={trackRef}>
-          {reviews.map((r, i) => <ReviewCard key={i} r={r} />)}
-        </div>
-      </div>
-
-      <div className="rgs-controls">
-        <button className="cbtn" onClick={() => go(idx - 1)} aria-label="Previous"><Icon name="arrow-left" /></button>
-        <div className="rgs-dots">
-          {reviews.map((_, i) => (
-            <button key={i} className={"rgs-dot" + (i === idx ? " on" : "")} onClick={() => go(i)} aria-label={"Review " + (i + 1)} />
-          ))}
-        </div>
-        <button className="cbtn" onClick={() => go(idx + 1)} aria-label="Next"><Icon name="arrow-right" /></button>
+        <span><span className="nm">{r.name}</span><br /><span className="rl">{r.role}{r.date ? " · " + r.date : ""}</span></span>
+        <span className="g">G</span>
       </div>
     </div>
   );
 }
 
 function SectorTile({ s, go }) {
+  const meta = window.PH_SECTOR[s.name];
   return (
-    <div className="sector-tile" onClick={() => go("jobs")}>
-      <span className="sector-ic"><Icon name={s.icon} /></span>
-      <span>
-        <span className="st-name">{s.name}</span><br />
-        <span className="st-count">{s.count} open roles</span>
-      </span>
-    </div>
-  );
-}
-
-function SearchBar({ go }) {
-  return (
-    <div className="searchbar">
-      <div className="field"><Icon name="search" /><input placeholder="Job title, skill or keyword" /></div>
-      <div className="field"><Icon name="map-pin" /><input placeholder="Location" /></div>
-      <div className="field"><Icon name="layers" />
-        <select defaultValue=""><option value="">All sectors</option>
-          {window.PH_DATA.sectors.map(s => <option key={s.name}>{s.name}</option>)}
-        </select>
+    <a className="sector-tile" href="#" onClick={e => { e.preventDefault(); go("sector-" + meta.key); }}>
+      <img src={meta.img()} alt={s.name} onError={e => { e.target.style.display = "none"; }} />
+      <div className="st-body">
+        <div className="st-idx">{s.count} live roles</div>
+        <h3>{s.name}</h3>
+        <p>{s.blurb}</p>
+        <span className="st-go">Explore sector <Icon name="arrow-right" /></span>
       </div>
-      <Button variant="primary" size="lg" icon="search" onClick={() => go("jobs")}>Search</Button>
-    </div>
+    </a>
   );
 }
 
-function StatStrip() {
+/* full-bleed in-body photo band with gradient overlay */
+function PhotoBand({ img, kicker, title, text, children }) {
   return (
-    <div className="stats">
-      {window.PH_DATA.stats.map(s => (
-        <div className="stat" key={s.label}>
-          <div className="v">{s.value}</div>
-          <div className="l">{s.label}</div>
+    <section className="photoband">
+      <img src={img} alt="" onError={e => { e.target.style.display = "none"; }} />
+      <div className="container">
+        <div className="pb-inner">
+          {kicker && <Label dark idx="//">{kicker}</Label>}
+          <h2 className="h2 on-dark">{title}</h2>
+          {text && <p>{text}</p>}
+          {children && <div className="acts">{children}</div>}
         </div>
-      ))}
+      </div>
+    </section>
+  );
+}
+
+/* candidate + employer CTA bands (paired) */
+function CtaBands({ go }) {
+  return (
+    <div className="cta-bands">
+      <div className="cta-band cand">
+        <div className="inner">
+          <div className="ce">For candidates</div>
+          <h2 className="on-dark">Looking for your next role?</h2>
+          <p>Register in a couple of minutes and we'll be in touch when something that fits comes along, no pressure, just a friendly heads-up.</p>
+          <div className="acts">
+            <Button variant="primary" iconRight="arrow-right" onClick={() => go("candidate")}>Register now</Button>
+            <Button variant="ghost-light" onClick={() => go("jobs")}>View jobs</Button>
+          </div>
+        </div>
+      </div>
+      <div className="cta-band emp">
+        <div className="inner">
+          <div className="ce">For employers</div>
+          <h2 className="on-dark">Looking to hire?</h2>
+          <p>Tell us who you're looking for and we'll put together a shortlist of people we think you'll be glad to meet.</p>
+          <div className="acts">
+            <Button variant="dark" iconRight="arrow-right" onClick={() => go("employers")}>Enquire now</Button>
+            <Button variant="ghost-light" onClick={() => go("contact")}>Book a call</Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-const HERO_IMG = window.PH_IMG.hero;
-const SPLIT_IMG = window.PH_IMG.candidateCta;
-
-Object.assign(window, { SectionHead, Stars, JobCard, Carousel, ReviewCard, ReviewsSlider, SectorTile, SearchBar, StatStrip, HERO_IMG, SPLIT_IMG });
+Object.assign(window, { Label, SectionHead, Hero, FeatureStrip, Stars, JobCard, Carousel, ReviewCard, SectorTile, CtaBands, PhotoBand });
