@@ -1,20 +1,21 @@
 <?php
 /**
- * Phase 3/4 visual: build the Home page (design system §25 Home composition,
- * §9 image hero, §11 home search, §12 featured carousel). Run inside
- * WordPress:
+ * Build the Home page to the v2 "Engineered" design system (docs/12 §7.1,
+ * source of truth: the design handoff's ui_kits/website/screen-home.jsx,
+ * blocks.jsx and data.js). Run inside WordPress:
  *
  *   wp eval-file scripts/dev/create-home-page.php
  *
  * Idempotent: creates the `home` page once, points the site front page at
  * it, and replaces its Elementor document on each run (prior
- * _elementor_data backed up first — hard rule 11). Content mirrors the
- * approved prototype (project/ui_kits/website/Home.jsx): image hero with
- * the server-rendered `[poolhall_job_search]` panel and trust row
- * (`[poolhall_live_roles]` hides itself while the job store is empty),
- * featured jobs Loop Carousel (query `poolhall_featured_jobs`, no
- * autoplay), six static sector cards, the three-step candidate process,
- * the credibility stat strip and the employer CTA split.
+ * _elementor_data backed up first — hard rule 11).
+ *
+ * Section order matches screen-home.jsx exactly: hero (no search box) →
+ * feature strip (overlaps the hero on a white card) → featured jobs Loop
+ * Carousel (query `poolhall_featured_jobs`, no autoplay) → Google reviews
+ * (dark band) → three real-photo sector tiles → "what makes us different"
+ * split (checklist + media collage) → credibility stat strip (bordered box
+ * on navy) → paired candidate/employer CTA bands.
  *
  * The Google Reviews section renders through `[poolhall_reviews]`, which
  * shows the cached Places snapshot (Phase 8) or, on staging only, the
@@ -96,8 +97,11 @@ $poolhall_import_image = static function ( string $filename, string $alt ): int 
 };
 
 $poolhall_images = array(
-	'hero'  => $poolhall_import_image( 'poolhall-office.jpg', '' ),
-	'story' => $poolhall_import_image( 'poolhall-story.jpg', 'The Poolhall team at work' ),
+	'hero'          => $poolhall_import_image( 'poolhall-office.jpg', '' ),
+	'story'         => $poolhall_import_image( 'poolhall-story.jpg', 'The Poolhall team at work' ),
+	'construction'  => $poolhall_import_image( 'sector-construction.webp', 'Construction site team at work' ),
+	'manufacturing' => $poolhall_import_image( 'sector-manufacturing.webp', 'Manufacturing and engineering at work' ),
+	'digital'       => $poolhall_import_image( 'sector-digital.webp', 'Digital and marketing team at work' ),
 );
 foreach ( $poolhall_images as $poolhall_img_key => $poolhall_img_id ) {
 	if ( 0 === $poolhall_img_id ) {
@@ -233,9 +237,6 @@ $employers_url = (string) get_permalink( get_page_by_path( 'employers' ) );
 // 1. Hero (§7.1): office photo over brand navy, eyebrow, gold-emphasis H1,
 // lead, gold "Find work" + ghost-light "Hire talent" CTAs, world markers.
 // No search box in the hero (Poolhall is a partner, not a job board).
-$star_icon   = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg>';
-$shield_icon = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>';
-
 $hero = $container(
 	$boxed(
 		array(
@@ -281,7 +282,7 @@ $hero = $container(
 				),
 				$widget(
 					'text-editor',
-					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">We place the people who build, make and market British business, across Construction, Manufacturing and Digital. Independent, practical and human. We actually answer the phone.</p>' )
+					array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">We help the people who build, make and market British business find their next move, across Construction, Manufacturing and Digital. Independent, down-to-earth and always happy to talk things through.</p>' )
 				),
 				$widget(
 					'text-editor',
@@ -295,7 +296,7 @@ $hero = $container(
 				$widget(
 					'text-editor',
 					array(
-						'editor' => '<div class="ph-hero-worlds"><span class="is-active"><b>01</b> Construction</span><span><b>02</b> Manufacturing</span><span><b>03</b> Digital</span><span><b>04</b> Team</span></div>',
+						'editor' => '<div class="ph-hero-worlds"><span class="is-active"><b>01</b> Construction</span><span><b>02</b> Manufacturing</span><span><b>03</b> Digital</span><span><b>04</b> Our Team</span></div>',
 					)
 				),
 			),
@@ -328,19 +329,11 @@ $featured = $container(
 				'flex_gap'              => $gap( 16 ),
 			),
 			array(
-				$section_head( 'Current roles', 'Featured jobs this week', 'Hand-picked roles from our latest live vacancies.' ),
+				$section_head( '01 / Featured roles', 'Live jobs, this week', 'A snapshot of what we&rsquo;re recruiting right now. New roles land all the time.' ),
 				$widget(
-					'heading',
+					'text-editor',
 					array(
-						'title'        => 'View all jobs',
-						'header_size'  => 'p',
-						'title_color'  => '#8A5E12',
-						'_css_classes' => 'ph-link ph-link--arrow',
-						'link'         => array(
-							'url'         => $jobs_url,
-							'is_external' => '',
-							'nofollow'    => '',
-						),
+						'editor' => '<a class="ph-button ph-button--ghost" href="' . esc_url( $jobs_url ) . '">View all jobs &rarr;</a>',
 					)
 				),
 			),
@@ -367,84 +360,68 @@ $featured = $container(
 	)
 );
 
-// 3. Sectors (§7.1 #4): three photo tiles (overlay + gold tag + Explore
-// link). The office photo is a placeholder until per-sector photography is
-// supplied; the heavy navy overlay keeps the three reading as a set.
-$sector_tile = static function ( string $name, string $tag, string $desc ) use ( $container, $widget, $poolhall_images, $jobs_url ): array {
+// 3. Sectors (§9.1 SectorTile): three real-photo tiles (bottom-heavy gradient
+// + gold "N live roles" tag + Explore link), using the bundled sector photos.
+$sector_tile = static function ( string $name, int $image_id, int $count, string $desc ) use ( $container, $widget, $jobs_url ): array {
 	return $container(
 		array(
-			'content_width'                 => 'full',
-			'flex_direction'                => 'column',
-			'flex_justify_content'          => 'flex-end',
-			'min_height'                    => array(
-				'unit' => 'custom',
-				'size' => '24rem',
+			'content_width'          => 'full',
+			'flex_direction'         => 'column',
+			'flex_justify_content'   => 'flex-end',
+			'background_background'  => 'classic',
+			'background_color'       => '#123255',
+			'background_image'       => array(
+				'id'  => $image_id,
+				'url' => (string) wp_get_attachment_image_url( $image_id, 'full' ),
 			),
-			'background_background'          => 'classic',
-			'background_color'              => '#0B2846',
-			'background_image'              => array(
-				'id'  => $poolhall_images['hero'],
-				'url' => (string) wp_get_attachment_image_url( $poolhall_images['hero'], 'full' ),
-			),
-			'background_size'               => 'cover',
-			'background_position'           => 'center center',
-			'background_overlay_background' => 'classic',
-			'background_overlay_color'      => '#06182B',
-			'background_overlay_opacity'    => array(
-				'unit' => 'px',
-				'size' => 0.74,
-			),
-			'border_radius'                 => array(
+			'background_size'        => 'cover',
+			'background_position'    => 'center center',
+			'padding'                => array(
 				'unit'     => 'px',
-				'top'      => '6',
-				'right'    => '6',
-				'bottom'   => '6',
-				'left'     => '6',
+				'top'      => '26',
+				'right'    => '26',
+				'bottom'   => '26',
+				'left'     => '26',
 				'isLinked' => true,
 			),
-			'padding'                       => array(
-				'unit'     => 'px',
-				'top'      => '28',
-				'right'    => '28',
-				'bottom'   => '28',
-				'left'     => '28',
-				'isLinked' => false,
-			),
-			'flex_gap'                      => array(
+			'flex_gap'               => array(
 				'unit'   => 'px',
-				'size'   => 8,
-				'column' => '8',
-				'row'    => '8',
+				'size'   => 4,
+				'column' => '4',
+				'row'    => '4',
 			),
-			'css_classes'                   => 'ph-sector-tile',
-			'link'                          => array(
+			'css_classes'            => 'ph-sector-tile',
+			'link'                   => array(
 				'url'         => $jobs_url,
 				'is_external' => '',
 				'nofollow'    => '',
 			),
 		),
 		array(
-			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__count">' . esc_html( $tag ) . '</p>' ) ),
+			$widget(
+				'text-editor',
+				array( 'editor' => '<p class="ph-sector-tile__count">' . esc_html( $count ) . ' live roles</p>' )
+			),
 			$widget(
 				'heading',
 				array(
 					'title'        => $name,
 					'header_size'  => 'h3',
-					'_css_classes' => 'ph-h3 ph-sector-tile__name',
+					'_css_classes' => 'ph-sector-tile__name',
 					'title_color'  => '#FFFFFF',
 				)
 			),
 			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__desc">' . esc_html( $desc ) . '</p>' ) ),
-			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__more">Explore sector &rarr;</p>' ) ),
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-sector-tile__more">Explore sector <span aria-hidden="true">&rarr;</span></p>' ) ),
 		),
 		true
 	);
 };
 
 $sector_cards = array(
-	$sector_tile( 'Construction', 'Live roles', 'Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally.' ),
-	$sector_tile( 'Manufacturing', 'Live roles', 'Welders, fabricators, production and engineering talent for the region&rsquo;s manufacturing heartland.' ),
-	$sector_tile( 'Digital', 'Live roles', 'Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams.' ),
+	$sector_tile( 'Construction', $poolhall_images['construction'], 9, 'Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally.' ),
+	$sector_tile( 'Manufacturing', $poolhall_images['manufacturing'], 6, 'Welders, fabricators, production and engineering talent for the Black Country&rsquo;s manufacturing heartland.' ),
+	$sector_tile( 'Digital', $poolhall_images['digital'], 5, 'Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams.' ),
 );
 
 $sectors = $container(
@@ -458,7 +435,7 @@ $sectors = $container(
 		)
 	),
 	array(
-		$section_head( 'Where we work', 'Three sectors. Deep expertise.', 'We don&rsquo;t recruit for everything. We recruit brilliantly for the industries that build, make and market British business.' ),
+		$section_head( '03 / Where we work', 'Three sectors, real depth', 'We focus on a few industries rather than all of them, so we really understand the work and the people who build, make and market British business.' ),
 		$container(
 			array(
 				'content_width' => 'full',
@@ -470,71 +447,81 @@ $sectors = $container(
 	)
 );
 
-// 4. Three-step candidate process (§25 step 6).
-$poolhall_steps = array(
-	array( '1', 'Tell us what you want', 'Share your CV and what a great next move looks like. No pressure, no spam, just a real conversation.' ),
-	array( '2', 'We match you to roles', 'We only put you forward for roles that genuinely fit your skills, salary and ambitions.' ),
-	array( '3', 'We guide you to offer', 'Interview prep, honest feedback and support right through to your first day and beyond.' ),
+// 4. "What makes us different" (§9.1 Home step 4): checklist + media collage.
+$check_icon_home = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+$poolhall_differentiators = array(
+	'Independent and experienced, you&rsquo;ll always speak with a senior consultant who knows your sector.',
+	'Friendly, honest advice, we&rsquo;ll always share our genuine view to help you decide.',
+	'Quality over quantity, a considered shortlist that&rsquo;s thoughtfully put together.',
+	'Easy to reach, a local team that&rsquo;s always happy to pick up the phone.',
 );
-$step_cards     = array();
-foreach ( $poolhall_steps as [ $poolhall_step_num, $poolhall_step_title, $poolhall_step_body ] ) {
-	$step_cards[] = $container(
-		array(
-			'content_width'  => 'full',
-			'flex_direction' => 'column',
-			'flex_gap'       => $gap( 8 ),
-			'css_classes'    => 'ph-card',
-		),
-		array(
-			$widget(
-				'text-editor',
-				array( 'editor' => '<div class="ph-stat__value">' . esc_html( $poolhall_step_num ) . '</div>' )
-			),
-			$widget(
-				'heading',
-				array(
-					'title'        => $poolhall_step_title,
-					'header_size'  => 'h3',
-					'title_color'  => '#1B4068',
-					'_css_classes' => 'ph-h4',
-				)
-			),
-			$widget(
-				'text-editor',
-				array(
-					'editor'     => '<p class="ph-body">' . esc_html( $poolhall_step_body ) . '</p>',
-					'text_color' => '#5A6678',
-				)
-			),
-		),
-		true
-	);
+$poolhall_checklist_html = '<ul class="ph-checklist">';
+foreach ( $poolhall_differentiators as $poolhall_point ) {
+	$poolhall_checklist_html .= '<li>' . $check_icon_home . '<span>' . $poolhall_point . '</span></li>';
 }
+$poolhall_checklist_html .= '</ul>';
 
-$steps = $container(
+$about_split = $container(
 	$boxed(
 		array(
 			'background_background' => 'classic',
-			'background_color'      => '#F7F8FA',
-			'flex_direction'        => 'column',
-			'flex_gap'              => $gap( 40 ),
+			'background_color'      => '#FFFFFF',
 			'padding'               => $section_padding(),
 		)
 	),
 	array(
-		$section_head( 'How we work with you', 'Three steps to your next role' ),
 		$container(
 			array(
 				'content_width' => 'full',
-				'css_classes'   => 'ph-grid-3',
+				'css_classes'   => 'ph-split',
 			),
-			$step_cards,
+			array(
+				$container(
+					array(
+						'content_width'  => 'full',
+						'flex_direction' => 'column',
+					),
+					array(
+						$eyebrow( '04 / What makes us different' ),
+						$heading( 'Recruitment with people at the heart of it.', 'h2', '#1B4068', $h2_clamp ),
+						$widget(
+							'text-editor',
+							array( 'editor' => '<p class="ph-lede" style="margin-top:16px">We&rsquo;re an independent agency that believes recruitment works best when it&rsquo;s done thoughtfully, honestly, and with people at the centre.</p>' )
+						),
+						$widget( 'text-editor', array( 'editor' => $poolhall_checklist_html ) ),
+					),
+					true
+				),
+				$widget(
+					'text-editor',
+					array(
+						'editor' => '<div class="ph-media-collage">'
+							. '<div class="ph-media-collage__item ph-media-collage__item--tall"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['hero'], 'large' ) ) . '" alt="" /></div>'
+							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['story'], 'large' ) ) . '" alt="" /></div>'
+							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['construction'], 'large' ) ) . '" alt="" /></div>'
+							. '</div>',
+					)
+				),
+			),
 			true
 		),
 	)
 );
 
-// 5. Credibility stat strip (§25 step 7): navy, values orange on dark.
+// 5. Credibility stat strip (§9.1): bordered box on brand navy, white values.
+$poolhall_stat_cells = array(
+	array( '30', 'yrs', 'Combined experience' ),
+	array( '5.0', '', 'Average Google rating' ),
+	array( '3', '', 'Specialist sectors' ),
+	array( '2021', '', 'Independent since' ),
+);
+$poolhall_stats_html = '<div class="ph-stats-box">';
+foreach ( $poolhall_stat_cells as [ $poolhall_stat_value, $poolhall_stat_suffix, $poolhall_stat_label ] ) {
+	$poolhall_stats_html .= '<div class="ph-stats-box__cell"><div class="ph-stats-box__value">' . esc_html( $poolhall_stat_value ) . esc_html( $poolhall_stat_suffix ) . '</div>'
+		. '<div class="ph-stats-box__label">' . esc_html( $poolhall_stat_label ) . '</div></div>';
+}
+$poolhall_stats_html .= '</div>';
+
 $stats = $container(
 	$boxed(
 		array(
@@ -544,27 +531,17 @@ $stats = $container(
 		)
 	),
 	array(
-		$widget(
-			'text-editor',
-			array(
-				'editor' => '<div class="ph-grid-2 ph-grid-auto">'
-					. '<div><div class="ph-stat__value">30yrs</div><div class="ph-stat__label ph-text-reversed-soft">Combined experience</div></div>'
-					. '<div><div class="ph-stat__value">5.0</div><div class="ph-stat__label ph-text-reversed-soft">Average Google rating</div></div>'
-					. '<div><div class="ph-stat__value">6</div><div class="ph-stat__label ph-text-reversed-soft">Specialist sectors</div></div>'
-					. '<div><div class="ph-stat__value">2021</div><div class="ph-stat__label ph-text-reversed-soft">Independent since</div></div>'
-					. '</div>',
-			)
-		),
+		$widget( 'text-editor', array( 'editor' => $poolhall_stats_html ) ),
 	)
 );
 
-// 6. Google reviews (§25 step 8): self-contained server render — the
-// shortcode emits head + carousel only when review data exists.
+// 6. Google reviews (§9.1 step 3): dark navy band; the shortcode emits head +
+// carousel only when review data exists, so this never shows an empty band.
 $reviews = $container(
 	$boxed(
 		array(
 			'background_background' => 'classic',
-			'background_color'      => '#FFFFFF',
+			'background_color'      => '#06182B',
 			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '0',
@@ -580,127 +557,16 @@ $reviews = $container(
 	)
 );
 
-// 7. Employer CTA split (§25 step 9).
-$employer_cta = $container(
-	$boxed(
-		array(
-			'background_background' => 'classic',
-			'background_color'      => '#F2F4F6',
-			'padding'               => $section_padding(),
-		)
-	),
-	array(
-		$container(
-			array(
-				'content_width' => 'full',
-				'css_classes'   => 'ph-split',
-			),
-			array(
-				$container(
-					array(
-						'content_width'  => 'full',
-						'flex_direction' => 'column',
-						'flex_gap'       => $gap( 14 ),
-					),
-					array(
-						$eyebrow( 'Looking to hire?' ),
-						$heading( 'We&rsquo;ll represent your business like it&rsquo;s our own', 'h2', '#1B4068', $h2_clamp ),
-						$widget(
-							'text-editor',
-							array( 'editor' => '<p class="ph-lede">We work with PLCs and SMEs on exclusive and exciting roles. Tell us who you need and we&rsquo;ll find the right people.</p>' )
-						),
-						$container(
-							array(
-								'content_width'  => 'full',
-								'flex_direction' => 'row',
-								'flex_wrap'      => 'wrap',
-								'flex_gap'       => $gap( 12 ),
-							),
-							array(
-								$widget(
-									'button',
-									array(
-										'text'                          => 'For employers',
-										'link'                          => array(
-											'url'         => $employers_url,
-											'is_external' => '',
-											'nofollow'    => '',
-										),
-										'background_color'              => '#0B2846',
-										'button_background_hover_color' => '#1B4068',
-										'button_text_color'             => '#FFFFFF',
-										'hover_color'                   => '#FFFFFF',
-										'typography_typography'         => 'custom',
-										'typography_font_family'        => 'Source Sans 3',
-										'typography_font_weight'        => '700',
-									)
-								),
-								$widget(
-									'button',
-									array(
-										'text'                          => '0121 516 3000',
-										'link'                          => array(
-											'url'         => 'tel:01215163000',
-											'is_external' => '',
-											'nofollow'    => '',
-										),
-										'background_color'              => '#FFFFFF',
-										'button_background_hover_color' => '#F7F8FA',
-										'button_text_color'             => '#0B2846',
-										'hover_color'                   => '#0B2846',
-										'border_border'                 => 'solid',
-										'border_width'                  => array(
-											'unit'     => 'px',
-											'top'      => '1',
-											'right'    => '1',
-											'bottom'   => '1',
-											'left'     => '1',
-											'isLinked' => true,
-										),
-										'border_color'                  => '#C9D0DA',
-										'typography_typography'         => 'custom',
-										'typography_font_family'        => 'Source Sans 3',
-										'typography_font_weight'        => '700',
-									)
-								),
-							),
-							true
-						),
-					),
-					true
-				),
-				$widget(
-					'image',
-					array(
-						'image'               => array(
-							'id'  => $poolhall_images['story'],
-							'url' => (string) wp_get_attachment_image_url( $poolhall_images['story'], 'full' ),
-						),
-						'image_size'          => 'large',
-						'image_border_radius' => array(
-							'unit'     => 'px',
-							'top'      => '16',
-							'right'    => '16',
-							'bottom'   => '16',
-							'left'     => '16',
-							'isLinked' => true,
-						),
-					)
-				),
-			),
-			true
-		),
-	)
-);
 
-// Feature strip (design §7.1 #2): three reasons on a navy bar under the hero.
+// Feature strip (§9.1 FeatureStrip): overlaps the hero by -46px on a white
+// card (the overlap and card styling live in .ph-feature-strip-wrap/-strip).
 $feature_item = static function ( string $icon, string $title, string $text ) use ( $widget ): array {
 	return $widget(
 		'text-editor',
 		array(
 			'editor' => '<div class="ph-feature"><span class="ph-feature__icon" aria-hidden="true">' . $icon . '</span>'
-				. '<h3 class="ph-feature__title">' . esc_html( $title ) . '</h3>'
-				. '<p class="ph-feature__text">' . esc_html( $text ) . '</p></div>',
+				. '<div><h3 class="ph-feature__title">' . esc_html( $title ) . '</h3>'
+				. '<p class="ph-feature__text">' . esc_html( $text ) . '</p></div></div>',
 		)
 	);
 };
@@ -709,33 +575,35 @@ $icon_phone  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stro
 $icon_map    = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
 
 $feature_strip = $container(
-	$boxed(
-		array(
-			'background_background' => 'classic',
-			'background_color'      => '#0B2846',
-			'flex_direction'        => 'column',
-			'padding'               => $section_padding( 52 ),
-		)
+	array(
+		'content_width' => 'full',
+		'css_classes'   => 'ph-feature-strip-wrap',
 	),
 	array(
 		$container(
-			array(
-				'content_width' => 'full',
-				'css_classes'   => 'ph-grid-3 ph-feature-strip',
+			$boxed(
+				array(
+					'css_classes' => 'ph-grid-3 ph-feature-strip',
+				)
 			),
 			array(
-				$feature_item( $icon_target, 'Specialist, not generalist', 'We focus on Construction, Manufacturing and Digital, so we actually know your roles.' ),
-				$feature_item( $icon_phone, 'A friendly voice on the phone', 'Real people who answer, listen and keep you informed. No call centres.' ),
-				$feature_item( $icon_map, 'National reach', 'West Midlands roots, placing people the length and breadth of the country.' ),
+				$feature_item( $icon_target, 'Specialist, not generalist', 'Three sectors we know inside out, so the conversation starts in the right place.' ),
+				$feature_item( $icon_phone, 'A friendly voice on the phone', 'Consultants who pick up, take the time to listen, and offer genuine advice.' ),
+				$feature_item( $icon_map, 'National reach', 'Black Country roots, helping people find roles the length of the country.' ),
 			),
 			true
 		),
 	)
 );
 
-// Paired CTA bands (design §7.1 #8): candidate (navy + gold edge) + employer
-// (steel) side by side.
-$cta_card = static function ( string $classes, string $eyebrow_text, string $title, string $text, string $btn_text, string $btn_url, string $btn_variant ) use ( $container, $widget, $heading, $h2_clamp ): array {
+// Paired CTA bands (§9.1 CtaBands): candidate (navy + gold edge, two CTAs) +
+// employer (steel-700 + steel-200 edge, two CTAs) side by side.
+$register_url = home_url( '/candidate/register/' );
+$contact_url  = (string) get_permalink( get_page_by_path( 'contact' ) );
+
+$cta_card = static function ( string $classes, string $eyebrow_text, string $title, string $text, array $primary, array $secondary ) use ( $container, $widget, $heading, $h2_clamp ): array {
+	[ $primary_text, $primary_url, $primary_variant ] = $primary;
+	[ $secondary_text, $secondary_url ]               = $secondary;
 	return $container(
 		array(
 			'content_width'  => 'full',
@@ -760,20 +628,22 @@ $cta_card = static function ( string $classes, string $eyebrow_text, string $tit
 			$widget( 'text-editor', array( 'editor' => '<p class="ph-eyebrow" style="color:#FECF87">' . esc_html( $eyebrow_text ) . '</p>' ) ),
 			$heading( $title, 'h2', '#FFFFFF', $h2_clamp ),
 			$widget( 'text-editor', array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">' . esc_html( $text ) . '</p>' ) ),
-			$widget( 'text-editor', array( 'editor' => '<div style="margin-top:8px"><a class="ph-button ph-button--' . esc_attr( $btn_variant ) . ' ph-button--lg" href="' . esc_url( $btn_url ) . '">' . esc_html( $btn_text ) . '</a></div>' ) ),
+			$widget(
+				'text-editor',
+				array(
+					'editor' => '<div class="ph-cluster" style="margin-top:8px">'
+						. '<a class="ph-button ph-button--' . esc_attr( $primary_variant ) . '" href="' . esc_url( $primary_url ) . '">' . esc_html( $primary_text ) . ' &rarr;</a>'
+						. '<a class="ph-button ph-button--inverse" href="' . esc_url( $secondary_url ) . '">' . esc_html( $secondary_text ) . '</a>'
+						. '</div>',
+				)
+			),
 		),
 		true
 	);
 };
 
 $paired_cta = $container(
-	$boxed(
-		array(
-			'background_background' => 'classic',
-			'background_color'      => '#F2F4F6',
-			'padding'               => $section_padding(),
-		)
-	),
+	array( 'content_width' => 'full' ),
 	array(
 		$container(
 			array(
@@ -781,15 +651,29 @@ $paired_cta = $container(
 				'css_classes'   => 'ph-grid-2',
 			),
 			array(
-				$cta_card( 'ph-cta-card ph-cta-card--candidate', 'For candidates', 'Looking for your next role?', 'Tell us what a great move looks like and we will be in touch about roles that fit.', 'Find work', home_url( '/jobs/' ), 'primary' ),
-				$cta_card( 'ph-cta-card ph-cta-card--employer', 'For employers', 'Looking to hire?', 'PLCs and SMEs trust us with exclusive roles. Tell us who you need and we will find them.', 'Hire talent', $employers_url, 'inverse' ),
+				$cta_card(
+					'ph-cta-card ph-cta-card--candidate',
+					'For candidates',
+					'Looking for your next role?',
+					'Register in a couple of minutes and we&rsquo;ll be in touch when something that fits comes along, no pressure, just a friendly heads-up.',
+					array( 'Register now', $register_url, 'primary' ),
+					array( 'View jobs', $jobs_url )
+				),
+				$cta_card(
+					'ph-cta-card ph-cta-card--employer',
+					'For employers',
+					'Looking to hire?',
+					'Tell us who you&rsquo;re looking for and we&rsquo;ll put together a shortlist of people we think you&rsquo;ll be glad to meet.',
+					array( 'Enquire now', $employers_url, 'navy' ),
+					array( 'Book a call', $contact_url )
+				),
 			),
 			true
 		),
 	)
 );
 
-$home_data = array( $hero, $feature_strip, $featured, $reviews, $sectors, $stats, $paired_cta );
+$home_data = array( $hero, $feature_strip, $featured, $reviews, $sectors, $about_split, $stats, $paired_cta );
 
 // Backup before modifying Elementor data (hard rule 11).
 $prior = get_post_meta( $poolhall_home_page->ID, '_elementor_data', true );
@@ -812,6 +696,6 @@ update_option( 'page_on_front', $poolhall_home_page->ID );
 $poolhall_tpl_ids['home_page'] = $poolhall_home_page->ID;
 update_option( 'poolhall_template_ids', $poolhall_tpl_ids, false );
 
-printf( "Images: hero #%d, story #%d.\n", $poolhall_images['hero'], $poolhall_images['story'] );
-printf( "Home page: #%d built (hero + search, featured carousel, sectors, steps, stats, employer CTA) and set as front page.\n", $poolhall_home_page->ID );
+printf( "Images: hero #%d, story #%d, construction #%d, manufacturing #%d, digital #%d.\n", $poolhall_images['hero'], $poolhall_images['story'], $poolhall_images['construction'], $poolhall_images['manufacturing'], $poolhall_images['digital'] );
+printf( "Home page: #%d built (hero, feature strip, featured carousel, reviews, sectors, about split, stats, paired CTAs) and set as front page.\n", $poolhall_home_page->ID );
 echo "OK: home page created. Verify the frontend before treating this as done.\n";

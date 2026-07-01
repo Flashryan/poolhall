@@ -51,16 +51,16 @@ final class ReviewsCarousel {
 
 		$read_all = '';
 		if ( null !== $snapshot->google_maps_uri ) {
-			$read_all = '<a class="ph-link ph-link--arrow" href="' . esc_url( $snapshot->google_maps_uri ) . '" rel="noopener" target="_blank">'
+			$read_all = '<a class="ph-link ph-link--arrow ph-reviews__readall" href="' . esc_url( $snapshot->google_maps_uri ) . '" rel="noopener" target="_blank">'
 				. esc_html__( 'Read all reviews', 'poolhall-integration' ) . '</a>';
 		}
 
 		return '<section class="ph-reviews">'
 			. '<div class="ph-reviews__head">'
 			. '<div class="ph-stack-xs">'
-			. '<p class="ph-eyebrow" style="color:#C45712">' . esc_html__( 'Google reviews', 'poolhall-integration' ) . '</p>'
-			. '<h2 class="ph-h2" style="color:#1B3052">' . esc_html__( 'Rated five stars by the people we place', 'poolhall-integration' ) . '</h2>'
-			. '<p class="ph-lede">' . esc_html__( 'Real feedback from candidates and clients across the UK.', 'poolhall-integration' ) . '</p>'
+			. '<p class="ph-eyebrow ph-reviews__eyebrow">' . esc_html__( 'Google reviews', 'poolhall-integration' ) . '</p>'
+			. '<h2 class="ph-h2 ph-reviews__title">' . esc_html__( 'Rated five stars by the people we work with', 'poolhall-integration' ) . '</h2>'
+			. '<p class="ph-lede ph-reviews__lede">' . esc_html__( 'Real feedback from the people we&rsquo;ve placed and the businesses we&rsquo;ve helped to hire.', 'poolhall-integration' ) . '</p>'
 			. '</div>'
 			. $read_all
 			. '</div>'
