@@ -274,7 +274,7 @@ $hero = $container(
 				),
 			),
 			array(
-				$eyebrow( 'Recruitment, done properly', true ),
+				$eyebrow( 'Recruitment, done well', true ),
 				$widget(
 					'text-editor',
 					array( 'editor' => '<h1 class="ph-display" style="color:#FFFFFF;margin:0">West Midlands roots. <span style="color:var(--ph-color-gold-500)">National</span> recruitment reach.</h1>' )
@@ -693,7 +693,103 @@ $employer_cta = $container(
 	)
 );
 
-$home_data = array( $hero, $featured, $sectors, $steps, $stats, $reviews, $employer_cta );
+// Feature strip (design §7.1 #2): three reasons on a navy bar under the hero.
+$feature_item = static function ( string $icon, string $title, string $text ) use ( $widget ): array {
+	return $widget(
+		'text-editor',
+		array(
+			'editor' => '<div class="ph-feature"><span class="ph-feature__icon" aria-hidden="true">' . $icon . '</span>'
+				. '<h3 class="ph-feature__title">' . esc_html( $title ) . '</h3>'
+				. '<p class="ph-feature__text">' . esc_html( $text ) . '</p></div>',
+		)
+	);
+};
+$icon_target = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
+$icon_phone  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+$icon_map    = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+
+$feature_strip = $container(
+	$boxed(
+		array(
+			'background_background' => 'classic',
+			'background_color'      => '#0B2846',
+			'flex_direction'        => 'column',
+			'padding'               => $section_padding( 52 ),
+		)
+	),
+	array(
+		$container(
+			array(
+				'content_width' => 'full',
+				'css_classes'   => 'ph-grid-3 ph-feature-strip',
+			),
+			array(
+				$feature_item( $icon_target, 'Specialist, not generalist', 'We focus on Construction, Manufacturing and Digital, so we actually know your roles.' ),
+				$feature_item( $icon_phone, 'A friendly voice on the phone', 'Real people who answer, listen and keep you informed. No call centres.' ),
+				$feature_item( $icon_map, 'National reach', 'West Midlands roots, placing people the length and breadth of the country.' ),
+			),
+			true
+		),
+	)
+);
+
+// Paired CTA bands (design §7.1 #8): candidate (navy + gold edge) + employer
+// (steel) side by side.
+$cta_card = static function ( string $classes, string $eyebrow_text, string $title, string $text, string $btn_text, string $btn_url, string $btn_variant ) use ( $container, $widget, $heading, $h2_clamp ): array {
+	return $container(
+		array(
+			'content_width'  => 'full',
+			'flex_direction' => 'column',
+			'flex_gap'       => array(
+				'unit'   => 'px',
+				'size'   => 12,
+				'column' => '12',
+				'row'    => '12',
+			),
+			'padding'        => array(
+				'unit'     => 'px',
+				'top'      => '44',
+				'right'    => '40',
+				'bottom'   => '44',
+				'left'     => '40',
+				'isLinked' => false,
+			),
+			'css_classes'    => $classes,
+		),
+		array(
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-eyebrow" style="color:#FECF87">' . esc_html( $eyebrow_text ) . '</p>' ) ),
+			$heading( $title, 'h2', '#FFFFFF', $h2_clamp ),
+			$widget( 'text-editor', array( 'editor' => '<p class="ph-lede ph-text-reversed-soft">' . esc_html( $text ) . '</p>' ) ),
+			$widget( 'text-editor', array( 'editor' => '<div style="margin-top:8px"><a class="ph-button ph-button--' . esc_attr( $btn_variant ) . ' ph-button--lg" href="' . esc_url( $btn_url ) . '">' . esc_html( $btn_text ) . '</a></div>' ) ),
+		),
+		true
+	);
+};
+
+$paired_cta = $container(
+	$boxed(
+		array(
+			'background_background' => 'classic',
+			'background_color'      => '#F2F4F6',
+			'padding'               => $section_padding(),
+		)
+	),
+	array(
+		$container(
+			array(
+				'content_width' => 'full',
+				'css_classes'   => 'ph-grid-2',
+			),
+			array(
+				$cta_card( 'ph-cta-card ph-cta-card--candidate', 'For candidates', 'Looking for your next role?', 'Tell us what a great move looks like and we will be in touch about roles that fit.', 'Find work', home_url( '/jobs/' ), 'primary' ),
+				$cta_card( 'ph-cta-card ph-cta-card--employer', 'For employers', 'Looking to hire?', 'PLCs and SMEs trust us with exclusive roles. Tell us who you need and we will find them.', 'Hire talent', $employers_url, 'inverse' ),
+			),
+			true
+		),
+	)
+);
+
+$home_data = array( $hero, $feature_strip, $featured, $reviews, $sectors, $stats, $paired_cta );
 
 // Backup before modifying Elementor data (hard rule 11).
 $prior = get_post_meta( $poolhall_home_page->ID, '_elementor_data', true );

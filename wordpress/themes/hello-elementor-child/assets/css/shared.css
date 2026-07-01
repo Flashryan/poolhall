@@ -388,6 +388,18 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-sector-tile__desc { font-size: var(--ph-type-small-size); line-height: 1.5; color: var(--ph-color-steel-200); margin: 0; }
 .ph-sector-tile__more { display: inline-flex; align-items: center; gap: 8px; margin-block-start: 0.75rem; padding-block-start: 1rem; border-block-start: 1px solid rgba(255, 255, 255, 0.22); font-weight: 700; color: var(--ph-color-white); margin-bottom: 0; }
 
+/* Feature strip (home §7.1 #2): three reasons on a navy bar under the hero. */
+.ph-feature-strip { gap: var(--ph-space-6) var(--ph-space-8); }
+.ph-feature { display: flex; flex-direction: column; gap: 6px; }
+.ph-feature__icon { display: inline-flex; color: var(--ph-color-gold-500); }
+.ph-feature__title { font-family: var(--ph-font-display); font-weight: 700; font-size: 1.1rem; color: var(--ph-color-white); margin: 4px 0 0; }
+.ph-feature__text { font-size: var(--ph-type-small-size); line-height: 1.5; color: var(--ph-color-steel-200); margin: 0; }
+
+/* Paired CTA bands (home §7.1 #8): candidate navy + gold edge, employer steel. */
+.ph-cta-card { border-radius: var(--ph-radius-lg); }
+.ph-cta-card--candidate { background-color: var(--ph-color-navy-900); border-inline-start: 4px solid var(--ph-color-gold-500); }
+.ph-cta-card--employer { background-color: var(--ph-color-steel-600); }
+
 /* Search module (§11): home search panel. White card, Mist fields,
    one control per row on mobile, three fields + action on desktop. */
 .ph-search {
