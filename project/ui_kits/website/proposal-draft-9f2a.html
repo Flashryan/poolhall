@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Website Proposal — Poolhall Recruitment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBFAF7; --ink:#22201D; --muted:#6B6862; --faint:#94908A;
+    --line:#E7E2D8; --card:#FFFFFF;
+    --teal:#0F6E62; --teal-d:#0B5249; --teal-soft:#E6F0ED;
+    --clay:#B4541E;
+    --good:#1F8A5B;
+    --serif:'Fraunces',Georgia,serif;
+    --sans:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:#EFEBE3;line-height:1.62;font-size:15px}
+  .page{max-width:800px;margin:24px auto;background:var(--bg);border:1px solid var(--line);box-shadow:0 16px 50px rgba(40,36,28,.12)}
+  .pad{padding:44px 52px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;color:var(--ink);line-height:1.15}
+  p{margin:0 0 13px}
+  a{color:var(--teal-d);font-weight:600}
+  .kick{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+
+  /* top */
+  .top{background:var(--ink);color:#F3EFE7;padding:40px 52px}
+  .top .who{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.13);padding-bottom:16px;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+  .top .who .me{font-family:var(--serif);font-size:18px;color:#fff}
+  .top .who .me span{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9C978C;font-weight:600;margin-top:2px}
+  .top .who .for{text-align:right;font-size:12.5px;color:#B8B3A8}
+  .top h1{color:#fff;font-size:32px;font-weight:500;letter-spacing:-.01em;margin-bottom:12px;max-width:18ch}
+  .top p{color:#C9C4B8;font-size:15.5px;max-width:52ch;margin:0}
+
+  /* personal note */
+  .note{background:var(--teal-soft);border-left:3px solid var(--teal);padding:24px 28px;font-size:15.5px}
+  .note p{margin:0 0 12px;color:#234742}
+  .note p:last-child{margin:0}
+  .sign{font-family:var(--serif);font-size:18px;color:var(--teal-d);margin-top:4px}
+
+  section{border-bottom:1px solid var(--line)}
+  h2.sec{font-size:24px;margin-bottom:4px;font-weight:500}
+  .sub{color:var(--muted);font-size:15.5px;margin-bottom:22px}
+
+  /* preview */
+  .preview{background:var(--ink);border-radius:12px;padding:26px 28px;color:#fff;display:flex;gap:20px;align-items:flex-start}
+  .preview .ic{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.08);color:#7FD8C9;flex:none;display:flex;align-items:center;justify-content:center}
+  .preview h3{color:#fff;font-size:18px;margin-bottom:7px;font-weight:500}
+  .preview p{color:#C2BDB2;font-size:14.5px;margin-bottom:14px}
+  .preview a.btn{display:inline-block;background:var(--teal);color:#fff;padding:11px 20px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none}
+  .preview a.btn:hover{background:var(--teal-d)}
+  .preview .url{display:block;margin-top:9px;font-size:12.5px;color:#857F74}
+
+  /* deliverables */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .card{border:1px solid var(--line);border-radius:11px;padding:18px 20px;background:var(--card)}
+  .card .h{font-family:var(--serif);font-size:16.5px;color:var(--ink);margin-bottom:5px;font-weight:600;display:flex;gap:9px;align-items:baseline}
+  .card .h b{color:var(--teal);font-family:var(--sans);font-size:13px;font-weight:800}
+  .card p{font-size:13.5px;color:var(--muted);margin:0}
+
+  ul.tick{list-style:none;margin:8px 0 0}
+  ul.tick li{display:flex;gap:11px;align-items:flex-start;padding:6px 0;font-size:14.5px}
+  ul.tick li::before{content:"✓";color:var(--good);font-weight:800;flex:none}
+  ul.dash li::before{content:"–";color:var(--faint);font-weight:700}
+  h3.mini{font-family:var(--serif);font-size:16px;color:var(--ink);margin:24px 0 2px;font-weight:600}
+
+  /* price */
+  .pricebox{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .pricebox .main{background:var(--teal);color:#fff;padding:28px 30px;text-align:center}
+  .pricebox .main .l{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#BFE3DC;font-weight:700}
+  .pricebox .main .n{font-family:var(--serif);font-size:50px;font-weight:500;line-height:1;margin:6px 0 3px}
+  .pricebox .main .s{font-size:13.5px;color:#D6EDE8}
+  .pricebox .rows{display:grid;grid-template-columns:repeat(3,1fr)}
+  .pricebox .rows .r{padding:18px 14px;text-align:center;border-right:1px solid var(--line)}
+  .pricebox .rows .r:last-child{border-right:0}
+  .pricebox .rows .r .pc{font-family:var(--serif);font-size:22px;color:var(--teal-d);font-weight:600}
+  .pricebox .rows .r .a{font-weight:700;font-size:14.5px;margin:1px 0}
+  .pricebox .rows .r .w{font-size:11.5px;color:var(--muted)}
+  .wiggle{font-size:14px;color:var(--muted);margin-top:16px;font-style:italic}
+
+  table.t{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  table.t td{padding:11px 2px;border-bottom:1px solid var(--line)}
+  table.t td:last-child{text-align:right;font-weight:700;color:var(--ink);white-space:nowrap}
+  table.t tr:last-child td{border-bottom:0}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}
+
+  ol.steps{list-style:none;counter-reset:s}
+  ol.steps li{display:flex;gap:14px;align-items:flex-start;padding:9px 0;font-size:15px}
+  ol.steps li::before{counter-increment:s;content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+  .foot{background:var(--ink);color:#9C978C;font-size:12.5px;text-align:center;padding:20px}
+  .foot b{color:#fff;font-family:var(--serif);font-weight:500}
+
+  @media print{
+    body{background:#fff;font-size:12px}
+    .page{box-shadow:none;border:0;margin:0;max-width:none}
+    .pad{padding:28px 34px}
+    section,.preview,.pricebox{break-inside:avoid}
+  }
+  @media (max-width:660px){.grid,.two{grid-template-columns:1fr}.pricebox .rows{grid-template-columns:1fr}.pad,.top{padding:30px 24px}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP -->
+  <div class="top">
+    <div class="who">
+      <div class="me">Ryan<span>Web design &amp; build</span></div>
+      <div class="for">Prepared for Matt<br>Poolhall Recruitment &middot; 2 June 2026</div>
+    </div>
+    <h1>A new website for Poolhall, and you own the lot</h1>
+    <p>Off Wix, onto your own domain, with your jobs pulled in from Giig and a proper candidate experience built around how you actually work.</p>
+  </div>
+
+  <!-- PERSONAL NOTE -->
+  <div class="note">
+    <p>Hi Matt,</p>
+    <p>Good to talk the other day. Rather than just send you words on a page, I've gone and built a working version of the site so you can click round it yourself before we commit to anything. Have a play with it, then read through what I'm proposing below.</p>
+    <p>I've tried to keep this plain and honest. Anything you'd want done differently, just tell me and we'll sort it.</p>
+    <p class="sign">Ryan</p>
+  </div>
+
+  <!-- PREVIEW -->
+  <section><div class="pad">
+    <p class="kick">Have a look first</p>
+    <h2 class="sec">A working preview of the site</h2>
+    <p class="sub">Click around it before we build a thing. This is your chance to shape the design.</p>
+    <div class="preview">
+      <span class="ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </span>
+      <div>
+        <h3>The clickable preview</h3>
+        <p>This is a real, working version of the site I'm proposing. You can move through the home page, the jobs list, an individual job and the application, and you'll see both the candidate side and the employer side, plus the featured-jobs slider and the Google reviews slider. It's running on example jobs for now. Treat it as the look and feel we'll build from, so if anything's not right, now's the time to say.</p>
+        <a class="btn" href="https://poolhall.vercel.app/" target="_blank" rel="noopener">Open the preview →</a>
+        <span class="url">poolhall.vercel.app</span>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- WHAT YOU GET -->
+  <section><div class="pad">
+    <p class="kick">The build</p>
+    <h2 class="sec">What you're getting</h2>
+    <p class="sub">A proper custom recruitment site, built around Poolhall rather than dropped on top of a template.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="h"><b>01</b>Your own site, off Wix</div>
+        <p>A modern site on your own domain, designed around your brand. You own the code, the hosting and every account when it's done. No renting, no lock-in.</p>
+      </div>
+      <div class="card">
+        <div class="h"><b>02</b>Your jobs, pulled from Giig</div>
+        <p>Roles sync across from Giig onto your own pages a few times a day, with a "sync now" button when you've got something urgent. They update and expire on their own.</p>
+      </div>
+      <div class="card">
+        <div class="h"><b>03</b>Applications come straight to you</div>
+        <p>People apply on your site, CV and all. The CV lands with you by email the second they hit send, and the application's logged against the right job in Giig automatically, so you're not re-typing anything. If it ever hits a snag, it's held safely and tried again, so nothing slips through.</p>
+      </div>
+      <div class="card">
+        <div class="h"><b>04</b>Candidate logins &amp; saved jobs</div>
+        <p>Candidates can set up an account, save the jobs they're interested in, and come back to pick up where they left off. Their details stay handy for next time they apply.</p>
+      </div>
+      <div class="card">
+        <div class="h"><b>05</b>Eligible for Google for Jobs</div>
+        <p>Every role is built so it can show up in Google's jobs box, which is the one thing the current Giig widget can't do because it sits on a no-index page.</p>
+      </div>
+      <div class="card">
+        <div class="h"><b>06</b>Featured jobs &amp; reviews</div>
+        <p>A swipe-along featured-jobs slider on the home page, and a Google reviews slider showing off your real five-star feedback.</p>
+      </div>
+    </div>
+
+    <h3 class="mini">And the rest of it</h3>
+    <ul class="tick">
+      <li>Separate, clearly signposted journeys for people looking for work and businesses looking to hire</li>
+      <li>Full job search with filters: keyword, location, job type and salary (plus sector and remote/hybrid, depending on how your roles are tagged in Giig)</li>
+      <li>All the usual pages: home, jobs, single job, apply, employers, about, sectors, meet the team and contact</li>
+      <li>Privacy, cookie and terms pages, and a cookie banner</li>
+      <li>Quick on mobile, accessible, and the on-page SEO done properly</li>
+      <li>The move off Wix, hosting set up, launch, and a sit-down so you're comfortable running it</li>
+    </ul>
+  </div></section>
+
+  <!-- LATER -->
+  <section><div class="pad">
+    <p class="kick">For down the line</p>
+    <h2 class="sec">Things we can add later</h2>
+    <p class="sub">No point building everything at once. These are easy to bolt on once you're up and running.</p>
+    <ul class="tick dash">
+      <li>An employer self-service area for posting their own vacancies</li>
+      <li>Job-alert emails for candidates</li>
+      <li>Bringing your old blog and news posts across from Wix</li>
+    </ul>
+  </div></section>
+
+  <!-- PRICE -->
+  <section><div class="pad">
+    <p class="kick">The cost</p>
+    <h2 class="sec">What it'll come to</h2>
+    <p class="sub">One price for everything above, so you know exactly where you stand.</p>
+    <div class="pricebox">
+      <div class="main">
+        <div class="l">The full build</div>
+        <div class="n">£2,950</div>
+        <div class="s">and it's all yours when it's finished</div>
+      </div>
+      <div class="rows">
+        <div class="r"><div class="pc">£1,150</div><div class="w">to get started</div></div>
+        <div class="r"><div class="pc">£900</div><div class="w">when jobs &amp; applications are working end to end</div></div>
+        <div class="r"><div class="pc">£900</div><div class="w">on launch &amp; handover</div></div>
+      </div>
+    </div>
+    <p class="wiggle">That's my figure for the lot, and it's not set in stone. If the budget or the scope needs a conversation, just say and we'll work something out.</p>
+    <p style="margin-top:14px;font-size:14px;color:var(--muted)">For comparison, the rented job-board sites run around £2k a year, every year, and you never actually own them. This is a one-off, and it's yours to keep.</p>
+  </div></section>
+
+  <!-- FROM YOU -->
+  <section><div class="pad">
+    <p class="kick">Your bit</p>
+    <h2 class="sec">What I'll need from you</h2>
+    <ul class="tick two">
+      <li>Your logo, colours and fonts if you've got them</li>
+      <li>A few photos (office, team, work going on)</li>
+      <li>The words for the pages, or a nod for me to write them</li>
+      <li>Your Giig Plus API access</li>
+      <li>Access to your Google Business Profile for the reviews</li>
+      <li>A quick decision on keeping or moving the domain</li>
+    </ul>
+    <p style="margin-top:14px;font-size:13.5px;color:var(--muted)">Honestly, the thing that decides how fast we go is the content (words and pictures). Get me that early and we'll fly.</p>
+  </div></section>
+
+  <!-- NEXT -->
+  <section><div class="pad">
+    <p class="kick">Where to from here</p>
+    <h2 class="sec">Live in roughly four to six weeks</h2>
+    <p class="sub">Counting from the deposit and your bits landing. No mad rush on your end.</p>
+    <ol class="steps">
+      <li>Have a proper click through the preview and tell me what you'd change.</li>
+      <li>Give the design the thumbs up and pop the deposit over to lock the start.</li>
+      <li>I build it, getting the jobs feed and applications working and proven early on.</li>
+      <li>We go live on your domain and I hand the whole lot over to you.</li>
+    </ol>
+  </div></section>
+
+  <div class="foot">
+    <b>Ryan</b> &nbsp;·&nbsp; Website proposal for Poolhall Recruitment &nbsp;·&nbsp; Holds good for 30 days
+  </div>
+
+</div>
+<!-- Vercel Web Analytics -->
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

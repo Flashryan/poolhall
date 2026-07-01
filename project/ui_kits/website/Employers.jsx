@@ -45,7 +45,7 @@ function Employers({ go }) {
               <h2 className="h2">Quality and ethics, not quotas</h2>
               <p className="lead" style={{ marginTop: 14 }}>We're an independent agency, so you get a more personable service and a partner genuinely invested in the right outcome.</p>
               <ul className="check-list">
-                <li><Icon name="check-circle" /> Almost 50 years' combined recruitment experience</li>
+                <li><Icon name="check-circle" /> About 30 years' combined recruitment experience</li>
                 <li><Icon name="check-circle" /> Sector specialists in Construction, Manufacturing & Marketing</li>
                 <li><Icon name="check-circle" /> Exclusive roles and a transparent, honest process</li>
                 <li><Icon name="check-circle" /> Rated 5.0 by the candidates and clients we work with</li>

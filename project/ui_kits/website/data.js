@@ -67,7 +67,7 @@ window.PH_DATA = {
     { name: "James W.", role: "Placed as Welder/Fabricator", rating: 5, text: "Sorted a permanent role close to home with a great firm. Couldn't ask for more." },
   ],
   stats: [
-    { value: "50yrs", label: "Combined experience" },
+    { value: "30yrs", label: "Combined experience" },
     { value: "5.0", label: "Average Google rating" },
     { value: "6", label: "Specialist sectors" },
     { value: "2021", label: "Independent since" },

@@ -27,7 +27,6 @@ function Button({ variant = "primary", size, icon, iconRight, busy, children, cl
 }
 
 const NAV = [
-  { id: "home", label: "Home" },
   { id: "jobs", label: "Find a Job" },
   { id: "employers", label: "Employers" },
   { id: "sectors", label: "Sectors" },

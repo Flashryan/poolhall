@@ -1,0 +1,303 @@
+<?php
+/**
+ * Candidate account storage.
+ *
+ * @package Poolhall\Integration
+ */
+
+declare(strict_types=1);
+
+namespace Poolhall\Integration\Accounts;
+
+/**
+ * All reads/writes of candidate users and their account meta. Verification
+ * tokens are stored hash-only and deleted on redemption (single use);
+ * consent records keep the accepted document versions and timestamp
+ * (portal spec §4).
+ */
+final class CandidateRepository {
+
+	public const META_VERIFIED_AT  = 'poolhall_verified_at';
+	public const META_TOKEN_HASH   = 'poolhall_verify_token_hash';
+	public const META_TOKEN_ISSUED = 'poolhall_verify_token_issued_at';
+	public const META_VERIFY_SENDS = 'poolhall_verify_sends';
+	public const META_CONSENT      = 'poolhall_consent';
+	public const META_RESET_HASH   = 'poolhall_reset_token_hash';
+	public const META_RESET_ISSUED = 'poolhall_reset_token_issued_at';
+	public const META_RESET_SENDS  = 'poolhall_reset_sends';
+
+	public const META_PENDING_EMAIL        = 'poolhall_pending_email';
+	public const META_PENDING_EMAIL_HASH   = 'poolhall_pending_email_token_hash';
+	public const META_PENDING_EMAIL_ISSUED = 'poolhall_pending_email_token_issued_at';
+	public const META_EMAIL_CHANGE_SENDS   = 'poolhall_email_change_sends';
+
+	public const META_PROFILE      = 'poolhall_candidate_profile';
+	public const META_GIIG_ID      = 'poolhall_giig_candidate_id';
+	public const META_GIIG_PENDING = 'poolhall_giig_export_pending';
+
+	/** Candidate profile fields captured at registration (for Giig + the portal). */
+	public const PROFILE_FIELDS = array( 'phone', 'role_title', 'location', 'salary_expectations', 'linkedin', 'summary' );
+
+	public function find_by_email( string $email ): ?\WP_User {
+		$user = get_user_by( 'email', EmailAddress::normalize( $email ) );
+		return $user instanceof \WP_User ? $user : null;
+	}
+
+	/**
+	 * Create an unverified candidate with an internal non-email username
+	 * (portal spec §4 — candidates never surface a public login name).
+	 *
+	 * @throws \RuntimeException When WordPress refuses the insert.
+	 */
+	public function create_unverified( string $email, string $password, string $first_name, string $last_name ): int {
+		$username = $this->generate_username();
+
+		$result = wp_insert_user(
+			array(
+				'user_login'   => $username,
+				'user_pass'    => $password,
+				'user_email'   => EmailAddress::normalize( $email ),
+				'first_name'   => $first_name,
+				'last_name'    => $last_name,
+				'display_name' => trim( $first_name . ' ' . $last_name ),
+				'role'         => CandidateRole::ROLE,
+			)
+		);
+
+		if ( is_wp_error( $result ) ) {
+			throw new \RuntimeException( 'Failed to create candidate: ' . $result->get_error_message() );
+		}
+		return (int) $result;
+	}
+
+	/**
+	 * Store the candidate's profile details (known PROFILE_FIELDS only).
+	 * Marks the record pending export so verification can push it to Giig.
+	 *
+	 * @param array<string,string> $profile Raw profile fields.
+	 */
+	public function save_profile( int $user_id, array $profile ): void {
+		$clean = array();
+		foreach ( self::PROFILE_FIELDS as $field ) {
+			$value = isset( $profile[ $field ] ) ? trim( (string) $profile[ $field ] ) : '';
+			if ( '' !== $value ) {
+				$clean[ $field ] = $value;
+			}
+		}
+		update_user_meta( $user_id, self::META_PROFILE, $clean );
+	}
+
+	/** @return array<string,string> */
+	public function profile( int $user_id ): array {
+		$stored = get_user_meta( $user_id, self::META_PROFILE, true );
+		return is_array( $stored ) ? array_map( 'strval', $stored ) : array();
+	}
+
+	public function giig_candidate_id( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_GIIG_ID, true );
+	}
+
+	public function set_giig_candidate_id( int $user_id, string $candidate_id ): void {
+		update_user_meta( $user_id, self::META_GIIG_ID, $candidate_id );
+	}
+
+	public function mark_export_pending( int $user_id ): void {
+		update_user_meta( $user_id, self::META_GIIG_PENDING, '1' );
+	}
+
+	public function clear_export_pending( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_GIIG_PENDING );
+	}
+
+	public function is_export_pending( int $user_id ): bool {
+		return '1' === (string) get_user_meta( $user_id, self::META_GIIG_PENDING, true );
+	}
+
+	/**
+	 * @param array{terms_version:string,privacy_version:string,alert_consent:bool} $consent Consent fields.
+	 */
+	public function record_consent( int $user_id, array $consent, \DateTimeImmutable $accepted_at ): void {
+		update_user_meta(
+			$user_id,
+			self::META_CONSENT,
+			wp_json_encode(
+				array(
+					'terms_version'   => $consent['terms_version'],
+					'privacy_version' => $consent['privacy_version'],
+					'alert_consent'   => $consent['alert_consent'],
+					'accepted_at'     => $accepted_at->format( \DateTimeInterface::ATOM ),
+				)
+			)
+		);
+	}
+
+	public function is_verified( int $user_id ): bool {
+		return '' !== (string) get_user_meta( $user_id, self::META_VERIFIED_AT, true );
+	}
+
+	/** Storing a new token hash invalidates any previous verification link. */
+	public function store_verification_token( int $user_id, string $token_hash, \DateTimeImmutable $issued_at ): void {
+		update_user_meta( $user_id, self::META_TOKEN_HASH, $token_hash );
+		update_user_meta( $user_id, self::META_TOKEN_ISSUED, $issued_at->format( \DateTimeInterface::ATOM ) );
+	}
+
+	/** The unverified candidate holding this token hash, if any. */
+	public function find_by_token_hash( string $token_hash ): ?int {
+		return $this->find_candidate_by_meta( self::META_TOKEN_HASH, $token_hash );
+	}
+
+	public function token_issued_at( int $user_id ): ?\DateTimeImmutable {
+		$raw = (string) get_user_meta( $user_id, self::META_TOKEN_ISSUED, true );
+		return '' === $raw ? null : new \DateTimeImmutable( $raw );
+	}
+
+	/**
+	 * Single use: redeeming deletes the hash so the link can never replay.
+	 * All existing sessions are revoked so anything authenticated before
+	 * verification rotates (portal spec §4).
+	 */
+	public function mark_verified( int $user_id, \DateTimeImmutable $now ): void {
+		update_user_meta( $user_id, self::META_VERIFIED_AT, $now->format( \DateTimeInterface::ATOM ) );
+		delete_user_meta( $user_id, self::META_TOKEN_HASH );
+		delete_user_meta( $user_id, self::META_TOKEN_ISSUED );
+		\WP_Session_Tokens::get_instance( $user_id )->destroy_all();
+	}
+
+	/** @return \DateTimeImmutable[] */
+	public function verification_sends( int $user_id ): array {
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_VERIFY_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_verification_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_VERIFY_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	private function decode_sends( string $raw ): array {
+		$decoded = '' === $raw ? array() : (array) json_decode( $raw, true );
+		$sends   = array();
+		foreach ( $decoded as $timestamp ) {
+			if ( is_string( $timestamp ) ) {
+				$sends[] = new \DateTimeImmutable( $timestamp );
+			}
+		}
+		return $sends;
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Send history.
+	 */
+	private function encode_sends( array $sends ): string {
+		return (string) wp_json_encode(
+			array_map(
+				static fn( \DateTimeImmutable $sent_at ): string => $sent_at->format( \DateTimeInterface::ATOM ),
+				$sends
+			)
+		);
+	}
+
+	/** Storing a new reset hash invalidates any previous reset link (spec §5). */
+	public function store_reset_token( int $user_id, string $token_hash, \DateTimeImmutable $issued_at ): void {
+		update_user_meta( $user_id, self::META_RESET_HASH, $token_hash );
+		update_user_meta( $user_id, self::META_RESET_ISSUED, $issued_at->format( \DateTimeInterface::ATOM ) );
+	}
+
+	/** The candidate holding this reset-token hash, verified or not. */
+	public function find_by_reset_hash( string $token_hash ): ?int {
+		return $this->find_candidate_by_meta( self::META_RESET_HASH, $token_hash );
+	}
+
+	public function reset_token_issued_at( int $user_id ): ?\DateTimeImmutable {
+		$raw = (string) get_user_meta( $user_id, self::META_RESET_ISSUED, true );
+		return '' === $raw ? null : new \DateTimeImmutable( $raw );
+	}
+
+	/** Single use: redemption (or any password change) deletes the hash. */
+	public function clear_reset_token( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_RESET_HASH );
+		delete_user_meta( $user_id, self::META_RESET_ISSUED );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	public function reset_sends( int $user_id ): array {
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_RESET_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_reset_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_RESET_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	/** Storing a new pending email invalidates any previous change request. */
+	public function store_pending_email( int $user_id, string $new_email, string $token_hash, \DateTimeImmutable $issued_at ): void {
+		update_user_meta( $user_id, self::META_PENDING_EMAIL, $new_email );
+		update_user_meta( $user_id, self::META_PENDING_EMAIL_HASH, $token_hash );
+		update_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED, $issued_at->format( \DateTimeInterface::ATOM ) );
+	}
+
+	public function pending_email( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_PENDING_EMAIL, true );
+	}
+
+	public function pending_email_hash( int $user_id ): string {
+		return (string) get_user_meta( $user_id, self::META_PENDING_EMAIL_HASH, true );
+	}
+
+	public function pending_email_issued_at( int $user_id ): ?\DateTimeImmutable {
+		$raw = (string) get_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED, true );
+		return '' === $raw ? null : new \DateTimeImmutable( $raw );
+	}
+
+	/** Single use: redemption (or abandoning the change) deletes everything. */
+	public function clear_pending_email( int $user_id ): void {
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL );
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL_HASH );
+		delete_user_meta( $user_id, self::META_PENDING_EMAIL_ISSUED );
+	}
+
+	/** @return \DateTimeImmutable[] */
+	public function email_change_sends( int $user_id ): array {
+		return $this->decode_sends( (string) get_user_meta( $user_id, self::META_EMAIL_CHANGE_SENDS, true ) );
+	}
+
+	/**
+	 * @param \DateTimeImmutable[] $sends Full pruned history including the new send.
+	 */
+	public function record_email_change_sends( int $user_id, array $sends ): void {
+		update_user_meta( $user_id, self::META_EMAIL_CHANGE_SENDS, $this->encode_sends( $sends ) );
+	}
+
+	private function find_candidate_by_meta( string $meta_key, string $meta_value ): ?int {
+		if ( '' === $meta_value ) {
+			return null;
+		}
+		$query = new \WP_User_Query(
+			array(
+				'role'       => CandidateRole::ROLE,
+				'number'     => 1,
+				'fields'     => 'ID',
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- single keyed lookup.
+					array(
+						'key'   => $meta_key,
+						'value' => $meta_value,
+					),
+				),
+			)
+		);
+		$ids   = $query->get_results();
+		return array() === $ids ? null : (int) $ids[0];
+	}
+
+	/** Internal, collision-checked, never derived from the email address. */
+	private function generate_username(): string {
+		do {
+			$username = 'ph_c_' . bin2hex( random_bytes( 6 ) );
+		} while ( false !== username_exists( $username ) );
+		return $username;
+	}
+}

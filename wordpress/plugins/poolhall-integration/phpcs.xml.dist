@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="Poolhall Integration">
+    <description>WordPress Coding Standards for the Poolhall plugin. PSR-4 class layout and camelCase-free method names are kept; filename and a few structural sniffs that conflict with PSR-4 are excluded.</description>
+
+    <file>src</file>
+    <file>poolhall-integration.php</file>
+
+    <arg value="sp"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/>
+
+    <config name="minimum_wp_version" value="6.0"/>
+
+    <rule ref="WordPress">
+        <!-- PSR-4: Class names are StudlyCaps files without class- prefix. -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- Short array syntax and modern PHP idioms are project style. -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+        <exclude name="Universal.Operators.DisallowShortTernary"/>
+        <!-- declare(strict_types=1) sits above the file docblock. -->
+        <exclude name="Squiz.Commenting.FileComment.Missing"/>
+        <!-- PHP 8.2 typed signatures and promoted properties make repeated
+             @param/@return docblocks noise; intent comments are still written
+             where the code cannot express the why. -->
+        <exclude name="Squiz.Commenting.FunctionComment"/>
+        <exclude name="Squiz.Commenting.VariableComment"/>
+        <exclude name="Squiz.Commenting.FunctionCommentThrowTag"/>
+        <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+        <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
+        <!-- Exceptions here feed structured logs, not HTML output; rendering
+             paths escape at output per WordPress.Security.EscapeOutput. -->
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+        <!-- The log table is admin-only and intentionally uncached. -->
+        <exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="poolhall-integration"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
