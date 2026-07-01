@@ -384,10 +384,18 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
    gold mono "N live roles" tag, white title, full-width Explore row. */
 .ph-sector-tile { position: relative; display: flex; flex-direction: column; justify-content: flex-end; aspect-ratio: 3 / 3.4; border-radius: var(--ph-radius-lg); overflow: hidden; color: var(--ph-color-white); transition: transform 0.18s ease; }
 .ph-sector-tile:hover, .ph-sector-tile:focus-visible { transform: translateY(-3px); }
-.ph-sector-tile::after { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(0deg, rgba(6, 24, 43, 0.94) 0%, rgba(6, 24, 43, 0.5) 48%, rgba(6, 24, 43, 0.1) 100%); }
-.ph-sector-tile > * { position: relative; z-index: 1; }
+/* Photo renders as a plain <img> (see create-home-page.php) rather than an
+   Elementor container background — that setting proved unreliable this deep
+   in the nesting. Its Elementor widget wrapper is pulled out of flex flow and
+   behind the gradient; :has() is already used elsewhere in this file. */
+.ph-sector-tile > .elementor-widget:has(.ph-sector-tile__photo) { position: absolute; inset: 0; z-index: 0; }
+.ph-sector-tile__photo { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; margin: 0; }
+.ph-sector-tile::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgba(6, 24, 43, 0.94) 0%, rgba(6, 24, 43, 0.5) 48%, rgba(6, 24, 43, 0.1) 100%); }
+/* min-inline-size:0 stops flex items refusing to shrink below their text's
+   intrinsic width, which was clipping "Construction"/"Manufacturing". */
+.ph-sector-tile > * { position: relative; z-index: 2; min-inline-size: 0; }
 .ph-sector-tile__count { font-family: var(--ph-font-data); font-size: var(--ph-type-data-size); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ph-color-gold-500); margin: 0; }
-.ph-sector-tile__name, .ph-sector-tile__name .elementor-heading-title { color: var(--ph-color-white); font-size: 1.55rem; margin-block-start: 4px; }
+.ph-sector-tile__name, .ph-sector-tile__name .elementor-heading-title { color: var(--ph-color-white); font-size: 1.4rem; margin-block-start: 4px; overflow-wrap: break-word; }
 .ph-sector-tile__desc { font-size: var(--ph-type-small-size); line-height: 1.5; color: var(--ph-color-steel-200); margin: 8px 0 0; max-inline-size: 30ch; }
 .ph-sector-tile__more { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-block-start: 1rem; padding-block-start: 1rem; border-block-start: 1px solid rgba(255, 255, 255, 0.25); font-weight: 700; color: var(--ph-color-white); margin-bottom: 0; transition: color 0.18s ease; }
 .ph-sector-tile:hover .ph-sector-tile__more { color: var(--ph-color-gold-500); }

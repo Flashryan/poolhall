@@ -362,6 +362,10 @@ $featured = $container(
 
 // 3. Sectors (§9.1 SectorTile): three real-photo tiles (bottom-heavy gradient
 // + gold "N live roles" tag + Explore link), using the bundled sector photos.
+// The photo renders as a plain <img> (absolutely positioned by CSS) rather
+// than through Elementor's container background_image setting, which proved
+// unreliable this deep in the nesting (rendered as a flat colour only,
+// confirmed via a live browser check — computed background-image: none).
 $sector_tile = static function ( string $name, int $image_id, int $count, string $desc ) use ( $container, $widget, $jobs_url ): array {
 	return $container(
 		array(
@@ -370,12 +374,6 @@ $sector_tile = static function ( string $name, int $image_id, int $count, string
 			'flex_justify_content'   => 'flex-end',
 			'background_background'  => 'classic',
 			'background_color'       => '#123255',
-			'background_image'       => array(
-				'id'  => $image_id,
-				'url' => (string) wp_get_attachment_image_url( $image_id, 'full' ),
-			),
-			'background_size'        => 'cover',
-			'background_position'    => 'center center',
 			'padding'                => array(
 				'unit'     => 'px',
 				'top'      => '26',
@@ -398,6 +396,12 @@ $sector_tile = static function ( string $name, int $image_id, int $count, string
 			),
 		),
 		array(
+			$widget(
+				'text-editor',
+				array(
+					'editor' => '<img class="ph-sector-tile__photo" src="' . esc_url( (string) wp_get_attachment_image_url( $image_id, 'large' ) ) . '" alt="" />',
+				)
+			),
 			$widget(
 				'text-editor',
 				array( 'editor' => '<p class="ph-sector-tile__count">' . esc_html( $count ) . ' live roles</p>' )
