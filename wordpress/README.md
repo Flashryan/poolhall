@@ -64,12 +64,22 @@ define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
 ## Build status (docs/03-BUILD-PLAN.md)
 
 - **Phase 0 — repo & environments:** ✅ scaffolds, tests, lint, local WP loop.
-- **Phase 1 — prove Giig contracts:** ⏳ **blocked on real test credentials.**
-  The adapter is built against the documented endpoints with a synthetic
-  fixture; `GiigNormalizer::KEYS` and the auth header get locked when a live
-  response is recorded. Application Mode A/B is undecided until then
-  (`poolhall_application_mode` option stays `unset`; first-party apply UI and
-  `directApply: true` are hard-gated behind Mode A).
+- **Phase 1 — prove Giig contracts:** 🟡 **live contract recorded (2026-07-01);
+  enum legend pending.** Verified end to end against the live API
+  (`https://giigapi.com`, company 166598): the `Access-Secret-Key` auth header
+  works, responses arrive wrapped in a `{status,body}` transport envelope
+  (now unwrapped in `GiigClient::unwrap_envelope`), and the real payload uses
+  PascalCase fields — so `GiigNormalizer::KEYS` is locked to the recorded
+  response (`tests/fixtures/giig-getjobs.live.json`, sanitised). All 16 live
+  jobs normalize (title, salary range from `SalaryFrom`/`SalaryTo`, location,
+  sector, company, date). Giig also serialises empty fields as the literal
+  strings `"null"`/`"undefined"`, now treated as absent. **Still open:** five
+  integer-enum fields (`JobType`, `Experience`, `EducationRequirement`,
+  `SalaryPeriod`, `CandidateRemote`) are deliberately left unmapped until
+  Giig's enum legend is supplied — no guessed labels (work mode, job type,
+  experience, education, salary period/currency). Application Mode A/B still
+  undecided (`poolhall_application_mode` stays `unset`; first-party apply UI
+  and `directApply: true` hard-gated behind Mode A).
 - **Phase 2 — core plugin and sync:** ✅ code + unit tests + integration
   verification (idempotent sync, duplicate prevention, update-in-place,
   unpublish-on-removal, failure preserves jobs, mass-unpublish guard).

@@ -11,37 +11,50 @@ namespace Poolhall\Integration\Source\Giig;
 
 use Poolhall\Integration\Source\SourceException;
 use Poolhall\Integration\Source\SourceJob;
+use Poolhall\Integration\Support\Salary;
 use Poolhall\Integration\Support\SalaryParser;
 use Poolhall\Integration\Support\WorkMode;
 
 /**
  * Turns one raw Giig job payload into a SourceJob.
  *
- * IMPORTANT — Phase 1 contract: the public Giig docs (api-doc.giighire.com,
- * reviewed 2026-06-10) do not publish a full response example, so the key
- * map below tolerates the plausible naming variants. Phase 1 runs against
- * real credentials, records the exact response in
- * tests/fixtures/giig-getjobs.live.json and this KEYS map is then locked.
- * The exit gate forbids advancing while a required key is unmapped.
+ * Phase 1 contract (live response recorded 2026-07-01 from
+ * https://giigapi.com/public/api/v1/job/getjobs, see
+ * tests/fixtures/giig-getjobs.live.json): the real API returns PascalCase
+ * fields inside a transport envelope (unwrapped by GiigClient). The KEYS map
+ * below leads with the confirmed live names; the earlier camelCase guesses
+ * are kept so the synthetic fixture and any other source shape still work.
+ *
+ * Deliberately NOT mapped yet: work mode, job type, experience and education
+ * arrive as integer enums (CandidateRemote, JobType, Experience,
+ * EducationRequirement) whose legend is not published — mapping them without
+ * Giig's enum table would fabricate labels (e.g. job #28084 is described as
+ * hybrid yet CandidateRemote=0), so per the exit gate they stay unmapped
+ * until the legend is locked rather than guessed.
  */
 final class GiigNormalizer {
 
 	private const KEYS = array(
-		'id'          => array( 'jobId', 'JobId', 'id', 'Id' ),
-		'company_id'  => array( 'companyId', 'CompanyId' ),
-		'title'       => array( 'jobTitle', 'title', 'JobTitle', 'Title', 'name' ),
-		'description' => array( 'jobDescription', 'description', 'JobDescription', 'Description' ),
+		'id'          => array( 'JobId', 'jobId', 'id', 'Id' ),
+		'company_id'  => array( 'CompanyId', 'companyId' ),
+		'title'       => array( 'Title', 'jobTitle', 'title', 'JobTitle', 'name' ),
+		'description' => array( 'JobDescription', 'jobDescription', 'description', 'Description' ),
+		// Legacy string path; live jobs use SalaryFrom/SalaryTo (see resolve_salary()).
 		'salary'      => array( 'salary', 'Salary', 'salaryRange', 'SalaryRange' ),
+		// CandidateRemote (live) is an int enum — pending legend, deliberately unmapped.
 		'work_mode'   => array( 'remoteOnsite', 'RemoteOnsite', 'workMode', 'remote', 'Remote', 'workplaceType' ),
-		'locality'    => array( 'city', 'City', 'town' ),
-		'region'      => array( 'state', 'State', 'region', 'county' ),
-		'country'     => array( 'country', 'Country' ),
-		'location'    => array( 'location', 'Location', 'jobLocation' ),
-		'sector'      => array( 'industry', 'Industry', 'sector' ),
-		'job_type'    => array( 'jobType', 'JobType', 'employmentType' ),
+		'locality'    => array( 'Town', 'city', 'City', 'town' ),
+		'region'      => array( 'County', 'state', 'State', 'region', 'county' ),
+		'country'     => array( 'Country', 'country' ),
+		'location'    => array( 'LocationName', 'location', 'Location', 'jobLocation' ),
+		'sector'      => array( 'Industry', 'industry', 'sector' ),
+		// JobType (live) is an int enum — pending legend, deliberately unmapped.
+		'job_type'    => array( 'jobType', 'employmentType' ),
+		// Experience (live) is an int enum — pending legend, deliberately unmapped.
 		'experience'  => array( 'experienceRequired', 'ExperienceRequired', 'experience' ),
+		// EducationRequirement (live) is an int enum — pending legend, deliberately unmapped.
 		'education'   => array( 'educationRequired', 'EducationRequired', 'education' ),
-		'date_posted' => array( 'datePosted', 'DatePosted', 'createdAt', 'postedDate', 'created' ),
+		'date_posted' => array( 'CreatedDate', 'datePosted', 'DatePosted', 'createdAt', 'postedDate', 'created' ),
 		'reference'   => array( 'jobReference', 'reference', 'JobReference' ),
 		'url'         => array( 'jobUrl', 'url', 'JobUrl', 'applyUrl' ),
 	);
@@ -73,7 +86,7 @@ final class GiigNormalizer {
 			source_job_id: (string) $id,
 			title: trim( (string) $title ),
 			description_html: (string) ( $this->pick( $raw, 'description' ) ?? '' ),
-			salary: $this->salary_parser->parse( $this->str( $raw, 'salary' ) ),
+			salary: $this->resolve_salary( $raw ),
 			work_mode: WorkMode::from_source( $work_mode_raw ),
 			work_mode_raw: $work_mode_raw,
 			location_display: $this->str( $raw, 'location' ) ?? $this->compose_location( $raw ),
@@ -96,11 +109,74 @@ final class GiigNormalizer {
 	 */
 	private function pick( array $raw, string $field ): mixed {
 		foreach ( self::KEYS[ $field ] as $key ) {
-			if ( array_key_exists( $key, $raw ) && null !== $raw[ $key ] && '' !== $raw[ $key ] ) {
+			if ( array_key_exists( $key, $raw ) && $this->is_present( $raw[ $key ] ) ) {
 				return $raw[ $key ];
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether a raw value counts as a real value. Live Giig serialises empty
+	 * fields as the literal strings "null" and "undefined" (e.g. job #27499
+	 * has Town/County/Country = "null"), which must be treated as absent so we
+	 * never store the word "null" as a region or country.
+	 */
+	private function is_present( mixed $value ): bool {
+		if ( null === $value || '' === $value ) {
+			return false;
+		}
+		if ( is_string( $value ) ) {
+			$normalized = strtolower( trim( $value ) );
+			return '' !== $normalized && 'null' !== $normalized && 'undefined' !== $normalized;
+		}
+		return true;
+	}
+
+	/**
+	 * Build the salary.
+	 *
+	 * Live Giig sends numeric SalaryFrom/SalaryTo (strings like "35000.0000")
+	 * with SalaryPeriod, Currency and DisplaySalary as integer enums whose
+	 * legend is not yet locked. We build the numeric range so the salary filter
+	 * works, but leave currency and period null so Salary::is_reliable() stays
+	 * false and no schema baseSalary is emitted from unverified assumptions.
+	 * Other sources still flow through the display-string parser.
+	 *
+	 * @param array<string,mixed> $raw Raw payload.
+	 */
+	private function resolve_salary( array $raw ): Salary {
+		$from = $this->number( $raw, 'SalaryFrom' );
+		$to   = $this->number( $raw, 'SalaryTo' );
+
+		if ( null !== $from || null !== $to ) {
+			$min = $from ?? $to;
+			$max = $to ?? $from;
+			if ( $max < $min ) {
+				[ $min, $max ] = array( $max, $min );
+			}
+			$display = number_format( $min ) === number_format( $max )
+				? number_format( $min )
+				: number_format( $min ) . ' - ' . number_format( $max );
+
+			return new Salary( $display, null, $min, $max, null );
+		}
+
+		return $this->salary_parser->parse( $this->str( $raw, 'salary' ) );
+	}
+
+	/**
+	 * Read a positive numeric field (Giig sends salaries as decimal strings;
+	 * a zero or non-numeric value means "not set").
+	 *
+	 * @param array<string,mixed> $raw Raw payload.
+	 */
+	private function number( array $raw, string $key ): ?float {
+		if ( ! array_key_exists( $key, $raw ) || ! is_numeric( $raw[ $key ] ) ) {
+			return null;
+		}
+		$value = (float) $raw[ $key ];
+		return $value > 0 ? $value : null;
 	}
 
 	/**

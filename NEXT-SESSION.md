@@ -155,11 +155,18 @@ Remaining:
 
 ## What the next session can do
 
-- **Phase 1 — prove the Giig API** (needs the Giig token + secret from
-  Matt's Giig account; have them ready to paste when asked; they go into
-  wp-config constants on staging, never the repo). This also makes the
-  home featured carousel, jobs archive, sector taxonomy/search select
-  and live-roles trust item come alive with real data.
+- **Phase 1 — prove the Giig API:** 🟡 mostly done (2026-07-01). Constants
+  are on staging; the live contract was recorded and `GiigNormalizer::KEYS`
+  + the `Access-Secret-Key` header + the `{status,body}` envelope are locked
+  against `tests/fixtures/giig-getjobs.live.json`. All 16 live jobs
+  normalize. **Remaining:** get Giig's enum legend for the five integer
+  fields (`JobType`, `Experience`, `EducationRequirement`, `SalaryPeriod`,
+  `CandidateRemote`) — currently left unmapped, not guessed — then finish
+  work mode / job type / experience / education / salary period+currency in
+  `GiigNormalizer` and run a real sync so the home featured carousel, jobs
+  archive, sector taxonomy/search select and live-roles trust item come
+  alive. (Sanity check: the live `Industry` field sometimes carries a raw
+  id like `"109"` instead of a label — confirm sector mapping with Matt.)
 - **Continue Phase 4** (needs the Elementor Pro zip uploaded) — jobs
   filter/sort widgets (type, work mode, salary, sort, applied chips,
   mobile filter drawer), expired-job state, similar roles, save control

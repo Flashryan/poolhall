@@ -132,6 +132,50 @@ final class GiigClient {
 			throw new SourceException( sprintf( 'Giig request to %s returned non-JSON or unexpected JSON.', $path ), true );
 		}
 
+		// Live Giig wraps every response in a transport envelope,
+		// {"status":<int>,"body":"<json string>"} (recorded 2026-07-01). The
+		// inner status carries the API result independently of the HTTP code,
+		// so honour it before unwrapping to the real payload.
+		if ( isset( $decoded['status'], $decoded['body'] ) && is_numeric( $decoded['status'] ) ) {
+			$inner_status = (int) $decoded['status'];
+			if ( $inner_status < 200 || $inner_status >= 300 ) {
+				throw new SourceException(
+					sprintf( 'Giig request to %s returned API status %d.', $path, $inner_status ),
+					$inner_status >= 500
+				);
+			}
+		}
+
+		return self::unwrap_envelope( $decoded );
+	}
+
+	/**
+	 * Unwrap the Giig transport envelope.
+	 *
+	 * Live responses are shaped {"status":<int>,"body":"<json string>"} where
+	 * `body` is a JSON-encoded string holding the real payload. Anything not in
+	 * that exact shape passes through unchanged, so non-enveloped or already
+	 * unwrapped responses are unaffected.
+	 *
+	 * @param array<mixed> $decoded Outer decoded JSON.
+	 * @return array<mixed> The inner payload, or the input unchanged.
+	 */
+	public static function unwrap_envelope( array $decoded ): array {
+		if ( 2 !== count( $decoded ) || ! array_key_exists( 'status', $decoded ) || ! array_key_exists( 'body', $decoded ) ) {
+			return $decoded;
+		}
+
+		$inner = $decoded['body'];
+		if ( is_array( $inner ) ) {
+			return $inner;
+		}
+		if ( is_string( $inner ) ) {
+			$parsed = json_decode( $inner, true );
+			if ( is_array( $parsed ) ) {
+				return $parsed;
+			}
+		}
+
 		return $decoded;
 	}
 
