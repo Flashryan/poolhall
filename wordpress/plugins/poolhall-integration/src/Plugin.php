@@ -221,7 +221,10 @@ final class Plugin {
 		$source = apply_filters( 'poolhall_job_source', null );
 		if ( ! $source instanceof JobSource ) {
 			try {
-				$source = new GiigJobSource( GiigClient::from_environment() );
+				// CompanyId is required on some Giig calls (single-job refresh);
+				// same constant GiigCandidateSink already reads, kept consistent.
+				$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+				$source  = new GiigJobSource( GiigClient::from_environment(), company_id: $company );
 			} catch ( \Poolhall\Integration\Source\SourceException ) {
 				$source = new \Poolhall\Integration\Source\UnconfiguredJobSource();
 			}
