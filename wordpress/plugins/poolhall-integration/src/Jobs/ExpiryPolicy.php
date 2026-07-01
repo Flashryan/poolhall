@@ -12,7 +12,11 @@ namespace Poolhall\Integration\Jobs;
 /**
  * Pure expiry rules (architecture doc §5):
  *  - Giig stores no closing date, so default expiry = datePosted + 30 days
- *    (client decision from the original brief).
+ *    (client decision from the original brief). Revised 2026-07-01: source
+ *    presence governs visibility — while the source still lists a job, the
+ *    sync rolls its expiry clock forward instead of drafting it (see
+ *    SyncService step 8), so this age-based rule only hides jobs the source
+ *    no longer returns.
  *  - Staff may extend by 7/14/30 days; an explicit override always wins and
  *    a later source update must not silently overwrite it.
  *  - Warn staff 72 hours before expiry when the source still lists the job.

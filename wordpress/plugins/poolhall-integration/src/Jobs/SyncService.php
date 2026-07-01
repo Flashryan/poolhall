@@ -72,9 +72,34 @@ final class SyncService {
 				$this->repository->unpublish( $this->source->source_key(), $source_job_id, 'removed_from_source' );
 			}
 
-			// Step 8: local expiry rules.
+			// Step 8: local expiry rules. Source presence governs visibility
+			// (client decision, 2026-07-01): a job the fetch still lists is
+			// open by definition, so instead of drafting it we roll its expiry
+			// clock forward — the source has re-confirmed the role. Age-based
+			// expiry now only hides jobs the source no longer returns (e.g.
+			// kept published because the mass-unpublish guard suppressed
+			// removals). An explicit staff override still wins (doc §5) and is
+			// never rolled.
+			$open_post_ids = array();
+			foreach ( $source_jobs as $source_job ) {
+				$open_id = $this->repository->find_post_id( $this->source->source_key(), $source_job->source_job_id );
+				if ( null !== $open_id ) {
+					$open_post_ids[ $open_id ] = true;
+				}
+			}
+
 			$expired = 0;
 			foreach ( $this->repository->expired_post_ids( $now ) as $post_id ) {
+				$has_override = '' !== (string) get_post_meta( $post_id, 'expiry_override_at', true );
+				if ( isset( $open_post_ids[ $post_id ] ) && ! $has_override ) {
+					update_post_meta(
+						$post_id,
+						'expires_at',
+						$now->add( new \DateInterval( 'P' . ExpiryPolicy::DEFAULT_LIFETIME_DAYS . 'D' ) )
+							->format( \DateTimeInterface::ATOM )
+					);
+					continue;
+				}
 				wp_update_post(
 					array(
 						'ID'          => $post_id,
