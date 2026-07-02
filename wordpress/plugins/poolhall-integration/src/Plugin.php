@@ -204,7 +204,10 @@ final class Plugin {
 		$sink = null;
 		try {
 			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
-			$sink    = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment(), $company );
+			// Short per-call timeout: the two-step push runs inside the
+			// candidate's own request, which must never outlive PHP's 30s
+			// budget (a timeout mid-request would break the modal's JSON).
+			$sink = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment( 8 ), $company );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			$sink = null; // Credentials absent: first-party capture only.
 		}

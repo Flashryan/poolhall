@@ -224,8 +224,13 @@
 			var safeName = cvFile.name.replace( /[^\w .()-]+/g, '-' );
 			if ( safeName !== cvFile.name ) { payload.set( 'cv', cvFile, safeName ); }
 		}
-		fetch( form.action, { method: 'POST', body: payload, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' } )
-			.then( function ( r ) { return r.json(); } )
+		var httpStatus = 0;
+		// form.action is shadowed by the hidden <input name="action"> the
+		// admin-post contract requires, so it resolves to the INPUT ELEMENT
+		// (and a garbage URL). Read the attribute, never the property.
+		var endpoint = form.getAttribute( 'action' );
+		fetch( endpoint, { method: 'POST', body: payload, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' } )
+			.then( function ( r ) { httpStatus = r.status; return r.json(); } )
 			.then( function ( data ) {
 				if ( data.status === 'sent' || data.status === 'received' ) {
 					form.hidden = true;
@@ -239,18 +244,23 @@
 					submitBtn.disabled = false; submitBtn.textContent = original;
 					alert( 'Too many applications from this connection just now. Please try again shortly, or call 0121 516 3000.' );
 				} else {
-					( data.errors || [] ).forEach( function ( code ) {
+					var fieldCodes = ( data.errors || [] ).filter( function ( code ) { return code !== 'system'; } );
+					fieldCodes.forEach( function ( code ) {
 						if ( code.indexOf( 'cv' ) === 0 ) { setError( 'cv', code ); }
 						else if ( code === 'consent_required' ) { setError( 'consent', code ); }
 						else if ( code === 'email_invalid' ) { setError( 'email', code ); step( 1 ); }
 						else if ( code.indexOf( 'first_name' ) === 0 || code.indexOf( 'last_name' ) === 0 || code === 'phone_required' ) { setError( code.replace( '_required', '' ).replace( '_invalid', '' ), code ); step( 1 ); }
 					} );
 					submitBtn.disabled = false; submitBtn.textContent = original;
+					if ( ( data.errors || [] ).indexOf( 'system' ) !== -1 && fieldCodes.length === 0 ) {
+						alert( 'Sorry, something went wrong at our end and your application was not sent. Please try again in a minute, or call 0121 516 3000. (ref: server)' );
+					}
 				}
 			} )
 			.catch( function () {
 				submitBtn.disabled = false; submitBtn.textContent = original;
-				alert( 'Sorry, something went wrong sending your application. Please try again, or call 0121 516 3000.' );
+				var ref = httpStatus > 0 ? 'HTTP ' + httpStatus : 'network';
+				alert( 'Sorry, something went wrong sending your application. Please try again, or call 0121 516 3000. (ref: ' + ref + ')' );
 			} );
 	} );
 }() );

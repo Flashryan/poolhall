@@ -55,7 +55,15 @@ final class ApplicationEndpoints {
 			$this->respond( 'invalid', $errors, $job );
 		}
 
-		$result = $this->service->submit( $request, $job, $cv['path'], $cv['name'], $this->network_signal() );
+		try {
+			$result = $this->service->submit( $request, $job, $cv['path'], $cv['name'], $this->network_signal() );
+		} catch ( \Throwable $e ) {
+			// Whatever happens server-side, a fetch submit must get JSON back,
+			// never an HTML 500 (the modal would show the generic alert with
+			// no diagnostic value). Log it and tell the client honestly.
+			error_log( 'poolhall_apply crashed: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- deliberate crash breadcrumb for staging diagnosis.
+			$this->respond( 'invalid', array( 'system' ), $job );
+		}
 		$this->respond( $result['status'], $result['errors'], $job );
 	}
 

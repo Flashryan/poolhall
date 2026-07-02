@@ -36,7 +36,7 @@ final class GiigClient {
 		private readonly int $timeout = 20,
 	) {}
 
-	public static function from_environment(): self {
+	public static function from_environment( int $timeout = 20 ): self {
 		$base   = self::config( 'POOLHALL_GIIG_BASE_URL' );
 		$token  = self::config( 'POOLHALL_GIIG_TOKEN' );
 		$secret = self::config( 'POOLHALL_GIIG_SECRET' );
@@ -45,7 +45,7 @@ final class GiigClient {
 		if ( null === $base || null === $token || null === $secret ) {
 			throw new SourceException( 'Giig credentials are not configured (POOLHALL_GIIG_* constants/env).' );
 		}
-		return new self( rtrim( $base, '/' ), $token, $secret, $header );
+		return new self( rtrim( $base, '/' ), $token, $secret, $header, $timeout );
 	}
 
 	public function is_configured(): bool {
