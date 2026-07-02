@@ -378,8 +378,8 @@ $bja_url       = (string) get_permalink( $poolhall_pages['better-job-adverts'] )
 $employers_data = array(
 	$hero_slim(
 		'For employers',
-		'Find the right people, faster',
-		'An independent partner that represents your business like its own. Exclusive shortlists, honest advice and a personable service across Construction, Manufacturing and Marketing.',
+		'More than just recruitment.',
+		'A hiring partner that represents your business like it&rsquo;s our own. Better people, less wasted spend, and a process that respects your time.',
 		array(
 			$container(
 				array(
@@ -389,7 +389,7 @@ $employers_data = array(
 					'flex_gap'       => $gap( 12 ),
 				),
 				array(
-					$button( 'Get in touch', $employers_url . '#enquiry', 'primary' ),
+					$button( 'Hire talent', $employers_url . '#enquiry', 'primary' ),
 					$button( '0121 516 3000', 'tel:01215163000', 'ghost' ),
 				),
 				true
@@ -397,23 +397,75 @@ $employers_data = array(
 		)
 	),
 
-	// Service cards — the spec's real services, not the prototype labels.
+	// How we help (prototype screen-employers.jsx §7.5: four points).
 	$section(
 		'#FFFFFF',
 		array(
-			$section_head( 'Our services', 'Three ways we help you hire', 'Flexible support whether you want us to run the whole search or just lend a hand.' ),
+			$section_head( 'How we help employers', 'Hire better, waste less, think long-term', 'Three things our clients tell us make the difference.' ),
+			$container(
+				array(
+					'content_width' => 'full',
+					'css_classes'   => 'ph-grid-2',
+				),
+				array(
+					$card( 'Hire better people', 'Specialist consultants who understand the role and the sector, so the shortlist is genuinely worth your time.' ),
+					$card( 'Better value for your budget', 'We take the time to get the fit right, so you spend less time on CVs that aren&rsquo;t quite there, and keep your cost-per-hire sensible.' ),
+					$card( 'A strategic partner', 'From a single hire to a whole team, we plan with you, not just react to a vacancy.' ),
+					$card( 'Honest, friendly advice', 'We&rsquo;ll always give you our genuine view on salary, market and timelines, gently and openly, so you can plan with confidence.' ),
+				),
+				true
+			),
+		)
+	),
+
+	// Delivery options snapshot (prototype: "Five ways to work with us").
+	$section(
+		'#F7F8FA',
+		array(
+			$section_head( 'Recruitment delivery options', 'Five ways to work with us', 'Whatever the shape of your hiring need, there&rsquo;s a model that fits.' ),
 			$container(
 				array(
 					'content_width' => 'full',
 					'css_classes'   => 'ph-grid-3',
 				),
 				array(
-					$card( 'Permanent recruitment', 'Bespoke, end-to-end search for permanent roles. We manage sourcing, screening, interviews and offer.' ),
-					$card( 'Temp-to-perm', 'Flexible workforce support when you need to scale quickly, with a straightforward route to permanent hires when it works for both sides.' ),
-					$card( 'Retained &amp; embedded support', 'A dedicated partner for critical or multiple hires — running your search end to end or working alongside your team.' ),
+					$card( 'Temporary', 'Flexible workforce when you need to scale up fast, fully compliant and ready to go.' ),
+					$card( 'Permanent', 'End-to-end search for permanent hires, sourced, screened and shortlisted.' ),
+					$card( 'Scale', 'Volume and project recruitment for growth, multiple hires, one partner.' ),
 				),
 				true
 			),
+			$container(
+				array(
+					'content_width' => 'full',
+					'css_classes'   => 'ph-grid-2',
+				),
+				array(
+					$card( 'Pay Monthly', 'Spread the cost of a permanent hire across manageable monthly payments.' ),
+					$card( 'On-Site', 'A managed on-site service for high-volume, single-location requirements.' ),
+				),
+				true
+			),
+			$container(
+				array(
+					'content_width'        => 'full',
+					'flex_direction'       => 'row',
+					'flex_justify_content' => 'center',
+				),
+				array(
+					$button( 'See all options', (string) get_permalink( $poolhall_pages['delivery-options'] ), 'ghost' ),
+				),
+				true
+			),
+		)
+	),
+
+	// Service tiers (directive §11.6 — the build-critical addition).
+	$section(
+		'#FFFFFF',
+		array(
+			$section_head( 'Service levels', 'Three tiers, one standard of care', 'Pick the level of support that fits the role. Every tier is delivered by the same senior consultants.' ),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_service_tiers]' ) ),
 		)
 	),
 
@@ -749,9 +801,9 @@ $services_data = array(
 // ===================================================== Contact (spec §12) ----
 $contact_data = array(
 	$hero_slim(
-		'Get in touch',
-		'We&rsquo;d love to hear from you',
-		'Whether you&rsquo;re after your next role or looking to hire, drop us a line and we&rsquo;ll reply within one working day.'
+		'Contact',
+		'Let&rsquo;s talk',
+		'Choose whichever way suits you best and we&rsquo;ll make sure the right person gets back to you quickly. There&rsquo;s always a real person here to help.'
 	),
 	$section(
 		'#F7F8FA',
@@ -766,7 +818,7 @@ $contact_data = array(
 					$column(
 						array(
 							$heading( 'Talk to a real person', 'h2', '#1B4068', $h2_clamp ),
-							$body( 'No call centres, no ticket queues — you&rsquo;ll get one of the team every time.' ),
+							$body( 'No call centres, no ticket queues. You&rsquo;ll get one of the team every time.' ),
 							$contact_details(),
 						)
 					),

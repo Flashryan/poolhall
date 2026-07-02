@@ -310,11 +310,11 @@ $team_data = array(
 					),
 				),
 				array(
-					$eyebrow( 'Meet the team', true ),
+					$eyebrow( 'About Poolhall', true ),
 					$widget(
 						'heading',
 						array(
-							'title'       => 'The people behind Poolhall',
+							'title'       => 'A local team that takes recruitment personally.',
 							'header_size' => 'h1',
 							'title_color' => '#FFFFFF',
 							'typography_typography'  => 'custom',
@@ -333,7 +333,7 @@ $team_data = array(
 					$widget(
 						'text-editor',
 						array(
-							'editor' => '<p class="ph-lede ph-text-reversed-soft">A small, specialist team that believes recruitment should be honest, personable and built on real relationships, not targets.</p>',
+							'editor' => '<p class="ph-lede ph-text-reversed-soft">Founded in 2021 to do things differently, built on honesty, hard work and genuine relationships.</p>',
 						)
 					),
 				)
