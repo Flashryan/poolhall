@@ -213,7 +213,18 @@
 		submitBtn.disabled = true;
 		var original = submitBtn.textContent;
 		submitBtn.textContent = 'Submitting…';
-		fetch( form.action, { method: 'POST', body: new FormData( form ), headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' } )
+		var payload = new FormData( form );
+		// The host WAF rejects multipart uploads whose filename contains
+		// quote characters (403 before PHP runs), and real CVs are often
+		// named like "Ryan's CV.docx". Transmit under a sanitised name;
+		// the original is only used to label the email attachment.
+		var cvInput = form.querySelector( '[name="cv"]' );
+		if ( cvInput && cvInput.files && cvInput.files[0] ) {
+			var cvFile = cvInput.files[0];
+			var safeName = cvFile.name.replace( /[^\w .()-]+/g, '-' );
+			if ( safeName !== cvFile.name ) { payload.set( 'cv', cvFile, safeName ); }
+		}
+		fetch( form.action, { method: 'POST', body: payload, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' } )
 			.then( function ( r ) { return r.json(); } )
 			.then( function ( data ) {
 				if ( data.status === 'sent' || data.status === 'received' ) {
