@@ -40,6 +40,12 @@ $pages = array(
 	'hr-services'        => 'HR Services',
 	'commitment'         => 'Our Commitment',
 	'candidates'         => 'For Candidates',
+	// v2 nav pages (prototype ui.jsx nav model).
+	'about'              => 'About Us',
+	'blog'               => 'Blog',
+	'registration-guide' => 'Registration Guide',
+	'interview-tips'     => 'Interview Tips',
+	'cv-tips'            => 'CV Tips',
 	// Legal (docs/12 §7.9). Concise notices; full wording confirmed with the client.
 	'privacy-policy'     => 'Privacy Policy',
 	'terms'              => 'Terms of Use',
@@ -63,6 +69,29 @@ foreach ( $pages as $slug => $title ) {
 	);
 }
 echo 'Pages: ' . count( $page_ids ) . " present.\n";
+
+// Sector detail pages live under /sectors/ (prototype SECTOR_MENU).
+foreach ( array(
+	'construction'  => 'Construction Recruitment',
+	'manufacturing' => 'Manufacturing Recruitment',
+	'digital'       => 'Digital Recruitment',
+) as $poolhall_sector_slug => $poolhall_sector_title ) {
+	$existing = get_page_by_path( 'sectors/' . $poolhall_sector_slug );
+	if ( $existing instanceof WP_Post ) {
+		$page_ids[ 'sectors/' . $poolhall_sector_slug ] = $existing->ID;
+		continue;
+	}
+	$page_ids[ 'sectors/' . $poolhall_sector_slug ] = wp_insert_post(
+		array(
+			'post_type'   => 'page',
+			'post_status' => 'publish',
+			'post_title'  => $poolhall_sector_title,
+			'post_name'   => $poolhall_sector_slug,
+			'post_parent' => $page_ids['sectors'],
+		)
+	);
+}
+echo "Sector pages: construction, manufacturing, digital present.\n";
 
 // Style guide (design system §26.4): server-rendered from the child-theme
 // token contract via the plugin shortcode; noindexed by the StyleGuide class.
@@ -139,186 +168,11 @@ $tag = static fn( string $name, array $settings = array() ): string => sprintf(
 	rawurlencode( wp_json_encode( (object) $settings ) )
 );
 
-$header_data = array(
-	// Contact strip (design system §8): Navy 900, phone/email left, location
-	// right. Below 640px the child-theme .ph-contact-strip rules hide the
-	// location; links keep hover underline and visible focus.
-	$container(
-		array(
-			'content_width'         => 'boxed',
-			'boxed_width'           => array(
-				'unit' => 'px',
-				'size' => 1152,
-			),
-			'flex_direction'        => 'row',
-			'flex_align_items'      => 'center',
-			'flex_justify_content'  => 'space-between',
-			'flex_gap'              => array(
-				'unit'   => 'px',
-				'size'   => 16,
-				'column' => '16',
-				'row'    => '16',
-			),
-			'background_background' => 'classic',
-			'background_color'      => '#06182B',
-			'padding'               => array(
-				'unit'     => 'px',
-				'top'      => '8',
-				'right'    => '24',
-				'bottom'   => '8',
-				'left'     => '24',
-				'isLinked' => false,
-			),
-			'css_classes'           => 'ph-contact-strip',
-		),
-		array(
-			$widget(
-				'text-editor',
-				array(
-					'editor'     => '<p><a href="tel:01215163000">0121 516 3000</a> &nbsp;·&nbsp; <a href="mailto:jobs@poolhallrecruitment.co.uk">jobs@poolhallrecruitment.co.uk</a></p>',
-					'text_color' => '#FFFFFF',
-				)
-			),
-			$widget(
-				'text-editor',
-				array(
-					'editor'       => '<p class="ph-contact-strip__location">Birmingham · West Midlands</p>',
-					'text_color'   => '#FFFFFF',
-				)
-			),
-		)
-	),
-	$container(
-		array(
-			'content_width'    => 'boxed',
-			'boxed_width'      => array(
-				'unit' => 'px',
-				'size' => 1152,
-			),
-			'flex_direction'      => 'row',
-			'flex_align_items'    => 'center',
-			'flex_justify_content' => 'space-between',
-			'flex_gap'            => array(
-				'unit'   => 'px',
-				'size'   => 24,
-				'column' => '24',
-				'row'    => '24',
-			),
-			'background_background' => 'classic',
-			'background_color'      => '#FFFFFF',
-			'border_border'         => 'solid',
-			'border_width'          => array(
-				'unit'     => 'px',
-				'top'      => '0',
-				'right'    => '0',
-				'bottom'   => '1',
-				'left'     => '0',
-				'isLinked' => false,
-			),
-			'border_color'          => '#E6E9ED',
-			'padding'               => array(
-				'unit'     => 'px',
-				'top'      => '16',
-				'right'    => '24',
-				'bottom'   => '16',
-				'left'     => '24',
-				'isLinked' => false,
-			),
-		),
-		array(
-			$widget(
-				'theme-site-title',
-				array(
-					'header_size' => 'p',
-					'title_color' => '#1B4068',
-					// Explicit dynamic tags + static fallbacks: the widget's
-					// own dynamic defaults only apply through the editor, not
-					// programmatic writes — without these the logo rendered
-					// the heading placeholder with no link at all.
-					'title'       => get_bloginfo( 'name' ),
-					'link'        => array(
-						'url'         => home_url( '/' ),
-						'is_external' => '',
-						'nofollow'    => '',
-					),
-					'__dynamic__' => array(
-						'title' => $tag( 'site-title' ),
-						'link'  => $tag( 'site-url' ),
-					),
-					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Archivo',
-					'typography_font_weight' => '600',
-					'typography_font_size'   => array(
-						'unit' => 'rem',
-						'size' => 1.375,
-					),
-				)
-			),
-			$widget(
-				'nav-menu',
-				array(
-					'menu'                   => (string) $primary_menu,
-					'layout'                 => 'horizontal',
-					'pointer'                => 'underline',
-					'menu_typography_typography'  => 'custom',
-					'menu_typography_font_family' => 'Source Sans 3',
-					'menu_typography_font_weight' => '600',
-					'menu_typography_font_size'   => array(
-						'unit' => 'rem',
-						'size' => 1,
-					),
-					'color_menu_item'        => '#11161B',
-					'color_menu_item_hover'  => '#1B4068',
-					'pointer_color_menu_item_hover' => '#FDBB5D',
-					// Mobile drawer (fixes the prototype's missing mobile nav).
-					'dropdown'               => 'tablet',
-					'toggle'                 => 'burger',
-					'toggle_color'           => '#1B4068',
-					'full_width'             => 'stretch',
-					'text_align'             => 'aside',
-				)
-			),
-			// Audience switch (§8): segmented Candidates/Employers control,
-			// server-rendered per page (active side + animated pill) by the
-			// plugin shortcode; desktop only — the child-theme rules hide it
-			// below 900px (it moves into the mobile drawer in Phase 4).
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_audience_switch]' ) ),
-			// Candidate account entry (§8): Sign in / My account by state.
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_account_link]' ) ),
-			$widget(
-				'button',
-				array(
-					'text'                  => 'Browse live jobs',
-					'link'                  => array(
-						'url'         => get_permalink( $page_ids['jobs'] ),
-						'is_external' => '',
-						'nofollow'    => '',
-					),
-					'background_color'      => '#FDBB5D',
-					'button_background_hover_color' => '#E0A33F',
-					'button_text_color'     => '#0B2846',
-					'hover_color'           => '#0B2846',
-					'border_radius'         => array(
-						'unit'     => 'px',
-						'top'      => '10',
-						'right'    => '10',
-						'bottom'   => '10',
-						'left'     => '10',
-						'isLinked' => true,
-					),
-					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Source Sans 3',
-					'typography_font_weight' => '700',
-				)
-			),
-		)
-	),
-);
-
-$year = gmdate( 'Y' );
-
-// Footer images: brand logo + TEAM/BNI accreditation marks (bundled in the
-// plugin; keyed sideload identical to the team/home scripts).
+// v2 chrome: the header and footer are server-rendered by the plugin
+// (V2Fragments: [poolhall_v2_header] / [poolhall_v2_footer]) so the frontend
+// matches the prototype's ui.jsx Header/Footer exactly, dropdown nav and
+// mobile drawer included. The Theme Builder templates below just mount them
+// site-wide through Elementor Pro's conditions machinery.
 $poolhall_import_image = static function ( string $filename, string $alt ): int {
 	$existing = get_posts(
 		array(
@@ -367,91 +221,40 @@ $logo_url = $logo_id ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) 
 $team_url = $team_id ? (string) wp_get_attachment_image_url( $team_id, 'full' ) : '';
 $bni_url  = $bni_id ? (string) wp_get_attachment_image_url( $bni_id, 'full' ) : '';
 
-// Footer links: real, published pages only (hard rule 7 — the prototype's
-// '#' socials/About/Career-advice links are omitted until real URLs exist;
-// Privacy policy appears as soon as the page is published and Site setup
-// re-runs).
-$poolhall_footer_link = static function ( string $slug, string $label ): string {
-	$page = get_page_by_path( $slug );
-	if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ) {
-		return '';
-	}
-	return '<li><a href="' . esc_url( (string) get_permalink( $page ) ) . '">' . esc_html( $label ) . '</a></li>';
-};
+$header_data = array(
+	$container(
+		array(
+			'content_width' => 'full',
+			'padding'       => array(
+				'unit'     => 'px',
+				'top'      => '0',
+				'right'    => '0',
+				'bottom'   => '0',
+				'left'     => '0',
+				'isLinked' => true,
+			),
+		),
+		array(
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_header]' ) ),
+		)
+	),
+);
 
-$footer_columns = '<div class="ph-footer-grid">'
-	. '<div class="ph-footer-col ph-footer-col--brand">'
-	. ( '' !== $logo_url ? '<p class="ph-footer-brand"><img src="' . esc_url( $logo_url ) . '" alt="" width="52" height="52" /><span>Poolhall</span></p>' : '<p class="ph-footer-brand"><span>Poolhall</span></p>' )
-	. '<p class="ph-footer-about">Independent recruitment across Construction, Manufacturing and Marketing. Quality and ethical solutions since 2021.</p>'
-	. '</div>'
-	. '<div class="ph-footer-col"><p class="ph-footer-head">Candidates</p><ul>'
-	. $poolhall_footer_link( 'jobs', 'Find a job' )
-	. $poolhall_footer_link( 'sectors', 'Browse sectors' )
-	. $poolhall_footer_link( 'candidate/register', 'Register your CV' )
-	. $poolhall_footer_link( 'candidate/login', 'Sign in' )
-	. '</ul></div>'
-	. '<div class="ph-footer-col"><p class="ph-footer-head">Employers</p><ul>'
-	. $poolhall_footer_link( 'employers', 'Hire talent' )
-	. $poolhall_footer_link( 'services', 'Our services' )
-	. $poolhall_footer_link( 'better-job-adverts', 'Better Job Adverts' )
-	. $poolhall_footer_link( 'join-our-team', 'Partner with us' )
-	. '</ul></div>'
-	. '<div class="ph-footer-col"><p class="ph-footer-head">Company</p><ul>'
-	. $poolhall_footer_link( 'team', 'Meet the team' )
-	. $poolhall_footer_link( 'join-our-team', 'Join our team' )
-	. $poolhall_footer_link( 'contact', 'Contact' )
-	. $poolhall_footer_link( 'privacy-policy', 'Privacy policy' )
-	. $poolhall_footer_link( 'terms', 'Terms of use' )
-	. $poolhall_footer_link( 'cookies', 'Cookie policy' )
-	. '</ul></div>'
-	. '</div>';
-
-$footer_accred = '<div class="ph-footer-accred">'
-	. '<span class="ph-footer-accred__label">Proud members of</span>'
-	. '<span class="ph-footer-accred__logos">'
-	. ( '' !== $team_url ? '<span class="ph-footer-chip"><img src="' . esc_url( $team_url ) . '" alt="TEAM member" height="26" /></span>' : '' )
-	. ( '' !== $bni_url ? '<span class="ph-footer-chip"><img src="' . esc_url( $bni_url ) . '" alt="BNI member" height="26" /></span>' : '' )
-	. '</span></div>';
-
-$footer_bottom = '<div class="ph-footer-bottom">'
-	. '<span>&copy; ' . esc_html( $year ) . ' Poolhall Recruitment Limited &middot; Company No. 13319338 &middot; VAT 383617377</span>'
-	. '<span>Grosvenor House, 11 St Pauls Square, Birmingham, B3 1RB</span>'
-	. '</div>';
-
-// Footer (directive §2.1): navy-900, 4-column grid, accreditation strip,
-// company/VAT/address bottom bar. Social icon buttons are deliberately
-// absent until real profile URLs exist (hard rule 7).
 $footer_data = array(
 	$container(
 		array(
-			'content_width'         => 'boxed',
-			'boxed_width'           => array(
-				'unit' => 'px',
-				'size' => 1152,
-			),
-			'flex_direction'        => 'column',
-			'flex_gap'              => array(
-				'unit'   => 'px',
-				'size'   => 0,
-				'column' => '0',
-				'row'    => '0',
-			),
-			'background_background' => 'classic',
-			'background_color'      => '#06182B',
-			'padding'               => array(
+			'content_width' => 'full',
+			'padding'       => array(
 				'unit'     => 'px',
-				'top'      => '64',
-				'right'    => '24',
-				'bottom'   => '28',
-				'left'     => '24',
-				'isLinked' => false,
+				'top'      => '0',
+				'right'    => '0',
+				'bottom'   => '0',
+				'left'     => '0',
+				'isLinked' => true,
 			),
-			'css_classes'           => 'ph-footer',
 		),
 		array(
-			$widget( 'text-editor', array( 'editor' => $footer_columns ) ),
-			$widget( 'text-editor', array( 'editor' => $footer_accred ) ),
-			$widget( 'text-editor', array( 'editor' => $footer_bottom ) ),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_footer]' ) ),
 		)
 	),
 );

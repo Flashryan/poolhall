@@ -27,5 +27,7 @@ final class ApplicationPayload {
 		public readonly ?string $cv_mime_type,
 		public readonly string $idempotency_key,
 		public readonly ?string $source_company_id = null,
+		public readonly ?string $role_title = null,
+		public readonly ?float $salary_from = null,
 	) {}
 }

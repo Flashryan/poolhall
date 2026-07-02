@@ -34,7 +34,7 @@ if ( ! did_action( 'elementor/loaded' ) ) {
 	exit( 1 );
 }
 $poolhall_pages = array();
-foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies' ) as $poolhall_slug ) {
+foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies', 'about', 'blog', 'registration-guide', 'interview-tips', 'cv-tips', 'sectors/construction', 'sectors/manufacturing', 'sectors/digital' ) as $poolhall_slug ) {
 	$poolhall_page = get_page_by_path( $poolhall_slug );
 	if ( ! $poolhall_page instanceof WP_Post ) {
 		printf( "FAIL: /%s/ page missing — run create-theme-shell.php first.\n", $poolhall_slug );
@@ -186,7 +186,7 @@ $body = static fn( string $text ): array => $widget(
 );
 
 $button = static function ( string $text, string $url, string $style = 'primary' ) use ( $widget ): array {
-	$colors = array(
+	$colors                            = array(
 		'primary' => array( '#FDBB5D', '#E0A33F', '#0B2846', '#0B2846' ),
 		'navy'    => array( '#0B2846', '#1B4068', '#FFFFFF', '#FFFFFF' ),
 		'ghost'   => array( '#FFFFFF', '#F7F8FA', '#0B2846', '#0B2846' ),
@@ -601,7 +601,7 @@ $poolhall_sector_sections = array(
 		array( 'Marketing Managers', 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'PR & Communications' ),
 	),
 );
-$sector_blocks = array();
+$sector_blocks            = array();
 foreach ( $poolhall_sector_sections as $i => [ $poolhall_s_name, $poolhall_s_lede, $poolhall_s_roles ] ) {
 	$chips = '<div class="ph-cluster">' . implode(
 		'',
@@ -951,7 +951,7 @@ $poolhall_bja_props = array(
 	array( 'Interview-ready shortlists', 'Organised, qualified candidates delivered ready to book in for interview.' ),
 	array( 'Results you can check', 'Clear reporting on views, applications and shortlist quality while the advert runs.' ),
 );
-$bja_prop_cards = array();
+$bja_prop_cards     = array();
 foreach ( $poolhall_bja_props as [ $poolhall_prop_title, $poolhall_prop_body ] ) {
 	$bja_prop_cards[] = $card( $poolhall_prop_title, $poolhall_prop_body );
 }
@@ -961,7 +961,7 @@ $poolhall_bja_steps = array(
 	array( '2', 'We write, brand and post', 'A professionally written, branded advert goes out across the major boards.' ),
 	array( '3', 'You interview from a shortlist', 'We screen every CV and hand you an organised, interview-ready shortlist.' ),
 );
-$bja_step_cards = array();
+$bja_step_cards     = array();
 foreach ( $poolhall_bja_steps as [ $poolhall_step_num, $poolhall_step_title, $poolhall_step_body ] ) {
 	$bja_step_cards[] = $container(
 		array(
@@ -1372,6 +1372,285 @@ $write_page(
 	)
 );
 
+// =========================================== v2 pages (prototype nav) ----
+// About (screen-about.jsx), guides (CANDIDATE_MENU), blog shell and the
+// three sector detail pages. Copy is the approved prototype voice; the
+// blog deliberately ships an honest empty state until real articles land
+// (no invented posts, hard rule 5).
+
+$poolhall_points_grid = static function ( array $points ) use ( $container, $widget, $gap, $heading, $body ): array {
+	$cells = array();
+	foreach ( $points as $i => [ $pt, $pd ] ) {
+		$cells[] = $container(
+			array(
+				'content_width'  => 'full',
+				'flex_direction' => 'column',
+				'flex_gap'       => $gap( 8 ),
+				'css_classes'    => 'ph-card',
+			),
+			array(
+				$widget( 'text-editor', array( 'editor' => '<p class="ph-eyebrow">// ' . esc_html( str_pad( (string) ( $i + 1 ), 2, '0', STR_PAD_LEFT ) ) . '</p>' ) ),
+				$heading( $pt, 'h3', '#0B2846', '1.24rem' ),
+				$body( $pd ),
+			),
+			true
+		);
+	}
+	return $container(
+		array(
+			'content_width' => 'full',
+			'css_classes'   => 'ph-grid-2',
+		),
+		$cells,
+		true
+	);
+};
+
+$about_data = array(
+	$hero_slim(
+		'About Poolhall',
+		'Recruitment, done with care.',
+		'An independent West Midlands agency built in 2021 to prove that hiring can be honest, thoughtful and genuinely personable, across Construction, Manufacturing and Digital.'
+	),
+	$section(
+		'#FFFFFF',
+		array(
+			$container(
+				array(
+					'content_width' => 'full',
+					'css_classes'   => 'ph-split',
+				),
+				array(
+					$column(
+						array(
+							$eyebrow( 'Our story' ),
+							$heading( 'Independent, by choice.', 'h2', '#1B4068', $h2_clamp ),
+							$lede( 'Poolhall was founded in 2021 by Matthew Tonks to show recruitment can be done thoughtfully, without the pushy tactics and numbers games the industry is sometimes known for.' ),
+							$body( 'Being independent means we answer to our clients and candidates, not a franchise target. Run from Grosvenor House on St Pauls Square in Birmingham, we&rsquo;ve kept our roots in the West Midlands while helping people find roles the length of the country.' ),
+							$body( 'With around 30 years of combined experience across our three sectors, we know the work, the markets and the people, and we treat every introduction like it matters. Because it does.' ),
+						)
+					),
+					$image_widget( $poolhall_story_img ),
+				),
+				true
+			),
+		)
+	),
+	$section(
+		'#F7F8FA',
+		array(
+			$section_head( 'What we stand for', 'Four things we won&rsquo;t compromise on', 'The same principles guide every call, every shortlist and every placement, whether you&rsquo;re hiring or looking for your next role.' ),
+			$poolhall_points_grid(
+				array(
+					array( 'Honest, always', 'Straight advice on salary, market and timelines, even when it isn&rsquo;t what you were hoping to hear. No spin, no pressure.' ),
+					array( 'Ethical by default', 'Doing recruitment the right way isn&rsquo;t a tagline, it&rsquo;s how we operate, from how we handle your data to how we represent you.' ),
+					array( 'Genuinely personable', 'Independent means a real conversation with someone who picks up the phone, listens properly and remembers who you are.' ),
+					array( 'Specialist, not generalist', 'Three sectors we know inside out, so the conversation starts in the right place and the introductions actually fit.' ),
+				)
+			),
+		)
+	),
+	$section(
+		'#0B2846',
+		array(
+			$section_head( 'Our mission', 'State-of-the-art technology, traditional principles.', 'We pair modern recruitment tools with old-fashioned values, honesty, hard work and real relationships, to match incredible roles with amazing people.', true ),
+			$container(
+				array(
+					'content_width'        => 'full',
+					'flex_direction'       => 'row',
+					'flex_justify_content' => 'center',
+				),
+				array( $button( 'Get in touch', $contact_url, 'primary' ) ),
+				true
+			),
+		),
+		56
+	),
+	$section(
+		'#FFFFFF',
+		array(
+			$section_head( 'The people behind it', 'A small team you&rsquo;ll actually deal with', '' ),
+			$container(
+				array(
+					'content_width'        => 'full',
+					'flex_direction'       => 'row',
+					'flex_justify_content' => 'center',
+				),
+				array( $button( 'Meet the team', (string) get_permalink( get_page_by_path( 'team' ) ), 'ghost' ) ),
+				true
+			),
+		)
+	),
+);
+
+$blog_data = array(
+	$hero_slim(
+		'Blog',
+		'Advice, insight and a bit of straight talk',
+		'Career guides, hiring know-how and news from the Poolhall team.'
+	),
+	$section(
+		'#FFFFFF',
+		array(
+			$container(
+				array(
+					'content_width'  => 'full',
+					'flex_direction' => 'column',
+					'flex_gap'       => $gap( 12 ),
+					'css_classes'    => 'ph-card ph-empty-state',
+				),
+				array(
+					$heading( 'Articles are on their way', 'h3', '#0B2846', '1.24rem' ),
+					$body( 'We&rsquo;re moving our guides and articles over. In the meantime, our team is always happy to share advice directly, just get in touch.' ),
+					$container(
+						array(
+							'content_width'  => 'full',
+							'flex_direction' => 'row',
+							'flex_gap'       => $gap( 12 ),
+						),
+						array(
+							$button( 'Browse live jobs', $jobs_url, 'primary' ),
+							$button( 'Contact us', $contact_url, 'ghost' ),
+						),
+						true
+					),
+				),
+				true
+			),
+		)
+	),
+);
+
+$poolhall_guide_page = static function ( string $label, string $title, string $intro, array $steps, string $cta_label, string $cta_url ) use ( $hero_slim, $section, $poolhall_points_grid, $container, $button ): array {
+	return array(
+		$hero_slim( $label, $title, $intro ),
+		$section( '#FFFFFF', array( $poolhall_points_grid( $steps ) ) ),
+		$section(
+			'#F7F8FA',
+			array(
+				$container(
+					array(
+						'content_width'        => 'full',
+						'flex_direction'       => 'row',
+						'flex_justify_content' => 'center',
+					),
+					array( $button( $cta_label, $cta_url, 'primary' ) ),
+					true
+				),
+			),
+			56
+		),
+	);
+};
+
+$registration_guide_data = $poolhall_guide_page(
+	'Candidates',
+	'What to expect when you register',
+	'Registering with Poolhall takes a couple of minutes. Here&rsquo;s how we&rsquo;ll work with you from there.',
+	array(
+		array( 'Tell us about yourself', 'Share your CV and what a great next move looks like: role, salary, location and anything that matters to you.' ),
+		array( 'A real conversation', 'One of the team will call to understand your experience and ambitions properly, not just keyword-match your CV.' ),
+		array( 'We go to work', 'We only put you forward for roles that genuinely fit, and we&rsquo;ll always ask before your CV goes anywhere.' ),
+		array( 'Offer and beyond', 'Interview prep, honest feedback and support through to your first day and your first weeks in the role.' ),
+	),
+	'Register now',
+	(string) get_permalink( get_page_by_path( 'register' ) )
+);
+
+$interview_tips_data = $poolhall_guide_page(
+	'Candidates',
+	'Interview prep that actually helps',
+	'Practical preparation beats nerves. A simple framework from consultants who hear interview feedback every week.',
+	array(
+		array( 'Know the company', 'Fifteen minutes on their website, recent work and competitors goes further than an hour of generic question practice.' ),
+		array( 'Have five stories ready', 'Real examples of problems you solved, pressure you handled, and results you delivered. Numbers help.' ),
+		array( 'Ask real questions', 'Ask about the team, the first six months and how success is measured. It shows you&rsquo;re serious about the fit.' ),
+		array( 'Close well', 'Say you&rsquo;re interested if you are. Ask about next steps. Follow up the same day through your consultant.' ),
+	),
+	'Browse live jobs',
+	$jobs_url
+);
+
+$cv_tips_data = $poolhall_guide_page(
+	'Candidates',
+	'Make your CV count',
+	'Straight from the consultants who read CVs all day: what gets you shortlisted and what gets in the way.',
+	array(
+		array( 'Lead with impact', 'Your first half-page decides everything. Put your strongest, most relevant experience and achievements up top.' ),
+		array( 'Show results, not duties', '&ldquo;Cut rework by a third&rdquo; beats &ldquo;responsible for quality&rdquo;. Quantify wherever you honestly can.' ),
+		array( 'Tailor it', 'Mirror the language of the role you&rsquo;re applying for. Two focused pages beat six generic ones.' ),
+		array( 'Keep it clean', 'Simple layout, consistent dates, no photos or gimmicks. Make it effortless to read on a screen.' ),
+	),
+	'Register your CV',
+	(string) get_permalink( get_page_by_path( 'register' ) )
+);
+
+$poolhall_sector_page = static function ( string $name, string $intro, array $roles, array $points ) use ( $hero_slim, $section, $section_head, $poolhall_points_grid, $container, $widget, $button, $gap, $jobs_url, $employers_url ): array {
+	$chips = '<div class="ph-cluster">' . implode(
+		'',
+		array_map( static fn( string $r ): string => '<span class="ph-chip">' . esc_html( $r ) . '</span>', $roles )
+	) . '</div>';
+	return array(
+		$hero_slim( 'Sector', $name, $intro ),
+		$section(
+			'#FFFFFF',
+			array(
+				$section_head( 'Roles we recruit', 'The people we place', '' ),
+				$widget( 'text-editor', array( 'editor' => $chips ) ),
+				$container(
+					array(
+						'content_width'  => 'full',
+						'flex_direction' => 'row',
+						'flex_gap'       => $gap( 12 ),
+					),
+					array(
+						$button( 'View live roles', $jobs_url, 'primary' ),
+						$button( 'Hire in this sector', $employers_url . '#enquiry', 'navy' ),
+					),
+					true
+				),
+			)
+		),
+		$section( '#F7F8FA', array( $section_head( 'Why Poolhall', 'Why teams in this sector work with us', '' ), $poolhall_points_grid( $points ) ) ),
+	);
+};
+
+$sector_construction_data = $poolhall_sector_page(
+	'Construction recruitment',
+	'Site supervision to commercial leadership: the people who deliver projects safely, on time and on budget.',
+	array( 'Site Managers', 'Project Managers', 'Quantity Surveyors', 'Estimators', 'Design Managers', 'Skilled Trades & Labour' ),
+	array(
+		array( 'We speak the language', 'CSCS, NVQs, JCT and NEC are not just acronyms to us. Briefs land with the right people because we understand them.' ),
+		array( 'Compliance first', 'Right-to-work, cards and tickets checked before anyone reaches your shortlist.' ),
+		array( 'Regional depth', 'West Midlands roots with live networks across the country&rsquo;s contractors and consultancies.' ),
+		array( 'Honest timelines', 'If a search will take three weeks, we say three weeks. No promises we can&rsquo;t keep.' ),
+	)
+);
+
+$sector_manufacturing_data = $poolhall_sector_page(
+	'Manufacturing recruitment',
+	'Hands-on specialists for the factory floor and the engineers who keep production moving.',
+	array( 'Welders & Fabricators', 'CNC Machinists & Programmers', 'Production Operatives', 'Maintenance Engineers', 'Quality & Compliance' ),
+	array(
+		array( 'Built in the Black Country', 'Our home turf is the UK&rsquo;s manufacturing heartland, and our network shows it.' ),
+		array( 'Skills, verified', 'Coding certificates, machine experience and tickets checked properly, not taken on trust.' ),
+		array( 'Shift-pattern realistic', 'We match people to the reality of the role: shifts, sites and travel included.' ),
+		array( 'Temp to perm, done right', 'Flexible routes that work for both sides, with clear terms from day one.' ),
+	)
+);
+
+$sector_digital_data = $poolhall_sector_page(
+	'Digital recruitment',
+	'Creative and performance marketers who grow brands, agency-side and in-house.',
+	array( 'Marketing Managers', 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'PR & Communications' ),
+	array(
+		array( 'Portfolio over buzzwords', 'We look at real campaigns and real numbers, so shortlists stand up to scrutiny.' ),
+		array( 'Agency and in-house', 'We know the difference in pace and culture, and match people accordingly.' ),
+		array( 'Hybrid-ready', 'Honest conversations about remote, hybrid and office expectations before anyone interviews.' ),
+		array( 'Growing market, old values', 'A modern sector recruited with the same care and honesty as everything we do.' ),
+	)
+);
+
 // ----------------------------------------------------------- write all ----
 $write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
@@ -1379,6 +1658,14 @@ $write_page( $poolhall_pages['sectors'], $sectors_data );
 $write_page( $poolhall_pages['services'], $services_data );
 $write_page( $poolhall_pages['contact'], $contact_data );
 $write_page( $poolhall_pages['join-our-team'], $join_data );
+$write_page( $poolhall_pages['about'], $about_data );
+$write_page( $poolhall_pages['blog'], $blog_data );
+$write_page( $poolhall_pages['registration-guide'], $registration_guide_data );
+$write_page( $poolhall_pages['interview-tips'], $interview_tips_data );
+$write_page( $poolhall_pages['cv-tips'], $cv_tips_data );
+$write_page( $poolhall_pages['sectors/construction'], $sector_construction_data );
+$write_page( $poolhall_pages['sectors/manufacturing'], $sector_manufacturing_data );
+$write_page( $poolhall_pages['sectors/digital'], $sector_digital_data );
 
 // Regenerate CSS and clear caches (hard rule 12).
 \Elementor\Plugin::instance()->files_manager->clear_cache();
@@ -1399,4 +1686,5 @@ printf(
 	$poolhall_pages['join-our-team']->ID
 );
 echo "Secondary pages: delivery-options, why-us, bespoke-search, hr-services, commitment, candidates built.\n";
+echo "v2 pages: about, blog, registration-guide, interview-tips, cv-tips, sector details (construction/manufacturing/digital) built.\n";
 echo "OK: marketing pages created. Verify the frontend before treating this as done.\n";

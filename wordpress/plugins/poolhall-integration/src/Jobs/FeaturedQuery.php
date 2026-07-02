@@ -38,6 +38,16 @@ final class FeaturedQuery {
 		add_action( 'elementor/query/' . self::QUERY_ID, array( $this, 'apply' ) );
 	}
 
+	/**
+	 * Public accessor for the featured selection (server-rendered v2
+	 * fragments reuse the exact carousel rules).
+	 *
+	 * @return int[]
+	 */
+	public function ids(): array {
+		return $this->selected_ids();
+	}
+
 	public function apply( \WP_Query $query ): void {
 		if ( $this->resolving ) {
 			return;

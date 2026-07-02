@@ -254,3 +254,71 @@
 			} );
 	} );
 }() );
+
+/**
+ * v2 four-stage hero (build reference: blocks.jsx Hero). Cross-fades the
+ * four world slides every 4.2s; markers jump on click; honours
+ * prefers-reduced-motion by staying on the first frame.
+ */
+( function () {
+	var hero = document.querySelector( '[data-ph-hero]' );
+	if ( ! hero ) { return; }
+	var slides  = hero.querySelectorAll( '.hero-slide' );
+	var worlds  = hero.querySelectorAll( '[data-ph-world]' );
+	var active  = 0;
+	var timer   = null;
+	var reduced = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+	function show( i ) {
+		active = i % slides.length;
+		slides.forEach( function ( s, k ) { s.classList.toggle( 'on', k === active ); } );
+		worlds.forEach( function ( w, k ) { w.classList.toggle( 'on', k === active ); } );
+	}
+	function play() {
+		if ( reduced ) { return; }
+		clearInterval( timer );
+		timer = setInterval( function () { show( active + 1 ); }, 4200 );
+	}
+	worlds.forEach( function ( w ) {
+		w.addEventListener( 'click', function () {
+			show( parseInt( w.getAttribute( 'data-ph-world' ), 10 ) );
+			play();
+		} );
+	} );
+	play();
+}() );
+
+/**
+ * v2 carousel arrows: scroll the snap track by one card.
+ */
+( function () {
+	document.querySelectorAll( '[data-ph-carousel]' ).forEach( function ( c ) {
+		var track = c.querySelector( '.carousel-track' );
+		if ( ! track ) { return; }
+		var step = function () {
+			var card = track.firstElementChild;
+			return card ? card.getBoundingClientRect().width + 22 : 380;
+		};
+		var prev = c.querySelector( '[data-ph-carousel-prev]' );
+		var next = c.querySelector( '[data-ph-carousel-next]' );
+		if ( prev ) { prev.addEventListener( 'click', function () { track.scrollBy( { left: -step(), behavior: 'smooth' } ); } ); }
+		if ( next ) { next.addEventListener( 'click', function () { track.scrollBy( { left: step(), behavior: 'smooth' } ); } ); }
+	} );
+}() );
+
+/**
+ * v2 mobile drawer (header burger).
+ */
+( function () {
+	var open    = document.querySelector( '[data-ph-drawer-open]' );
+	var drawer  = document.querySelector( '[data-ph-drawer]' );
+	var overlay = document.querySelector( '[data-ph-drawer-overlay]' );
+	if ( ! open || ! drawer ) { return; }
+	function set( on ) {
+		drawer.classList.toggle( 'open', on );
+		if ( overlay ) { overlay.classList.toggle( 'open', on ); }
+	}
+	open.addEventListener( 'click', function () { set( true ); } );
+	drawer.querySelectorAll( '[data-ph-drawer-close]' ).forEach( function ( b ) { b.addEventListener( 'click', function () { set( false ); } ); } );
+	if ( overlay ) { overlay.addEventListener( 'click', function () { set( false ); } ); }
+	document.addEventListener( 'keydown', function ( e ) { if ( 'Escape' === e.key ) { set( false ); } } );
+}() );

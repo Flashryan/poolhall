@@ -321,12 +321,12 @@ $featured = $container(
 	array(
 		$container(
 			array(
-				'content_width'         => 'full',
-				'flex_direction'        => 'row',
-				'flex_justify_content'  => 'space-between',
-				'flex_align_items'      => 'flex-end',
-				'flex_wrap'             => 'wrap',
-				'flex_gap'              => $gap( 16 ),
+				'content_width'        => 'full',
+				'flex_direction'       => 'row',
+				'flex_justify_content' => 'space-between',
+				'flex_align_items'     => 'flex-end',
+				'flex_wrap'            => 'wrap',
+				'flex_gap'             => $gap( 16 ),
 			),
 			array(
 				$section_head( '01 / Featured roles', 'Live jobs, this week', 'A snapshot of what we&rsquo;re recruiting right now. New roles land all the time.' ),
@@ -342,19 +342,19 @@ $featured = $container(
 		$widget(
 			'loop-carousel',
 			array(
-				'_skin'                => 'post',
-				'template_id'          => $poolhall_featured_card,
-				'posts_per_page'       => 6,
-				'post_query_post_type' => 'poolhall_job',
-				'post_query_query_id'  => 'poolhall_featured_jobs',
-				'slides_to_show'       => '3',
+				'_skin'                 => 'post',
+				'template_id'           => $poolhall_featured_card,
+				'posts_per_page'        => 6,
+				'post_query_post_type'  => 'poolhall_job',
+				'post_query_query_id'   => 'poolhall_featured_jobs',
+				'slides_to_show'        => '3',
 				'slides_to_show_tablet' => '2',
 				'slides_to_show_mobile' => '1',
-				'space_between'        => array( 'size' => 24 ),
-				'autoplay'             => '',
-				'loop'                 => '',
-				'arrows'               => 'yes',
-				'pagination'           => 'bullets',
+				'space_between'         => array( 'size' => 24 ),
+				'autoplay'              => '',
+				'loop'                  => '',
+				'arrows'                => 'yes',
+				'pagination'            => 'bullets',
 			)
 		),
 	)
@@ -369,12 +369,12 @@ $featured = $container(
 $sector_tile = static function ( string $name, int $image_id, int $count, string $desc ) use ( $container, $widget, $jobs_url ): array {
 	return $container(
 		array(
-			'content_width'          => 'full',
-			'flex_direction'         => 'column',
-			'flex_justify_content'   => 'flex-end',
-			'background_background'  => 'classic',
-			'background_color'       => '#123255',
-			'padding'                => array(
+			'content_width'         => 'full',
+			'flex_direction'        => 'column',
+			'flex_justify_content'  => 'flex-end',
+			'background_background' => 'classic',
+			'background_color'      => '#123255',
+			'padding'               => array(
 				'unit'     => 'px',
 				'top'      => '26',
 				'right'    => '26',
@@ -382,14 +382,14 @@ $sector_tile = static function ( string $name, int $image_id, int $count, string
 				'left'     => '26',
 				'isLinked' => true,
 			),
-			'flex_gap'               => array(
+			'flex_gap'              => array(
 				'unit'   => 'px',
 				'size'   => 4,
 				'column' => '4',
 				'row'    => '4',
 			),
-			'css_classes'            => 'ph-sector-tile',
-			'link'                   => array(
+			'css_classes'           => 'ph-sector-tile',
+			'link'                  => array(
 				'url'         => $jobs_url,
 				'is_external' => '',
 				'nofollow'    => '',
@@ -452,14 +452,14 @@ $sectors = $container(
 );
 
 // 4. "What makes us different" (§9.1 Home step 4): checklist + media collage.
-$check_icon_home = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+$check_icon_home          = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
 $poolhall_differentiators = array(
 	'Independent and experienced, you&rsquo;ll always speak with a senior consultant who knows your sector.',
 	'Friendly, honest advice, we&rsquo;ll always share our genuine view to help you decide.',
 	'Quality over quantity, a considered shortlist that&rsquo;s thoughtfully put together.',
 	'Easy to reach, a local team that&rsquo;s always happy to pick up the phone.',
 );
-$poolhall_checklist_html = '<ul class="ph-checklist">';
+$poolhall_checklist_html  = '<ul class="ph-checklist">';
 foreach ( $poolhall_differentiators as $poolhall_point ) {
 	$poolhall_checklist_html .= '<li>' . $check_icon_home . '<span>' . $poolhall_point . '</span></li>';
 }
@@ -574,9 +574,9 @@ $feature_item = static function ( string $icon, string $title, string $text ) us
 		)
 	);
 };
-$icon_target = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
-$icon_phone  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
-$icon_map    = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+$icon_target  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
+$icon_phone   = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+$icon_map     = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
 
 $feature_strip = $container(
 	array(
@@ -674,6 +674,60 @@ $paired_cta = $container(
 			),
 			true
 		),
+	)
+);
+
+// ---- v2 server-rendered swaps -----------------------------------------
+// The signature sections are rendered by the plugin (V2Fragments) so the
+// frontend is the prototype markup 1:1: four-stage hero, overlapping
+// feature strip, jobcard carousel, photo sector tiles and full-bleed
+// paired CTA bands. Reviews / about split / stats stay builder-composed.
+$poolhall_v2_full = static fn( string $shortcode ): array => $container(
+	array(
+		'content_width' => 'full',
+		'padding'       => array(
+			'unit'     => 'px',
+			'top'      => '0',
+			'right'    => '0',
+			'bottom'   => '0',
+			'left'     => '0',
+			'isLinked' => true,
+		),
+	),
+	array( $widget( 'shortcode', array( 'shortcode' => $shortcode ) ) )
+);
+
+$hero          = $poolhall_v2_full( '[poolhall_v2_hero]' );
+$feature_strip = $poolhall_v2_full( '[poolhall_v2_feature_strip]' );
+$paired_cta    = $poolhall_v2_full( '[poolhall_v2_cta_bands]' );
+
+$featured = $container(
+	$boxed(
+		array(
+			'flex_direction' => 'column',
+			'flex_gap'       => $gap( 40 ),
+			'padding'        => $section_padding(),
+		)
+	),
+	array(
+		$section_head( '01 / Featured roles', 'Live jobs, this week', 'A snapshot of what we&rsquo;re recruiting right now. New roles land all the time.' ),
+		$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_featured_jobs]' ) ),
+	)
+);
+
+$sectors = $container(
+	$boxed(
+		array(
+			'background_background' => 'classic',
+			'background_color'      => '#F2F4F6',
+			'flex_direction'        => 'column',
+			'flex_gap'              => $gap( 40 ),
+			'padding'               => $section_padding(),
+		)
+	),
+	array(
+		$section_head( '03 / Where we work', 'Three sectors, real depth', 'We focus on a few industries rather than all of them, so we really understand the work and the people who build, make and market British business.' ),
+		$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_sector_tiles]' ) ),
 	)
 );
 

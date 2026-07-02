@@ -86,6 +86,7 @@ final class ApplicationEndpoints {
 			'title'         => get_the_title( $post ),
 			'reference'     => (string) get_post_meta( $post->ID, 'job_reference', true ),
 			'salary'        => (string) get_post_meta( $post->ID, 'salary_display', true ),
+			'salary_min'    => (string) get_post_meta( $post->ID, 'salary_min', true ),
 			'sector'        => is_string( $sector ) ? wp_strip_all_tags( $sector ) : '',
 			'url'           => (string) get_permalink( $post ),
 		);

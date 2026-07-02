@@ -107,7 +107,9 @@ final class Plugin {
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
 		( new \Poolhall\Integration\DesignSystem\HeaderControls() )->register();
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
-		( new \Poolhall\Integration\Jobs\FeaturedQuery() )->register();
+		$featured_query = new \Poolhall\Integration\Jobs\FeaturedQuery();
+		$featured_query->register();
+		( new \Poolhall\Integration\DesignSystem\V2Fragments( $featured_query ) )->register();
 		( new \Poolhall\Integration\Jobs\SearchForm() )->register();
 		( new \Poolhall\Integration\Jobs\JobCardBits() )->register();
 		( new \Poolhall\Integration\Jobs\JobsArchive(
@@ -124,7 +126,7 @@ final class Plugin {
 		// (build reference applypopupjourney.html). Not a Giig push.
 		( new \Poolhall\Integration\Applications\ApplicationRecord() )->register();
 		( new \Poolhall\Integration\Applications\ApplicationEndpoints(
-			new \Poolhall\Integration\Applications\ApplicationService( new Logger() )
+			$this->application_service()
 		) )->register();
 		( new \Poolhall\Integration\Applications\ApplicationForm( new Options() ) )->register();
 
@@ -193,8 +195,26 @@ final class Plugin {
 		}
 	}
 
+	/**
+	 * Application delivery service with the Giig push sink attached when the
+	 * credentials are configured (directive §8: two-step candidate+applicant
+	 * write; CV stays local+email, no Giig upload endpoint).
+	 */
+	public function application_service(): \Poolhall\Integration\Applications\ApplicationService {
+		$sink = null;
+		try {
+			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+			$sink    = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment(), $company );
+		} catch ( \Poolhall\Integration\Source\SourceException ) {
+			$sink = null; // Credentials absent: first-party capture only.
+		}
+		return new \Poolhall\Integration\Applications\ApplicationService( new Logger(), $sink );
+	}
+
 	public function run_scheduled_sync(): void {
 		$this->sync_service()->run( 'cron' );
+		// Retry any applications whose Giig push failed (directive §8/§12).
+		$this->application_service()->retry_queued_pushes();
 		// CachePolicy makes this a no-op unless the snapshot is >24h old.
 		$this->reviews_service()->refresh();
 		( new Logger() )->prune();
