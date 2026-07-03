@@ -332,3 +332,18 @@
 	if ( overlay ) { overlay.addEventListener( 'click', function () { set( false ); } ); }
 	document.addEventListener( 'keydown', function ( e ) { if ( 'Escape' === e.key ) { set( false ); } } );
 }() );
+
+/**
+ * Back-to-top control (bottom right, after ~600px of scroll).
+ */
+( function () {
+	var btn = document.querySelector( '[data-ph-backtop]' );
+	if ( ! btn ) { return; }
+	var reduced = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+	function sync() { btn.classList.toggle( 'on', window.scrollY > 600 ); }
+	window.addEventListener( 'scroll', sync, { passive: true } );
+	sync();
+	btn.addEventListener( 'click', function () {
+		window.scrollTo( { top: 0, behavior: reduced ? 'auto' : 'smooth' } );
+	} );
+}() );

@@ -185,7 +185,12 @@ final class V2Fragments {
 			. '<a class="btn btn-primary" href="' . esc_url( $this->url( 'employers' ) ) . '">Hire talent' . $this->icon( 'arrow-right' ) . '</a>'
 			. '<button class="burger" type="button" data-ph-drawer-open aria-label="Menu">' . $this->icon( 'menu' ) . '</button>'
 			. '</div></nav></div>'
-			// Mobile drawer.
+			. '</header>'
+			// Mobile drawer: OUTSIDE the header element, because the header's
+			// backdrop-filter makes it the containing block for fixed
+			// descendants (the drawer's height:100% resolved to the header's
+			// 116px instead of the viewport - the squashed-drawer bug).
+			. '<div class="ph-v2-drawer-root">'
 			. '<div class="drawer-overlay" data-ph-drawer-overlay></div>'
 			. '<div class="drawer" data-ph-drawer role="dialog" aria-label="Menu">'
 			. '<div class="drawer-head"><span class="bn">POOLHALL</span>'
@@ -206,7 +211,7 @@ final class V2Fragments {
 			. '<a class="btn btn-ghost" href="' . esc_url( $this->url( 'jobs' ) ) . '">Find work</a>'
 			. '<a class="btn btn-primary" href="' . esc_url( $this->url( 'employers' ) ) . '">Hire talent</a>'
 			. '</div></div>'
-			. '</header>';
+			. '</div>';
 	}
 
 	// ------------------------------------------------------------- footer --
@@ -290,7 +295,9 @@ final class V2Fragments {
 			. '<a href="' . esc_url( $this->url( 'cookies' ) ) . '">Cookies</a>'
 			. '<span>Grosvenor House, 11 St Pauls Square, Birmingham, B3 1RB</span>'
 			. '</span></div>'
-			. '</div></footer>';
+			. '</div>'
+			. '<button class="ph-backtop" type="button" data-ph-backtop aria-label="Back to top">' . $this->icon( 'arrow-right' ) . '</button>'
+			. '</footer>';
 	}
 
 	// --------------------------------------------------------------- hero --

@@ -778,7 +778,7 @@ html, body {
    class names match the prototype's so the rendered output is the visual
    contract, not an approximation.
    ========================================================================== */
-.ph-v2-header,.ph-v2-footer,.ph-v2-hero,.ph-v2-strip,.ph-v2-ctas{
+.ph-v2-header,.ph-v2-footer,.ph-v2-hero,.ph-v2-strip,.ph-v2-ctas,.ph-v2-drawer-root{
   --slate-950:#06182B;--slate-900:#0B2846;--slate-800:#123255;--slate-700:#1B4068;
   --steel-700:#2C566F;--steel-600:#345D79;--steel-500:#3E6E8E;--steel-200:#AFC8D6;--steel-100:#D7E3EA;--steel-50:#EDF3F6;
   --hivis-600:#E0A33F;--hivis-500:#FDBB5D;--hivis-400:#FECF87;--hivis-100:#FCEFD7;--hivis-50:#FEF8EC;--gold-ink:#8A5E12;
@@ -803,15 +803,15 @@ html, body {
   --font-display:'Archivo',system-ui,sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --r:4px;--r-sm:3px;--shadow-2:0 10px 30px -12px rgba(16,33,43,.22);--ease:cubic-bezier(.2,.7,.3,1);
 }
-.ph-v2-header svg,.ph-v2-footer svg,.ph-v2-hero svg,.ph-v2-strip svg,.jobcard svg,.sector-grid svg,.carousel svg,.ph-v2-ctas svg{width:16px;height:16px}
+.ph-v2-header svg,.ph-v2-drawer-root svg,.ph-v2-footer svg,.ph-v2-hero svg,.ph-v2-strip svg,.jobcard svg,.sector-grid svg,.carousel svg,.ph-v2-ctas svg{width:16px;height:16px}
 
 /* buttons (fragment scope) */
-.ph-v2-header .btn,.ph-v2-hero .btn,.ph-v2-ctas .btn{font-family:var(--font-display);font-weight:700;font-size:15px;border:0;cursor:pointer;
+.ph-v2-header .btn,.ph-v2-hero .btn,.ph-v2-ctas .btn,.ph-v2-drawer-root .btn{font-family:var(--font-display);font-weight:700;font-size:15px;border:0;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:var(--r-sm);padding:14px 24px;
   transition:background .16s,color .16s,border-color .16s;white-space:nowrap;text-decoration:none}
-.ph-v2-header .btn-primary,.ph-v2-hero .btn-primary,.ph-v2-ctas .btn-primary{background:var(--accent);color:var(--on-accent, #0B2846)}
+.ph-v2-header .btn-primary,.ph-v2-hero .btn-primary,.ph-v2-ctas .btn-primary,.ph-v2-drawer-root .btn-primary{background:var(--accent);color:var(--on-accent, #0B2846)}
 .ph-v2-header .btn-primary:hover,.ph-v2-hero .btn-primary:hover,.ph-v2-ctas .btn-primary:hover{background:var(--accent-press)}
-.ph-v2-header .btn-ghost{background:transparent;color:var(--slate-900);border:1.5px solid var(--border-strong)}
+.ph-v2-header .btn-ghost,.ph-v2-drawer-root .btn-ghost{background:transparent;color:var(--slate-900);border:1.5px solid var(--border-strong)}
 .ph-v2-header .btn-ghost:hover{border-color:var(--slate-900)}
 .ph-v2-hero .btn-ghost-light,.ph-v2-ctas .btn-ghost-light{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4)}
 .ph-v2-hero .btn-ghost-light:hover,.ph-v2-ctas .btn-ghost-light:hover{background:rgba(255,255,255,.12);border-color:#fff}
@@ -849,22 +849,22 @@ html, body {
 .ph-v2-header .burger{display:none;width:44px;height:44px;border:1.5px solid var(--border-strong);border-radius:var(--r-sm);
   background:#fff;cursor:pointer;color:var(--slate-900);align-items:center;justify-content:center}
 .ph-v2-header .burger svg{width:22px;height:22px}
-.ph-v2-header .drawer-overlay{position:fixed;inset:0;background:rgba(14,22,30,.55);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s}
-.ph-v2-header .drawer-overlay.open{opacity:1;pointer-events:auto}
-.ph-v2-header .drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:#fff;z-index:91;
+.ph-v2-drawer-root .drawer-overlay{position:fixed;inset:0;background:rgba(14,22,30,.55);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s}
+.ph-v2-drawer-root .drawer-overlay.open{opacity:1;pointer-events:auto}
+.ph-v2-drawer-root .drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:#fff;z-index:91;
   transform:translateX(100%);transition:transform .24s var(--ease);display:flex;flex-direction:column;box-shadow:var(--shadow-3)}
-.ph-v2-header .drawer.open{transform:none}
-.ph-v2-header .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
-.ph-v2-header .drawer-head .bn{font-family:var(--font-display);font-weight:900;font-size:19px;color:var(--slate-900)}
-.ph-v2-header .drawer-close{width:38px;height:38px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.ph-v2-header .drawer-body{flex:1;overflow-y:auto;padding:14px 20px}
-.ph-v2-header .drawer-grp{margin-bottom:18px}
-.ph-v2-header .drawer-grp .gl{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist-400);margin-bottom:6px}
-.ph-v2-header .drawer-grp.cand .gl{color:var(--accent-ink)}
-.ph-v2-header .drawer-grp.emp .gl{color:var(--steel-600)}
-.ph-v2-header .drawer-grp a{display:flex;align-items:center;justify-content:space-between;padding:11px 0;font-family:var(--font-display);
+.ph-v2-drawer-root .drawer.open{transform:none}
+.ph-v2-drawer-root .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.ph-v2-drawer-root .drawer-head .bn{font-family:var(--font-display);font-weight:900;font-size:19px;color:var(--slate-900)}
+.ph-v2-drawer-root .drawer-close{width:38px;height:38px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ph-v2-drawer-root .drawer-body{flex:1;overflow-y:auto;padding:14px 20px}
+.ph-v2-drawer-root .drawer-grp{margin-bottom:18px}
+.ph-v2-drawer-root .drawer-grp .gl{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist-400);margin-bottom:6px}
+.ph-v2-drawer-root .drawer-grp.cand .gl{color:var(--accent-ink)}
+.ph-v2-drawer-root .drawer-grp.emp .gl{color:var(--steel-600)}
+.ph-v2-drawer-root .drawer-grp a{display:flex;align-items:center;justify-content:space-between;padding:11px 0;font-family:var(--font-display);
   font-weight:600;font-size:16px;border-bottom:1px solid var(--concrete-100);color:var(--ink-900);text-decoration:none}
-.ph-v2-header .drawer-foot{padding:18px 20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.ph-v2-drawer-root .drawer-foot{padding:18px 20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
 @media(max-width:1140px){.ph-v2-header .nav-links{display:none}.ph-v2-header .burger{display:flex}.ph-v2-header .btn-find{display:none}.ph-v2-header .nav{height:76px}.ph-v2-header .brand img{height:64px}}
 
 /* hero (4-stage) */
@@ -1033,5 +1033,35 @@ html, body {
 
 /* Drawer hardening: explicit width and a belt-and-braces hidden state so a
    partially-applied transform can never leave a sliver on screen. */
-.ph-v2-header .drawer{width:380px;max-width:92vw}
-.ph-v2-header .drawer:not(.open){visibility:hidden;transform:translateX(110%)}
+.ph-v2-drawer-root .drawer{width:380px;max-width:92vw}
+.ph-v2-drawer-root .drawer:not(.open){visibility:hidden;transform:translateX(110%)}
+
+/* Body-copy classes must defeat the kit's heading-widget typography: the
+   builders render ledes/body lines as heading widgets for markup control,
+   and without this the inner .elementor-heading-title picks up the kit's
+   H-size (56px leads on pageheads, observed on mobile). */
+.ph-body .elementor-heading-title,
+.ph-body-lg .elementor-heading-title,
+.ph-lede .elementor-heading-title{font:inherit;color:inherit;letter-spacing:inherit}
+
+/* Mobile type scale: trim the display/pagehead headings on small screens. */
+@media(max-width:560px){
+  .ph-v2-hero .display{font-size:2.3rem}
+  .ph-pagehead h1.elementor-heading-title,
+  .ph-hero--slim h1.elementor-heading-title{font-size:2rem !important}
+}
+
+/* Sticky site header: pin the Elementor Theme Builder wrapper that mounts
+   the v2 header, so it survives ancestor layout (works on mobile + desktop). */
+header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
+
+/* Back to top (bottom right, appears after scrolling). */
+.ph-backtop{position:fixed;right:18px;bottom:18px;z-index:75;width:46px;height:46px;border-radius:4px;
+  border:0;cursor:pointer;background:#0B2846;color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 30px -12px rgba(16,33,43,.4);opacity:0;transform:translateY(8px);pointer-events:none;
+  transition:opacity .2s,transform .2s,background .16s}
+.ph-backtop.on{opacity:1;transform:none;pointer-events:auto}
+.ph-backtop:hover{background:#FDBB5D;color:#0B2846}
+.ph-backtop svg{width:20px;height:20px}
+@media(prefers-reduced-motion:reduce){.ph-backtop{transition:none}}
+.ph-backtop svg{transform:rotate(-90deg)}
