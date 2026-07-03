@@ -973,7 +973,15 @@ html, body {
   font-size:14px;color:#fff;border-top:1px solid rgba(255,255,255,.25);padding-top:14px;width:100%;justify-content:space-between;transition:.2s}
 .sector-grid .sector-tile:hover .st-go{color:var(--accent)}
 .sector-grid .st-go svg{width:17px;height:17px}
-@media(max-width:920px){.sector-grid{grid-template-columns:1fr}.sector-grid .sector-tile{aspect-ratio:16/10}}
+.sector-grid .sector-tile{min-height:420px}
+@media(max-width:920px){
+  .sector-grid{grid-template-columns:1fr}
+  /* Content-driven height on mobile: no aspect-ratio dependence, so the
+     tile can never collapse and paint its text over the next section
+     (observed on iOS). The photo covers behind the static body. */
+  .sector-grid .sector-tile{aspect-ratio:auto;min-height:0}
+  .sector-grid .st-body{position:relative;z-index:2;padding:150px 26px 26px}
+}
 
 /* CTA bands (full-bleed) */
 .ph-v2-ctas{display:grid;grid-template-columns:1fr 1fr}
