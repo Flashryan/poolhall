@@ -161,6 +161,10 @@ final class V2Fragments {
 		};
 
 		return '<header class="ph-v2-header">'
+			// No-JS fallback: the burger needs JS, so without it the full nav
+			// links show (wrapped) and the burger hides. Core routes always
+			// reachable (directive: JS disabled leaves content and links working).
+			. '<noscript><style>.ph-v2-header .nav-links{display:flex !important;flex-wrap:wrap}.ph-v2-header .burger{display:none !important}.ph-v2-header .nav{height:auto;padding:10px 0;flex-wrap:wrap}</style></noscript>'
 			. '<div class="topbar"><div class="container">'
 			. '<div class="seg"><a href="tel:01215163000">' . $this->icon( 'phone' ) . '0121 516 3000</a>'
 			. '<a class="hide-sm" href="mailto:jobs@poolhallrecruitment.co.uk">' . $this->icon( 'mail' ) . 'jobs@poolhallrecruitment.co.uk</a></div>'
@@ -297,6 +301,11 @@ final class V2Fragments {
 			. '</span></div>'
 			. '</div>'
 			. '<button class="ph-backtop" type="button" data-ph-backtop aria-label="Back to top">' . $this->icon( 'arrow-right' ) . '</button>'
+			// Essential-cookies notice (directive §12/§13): this site sets no
+			// analytics or third-party cookies, so the notice is informational
+			// with a link to the cookie policy; dismissal is remembered locally.
+			. '<div class="ph-cookies" data-ph-cookies hidden><p>We only use essential cookies to run this site. No tracking, no third parties. <a href="' . esc_url( $this->url( 'cookies' ) ) . '">Cookie policy</a></p>'
+			. '<button type="button" class="btn btn-primary" data-ph-cookies-ok>OK</button></div>'
 			. '</footer>';
 	}
 

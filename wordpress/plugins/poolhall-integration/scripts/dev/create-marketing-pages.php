@@ -91,6 +91,10 @@ $poolhall_import_image = static function ( string $filename, string $alt ): int 
 
 $poolhall_office_img = $poolhall_import_image( 'poolhall-office.jpg', '' );
 $poolhall_story_img  = $poolhall_import_image( 'poolhall-story.jpg', 'The Poolhall team at work' );
+// Real client photography (supplied 2026-07-05).
+$poolhall_desk_img      = $poolhall_import_image( 'poolhall-matt-desk.jpg', 'Matthew at work in the Poolhall office' );
+$poolhall_grosvenor_img = $poolhall_import_image( 'poolhall-grosvenor-house.jpg', 'Grosvenor House, 11 St Pauls Square, Birmingham' );
+$poolhall_flyer_img     = $poolhall_import_image( 'bja-flyer.png', 'Better Job Adverts: we post, they apply, you hire' );
 if ( 0 === $poolhall_office_img || 0 === $poolhall_story_img ) {
 	echo "FAIL: could not import bundled photography.\n";
 	exit( 1 );
@@ -820,6 +824,8 @@ $contact_data = array(
 							$heading( 'Talk to a real person', 'h2', '#1B4068', $h2_clamp ),
 							$body( 'No call centres, no ticket queues. You&rsquo;ll get one of the team every time.' ),
 							$contact_details(),
+							$image_widget( $poolhall_grosvenor_img ),
+							$body( '<strong>Grosvenor House</strong>, 11 St Pauls Square: the black door on the corner, five minutes from St Paul&rsquo;s tram stop.' ),
 						)
 					),
 					$widget( 'shortcode', array( 'shortcode' => '[poolhall_enquiry_form kind="contact"]' ) ),
@@ -1043,6 +1049,44 @@ $bja_data = array(
 							$button( '0121 516 3000', 'tel:01215163000', 'ghost' ),
 						),
 						true
+					),
+				),
+				true
+			),
+		)
+	),
+
+	// The approved BJA collateral (supplied flyer): strapline, the boards the
+	// adverts run on, and the service's own contact details.
+	$section(
+		'#FFFFFF',
+		array(
+			$container(
+				array(
+					'content_width'    => 'full',
+					'css_classes'      => 'ph-split',
+					'flex_align_items' => 'center',
+				),
+				array(
+					$image_widget( $poolhall_flyer_img ),
+					$column(
+						array(
+							$eyebrow( 'Better Job Adverts' ),
+							$heading( 'We post. They apply. You hire.', 'h2', '#1B4068', $h2_clamp ),
+							$lede( 'Finding talent shouldn&rsquo;t cost a fortune. Your advert is written, branded and posted across the major job boards, and the applications come straight back to you.' ),
+							$widget(
+								'text-editor',
+								array(
+									'editor' => '<div class="ph-cluster">'
+										. '<span class="ph-chip">CV-Library</span>'
+										. '<span class="ph-chip">Reed</span>'
+										. '<span class="ph-chip">Totaljobs</span>'
+										. '<span class="ph-chip">Indeed</span>'
+										. '</div>',
+								)
+							),
+							$body( 'Call <a href="tel:01858457500">01858 457 500</a> or visit <a href="https://www.betterjobadverts.co.uk" target="_blank" rel="noopener">betterjobadverts.co.uk</a>.' ),
+						)
 					),
 				),
 				true
@@ -1430,7 +1474,7 @@ $about_data = array(
 							$body( 'With around 30 years of combined experience across our three sectors, we know the work, the markets and the people, and we treat every introduction like it matters. Because it does.' ),
 						)
 					),
-					$image_widget( $poolhall_story_img ),
+					$image_widget( 0 !== $poolhall_desk_img ? $poolhall_desk_img : $poolhall_story_img ),
 				),
 				true
 			),

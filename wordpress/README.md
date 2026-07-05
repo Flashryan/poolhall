@@ -61,6 +61,25 @@ define( 'POOLHALL_GIIG_SECRET', '...' );
 define( 'POOLHALL_GIIG_SECRET_HEADER', 'Access-Secret-Key' );
 ```
 
+## Google reviews: one-step activation
+
+The reviews pipeline (Places API New, 24h server cache, serve-cached-on-
+error, cron refresh) is fully built and idle until a key exists. To go
+live, add ONE line to staging/production wp-config.php:
+
+```php
+define( 'POOLHALL_PLACES_API_KEY', 'AIza...' );
+// Optional: skip the automatic Place ID lookup by pinning it:
+// define( 'POOLHALL_PLACE_ID', 'ChIJ...' );
+```
+
+On the next page view or 4-hourly cron the plugin resolves Poolhall's
+Place ID via Text Search (cached in `poolhall_resolved_place_id`),
+fetches the reviews and replaces the staging placeholder quotes
+everywhere `[poolhall_reviews]` renders. Failures back off for 30
+minutes and never break a page; the last good snapshot serves for up to
+7 days. Enable "Places API (New)" for the key in Google Cloud console.
+
 ## Build status (docs/03-BUILD-PLAN.md)
 
 - **Phase 0 — repo & environments:** ✅ scaffolds, tests, lint, local WP loop.

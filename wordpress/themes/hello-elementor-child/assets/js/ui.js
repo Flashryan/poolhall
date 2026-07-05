@@ -347,3 +347,22 @@
 		window.scrollTo( { top: 0, behavior: reduced ? 'auto' : 'smooth' } );
 	} );
 }() );
+
+/**
+ * Essential-cookies notice: informational (no consent gating needed, the
+ * site sets no analytics cookies); dismissal persists locally.
+ */
+( function () {
+	var box = document.querySelector( '[data-ph-cookies]' );
+	if ( ! box ) { return; }
+	var KEY = 'ph-cookies-ok';
+	try { if ( window.localStorage.getItem( KEY ) ) { return; } } catch ( e ) { return; }
+	box.hidden = false;
+	var ok = box.querySelector( '[data-ph-cookies-ok]' );
+	if ( ok ) {
+		ok.addEventListener( 'click', function () {
+			box.hidden = true;
+			try { window.localStorage.setItem( KEY, '1' ); } catch ( e ) { /* private mode */ }
+		} );
+	}
+}() );

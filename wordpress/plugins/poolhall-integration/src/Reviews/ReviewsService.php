@@ -47,6 +47,13 @@ final class ReviewsService {
 			return $this->policy->is_servable( $cached, $now ) ? $cached : null;
 		}
 
+		// Backoff: with nothing cached and a recent failure, do not re-fetch
+		// on every render (a bad key would otherwise add an API call per
+		// pageview). The cron retries after the cooldown.
+		if ( null === $cached && $this->recently_failed( $now ) ) {
+			return null;
+		}
+
 		try {
 			$fresh = ( $this->fetcher )();
 			update_option( self::OPTION, $fresh->to_array(), false );
@@ -70,6 +77,19 @@ final class ReviewsService {
 	/** Cron entry point: refresh without rendering. */
 	public function refresh(): void {
 		$this->snapshot_for_display();
+	}
+
+	private function recently_failed( \DateTimeImmutable $now ): bool {
+		$error = get_option( self::ERROR_OPTION, null );
+		if ( ! is_array( $error ) || ! isset( $error['at'] ) || ! is_string( $error['at'] ) ) {
+			return false;
+		}
+		try {
+			$at = new \DateTimeImmutable( $error['at'] );
+		} catch ( \Exception ) {
+			return false;
+		}
+		return $now < $at->add( new \DateInterval( 'PT30M' ) );
 	}
 
 	private function cached(): ?ReviewsSnapshot {

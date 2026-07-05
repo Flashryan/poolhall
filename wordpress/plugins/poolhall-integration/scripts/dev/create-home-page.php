@@ -99,6 +99,9 @@ $poolhall_import_image = static function ( string $filename, string $alt ): int 
 $poolhall_images = array(
 	'hero'          => $poolhall_import_image( 'poolhall-office.jpg', '' ),
 	'story'         => $poolhall_import_image( 'poolhall-story.jpg', 'The Poolhall team at work' ),
+	'portrait'      => $poolhall_import_image( 'poolhall-matthew-portrait.jpg', 'Matthew Tonks, founder of Poolhall Recruitment' ),
+	'desk'          => $poolhall_import_image( 'poolhall-matt-desk.jpg', 'Matthew at work in the Poolhall office' ),
+	'culture'       => $poolhall_import_image( 'poolhall-office-culture.jpg', 'The Poolhall office' ),
 	'construction'  => $poolhall_import_image( 'sector-construction.webp', 'Construction site team at work' ),
 	'manufacturing' => $poolhall_import_image( 'sector-manufacturing.webp', 'Manufacturing and engineering at work' ),
 	'digital'       => $poolhall_import_image( 'sector-digital.webp', 'Digital and marketing team at work' ),
@@ -500,9 +503,9 @@ $about_split = $container(
 					'text-editor',
 					array(
 						'editor' => '<div class="ph-media-collage">'
-							. '<div class="ph-media-collage__item ph-media-collage__item--tall"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['hero'], 'large' ) ) . '" alt="" /></div>'
-							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['story'], 'large' ) ) . '" alt="" /></div>'
-							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( $poolhall_images['construction'], 'large' ) ) . '" alt="" /></div>'
+							. '<div class="ph-media-collage__item ph-media-collage__item--tall"><img src="' . esc_url( (string) wp_get_attachment_image_url( 0 !== $poolhall_images['portrait'] ? $poolhall_images['portrait'] : $poolhall_images['hero'], 'large' ) ) . '" alt="Matthew Tonks, founder of Poolhall Recruitment" /></div>'
+							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( 0 !== $poolhall_images['desk'] ? $poolhall_images['desk'] : $poolhall_images['story'], 'large' ) ) . '" alt="" /></div>'
+							. '<div class="ph-media-collage__item"><img src="' . esc_url( (string) wp_get_attachment_image_url( 0 !== $poolhall_images['culture'] ? $poolhall_images['culture'] : $poolhall_images['construction'], 'large' ) ) . '" alt="" /></div>'
 							. '</div>',
 					)
 				),

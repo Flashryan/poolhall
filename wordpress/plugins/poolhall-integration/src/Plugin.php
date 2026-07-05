@@ -140,6 +140,7 @@ final class Plugin {
 		$options = new Options();
 		( new SchemaOutput( $options ) )->register();
 		( new \Poolhall\Integration\Reviews\ReviewsCarousel( $this->reviews_service() ) )->register();
+		( new \Poolhall\Integration\Jobs\JobRedirects() )->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();

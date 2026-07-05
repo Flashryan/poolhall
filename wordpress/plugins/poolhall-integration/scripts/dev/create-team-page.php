@@ -87,10 +87,13 @@ $poolhall_import_image = static function ( string $filename, string $alt ): int 
 	return (int) $attachment_id;
 };
 
-$poolhall_images = array(
+$poolhall_fallback = static function ( int $id, string $file, string $alt ) use ( $poolhall_import_image ): int {
+	return 0 !== $id ? $id : $poolhall_import_image( $file, $alt );
+};
+$poolhall_images   = array(
 	'office'  => $poolhall_import_image( 'poolhall-office.jpg', '' ),
-	'story'   => $poolhall_import_image( 'poolhall-story.jpg', 'The Poolhall team at work' ),
-	'matthew' => $poolhall_import_image( 'team-matthew.jpg', 'Matthew Tonks' ),
+	'story'   => $poolhall_fallback( $poolhall_import_image( 'poolhall-office-culture.jpg', 'The Poolhall office, dartboard and sponsored shirt on the wall' ), 'poolhall-story.jpg', 'The Poolhall team at work' ),
+	'matthew' => $poolhall_fallback( $poolhall_import_image( 'poolhall-matthew-portrait.jpg', 'Matthew Tonks, founder of Poolhall Recruitment' ), 'team-matthew.jpg', 'Matthew Tonks' ),
 	'jay'     => $poolhall_import_image( 'team-jay.jpg', 'Jay Thornton' ),
 	'sam'     => $poolhall_import_image( 'team-sam.jpg', 'Sam Ogle' ),
 );
@@ -137,19 +140,19 @@ $boxed = static fn( array $extra = array() ): array => array_merge(
 $eyebrow = static fn( string $text, bool $on_dark = false ): array => $widget(
 	'text-editor',
 	array(
-		'editor'      => '<p class="ph-eyebrow">' . esc_html( $text ) . '</p>',
-		'text_color'  => $on_dark ? '#FECF87' : '#8A5E12',
+		'editor'     => '<p class="ph-eyebrow">' . esc_html( $text ) . '</p>',
+		'text_color' => $on_dark ? '#FECF87' : '#8A5E12',
 	)
 );
 
 $image_widget = static fn( int $attachment_id, string $size = 'large' ): array => $widget(
 	'image',
 	array(
-		'image'              => array(
+		'image'               => array(
 			'id'  => $attachment_id,
 			'url' => (string) wp_get_attachment_image_url( $attachment_id, 'full' ),
 		),
-		'image_size'         => $size,
+		'image_size'          => $size,
 		'image_border_radius' => array(
 			'unit'     => 'px',
 			'top'      => '16',
@@ -184,12 +187,12 @@ $team_card = static function ( int $photo_id, string $name, string $role, array 
 			$widget(
 				'image',
 				array(
-					'image'      => array(
+					'image'        => array(
 						'id'  => $photo_id,
 						'url' => (string) wp_get_attachment_image_url( $photo_id, 'full' ),
 					),
-					'image_size' => 'large',
-					'width'      => array(
+					'image_size'   => 'large',
+					'width'        => array(
 						'unit' => '%',
 						'size' => 100,
 					),
@@ -219,9 +222,9 @@ $team_card = static function ( int $photo_id, string $name, string $role, array 
 					$widget(
 						'heading',
 						array(
-							'title'       => $name,
-							'header_size' => 'h3',
-							'title_color' => '#1B4068',
+							'title'                  => $name,
+							'header_size'            => 'h3',
+							'title_color'            => '#1B4068',
 							'typography_typography'  => 'custom',
 							'typography_font_family' => 'Archivo',
 							'typography_font_weight' => '700',
@@ -262,28 +265,28 @@ $team_data = array(
 	$container(
 		$boxed(
 			array(
-				'flex_direction'         => 'column',
-				'flex_justify_content'   => 'flex-end',
-				'min_height'             => array(
+				'flex_direction'                => 'column',
+				'flex_justify_content'          => 'flex-end',
+				'min_height'                    => array(
 					'unit' => 'custom',
 					'size' => 'clamp(24rem, 50svh, 32rem)',
 				),
-				'background_background'  => 'classic',
-				'background_color'       => '#0B2846',
-				'background_image'       => array(
+				'background_background'         => 'classic',
+				'background_color'              => '#0B2846',
+				'background_image'              => array(
 					'id'  => $poolhall_images['office'],
 					'url' => (string) wp_get_attachment_image_url( $poolhall_images['office'], 'full' ),
 				),
-				'background_size'        => 'cover',
-				'background_position'    => 'center center',
-				'css_classes'            => 'ph-goldedge',
+				'background_size'               => 'cover',
+				'background_position'           => 'center center',
+				'css_classes'                   => 'ph-goldedge',
 				'background_overlay_background' => 'classic',
 				'background_overlay_color'      => '#06182B',
 				'background_overlay_opacity'    => array(
 					'unit' => 'px',
 					'size' => 0.78,
 				),
-				'padding'                => array(
+				'padding'                       => array(
 					'unit'     => 'px',
 					'top'      => '96',
 					'right'    => '24',
@@ -314,9 +317,9 @@ $team_data = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => 'A local team that takes recruitment personally.',
-							'header_size' => 'h1',
-							'title_color' => '#FFFFFF',
+							'title'                  => 'A local team that takes recruitment personally.',
+							'header_size'            => 'h1',
+							'title_color'            => '#FFFFFF',
 							'typography_typography'  => 'custom',
 							'typography_font_family' => 'Archivo',
 							'typography_font_weight' => '800',
@@ -380,13 +383,13 @@ $team_data = array(
 							$widget(
 								'heading',
 								array(
-									'title'       => 'Independent, and proud of it',
-									'header_size' => 'h2',
-									'title_color' => '#1B4068',
-									'typography_typography'  => 'custom',
+									'title'                => 'Independent, and proud of it',
+									'header_size'          => 'h2',
+									'title_color'          => '#1B4068',
+									'typography_typography' => 'custom',
 									'typography_font_family' => 'Archivo',
 									'typography_font_weight' => '800',
-									'typography_font_size'   => array(
+									'typography_font_size' => array(
 										'unit' => 'custom',
 										'size' => 'clamp(1.7rem, 1.45rem + 1vw, 2.25rem)',
 									),
@@ -465,9 +468,9 @@ $team_data = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => 'Meet the team',
-							'header_size' => 'h2',
-							'title_color' => '#1B4068',
+							'title'                  => 'Meet the team',
+							'header_size'            => 'h2',
+							'title_color'            => '#1B4068',
 							'typography_typography'  => 'custom',
 							'typography_font_family' => 'Archivo',
 							'typography_font_weight' => '800',
@@ -561,9 +564,9 @@ $team_data = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => 'Fancy joining the team?',
-							'header_size' => 'h2',
-							'title_color' => '#FFFFFF',
+							'title'                  => 'Fancy joining the team?',
+							'header_size'            => 'h2',
+							'title_color'            => '#FFFFFF',
 							'typography_typography'  => 'custom',
 							'typography_font_family' => 'Archivo',
 							'typography_font_weight' => '800',
@@ -582,17 +585,17 @@ $team_data = array(
 			$widget(
 				'button',
 				array(
-					'text'                  => 'Get in touch',
-					'link'                  => array(
+					'text'                          => 'Get in touch',
+					'link'                          => array(
 						'url'         => get_permalink( get_page_by_path( 'contact' ) ),
 						'is_external' => '',
 						'nofollow'    => '',
 					),
-					'background_color'      => '#FDBB5D',
-					'button_text_color'     => '#0B2846',
-					'hover_color'           => '#0B2846',
+					'background_color'              => '#FDBB5D',
+					'button_text_color'             => '#0B2846',
+					'hover_color'                   => '#0B2846',
 					'button_background_hover_color' => '#E0A33F',
-					'border_radius'         => array(
+					'border_radius'                 => array(
 						'unit'     => 'px',
 						'top'      => '10',
 						'right'    => '10',
@@ -600,9 +603,9 @@ $team_data = array(
 						'left'     => '10',
 						'isLinked' => true,
 					),
-					'typography_typography'  => 'custom',
-					'typography_font_family' => 'Source Sans 3',
-					'typography_font_weight' => '700',
+					'typography_typography'         => 'custom',
+					'typography_font_family'        => 'Source Sans 3',
+					'typography_font_weight'        => '700',
 				)
 			),
 		)
@@ -623,7 +626,7 @@ update_post_meta( $poolhall_team_page->ID, '_elementor_data', wp_slash( wp_json_
 // Regenerate CSS and clear caches (hard rule 12).
 \Elementor\Plugin::instance()->files_manager->clear_cache();
 
-$poolhall_ids           = (array) get_option( 'poolhall_template_ids', array() );
+$poolhall_ids              = (array) get_option( 'poolhall_template_ids', array() );
 $poolhall_ids['team_page'] = $poolhall_team_page->ID;
 update_option( 'poolhall_template_ids', $poolhall_ids, false );
 

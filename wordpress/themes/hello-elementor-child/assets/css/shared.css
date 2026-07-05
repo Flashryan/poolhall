@@ -1065,3 +1065,12 @@ header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
 .ph-backtop svg{width:20px;height:20px}
 @media(prefers-reduced-motion:reduce){.ph-backtop{transition:none}}
 .ph-backtop svg{transform:rotate(-90deg)}
+
+/* essential-cookies notice */
+.ph-cookies{position:fixed;left:18px;bottom:18px;z-index:76;max-width:min(420px,calc(100vw - 96px));
+  background:#fff;border:1px solid #E6E9ED;border-radius:4px;box-shadow:0 10px 30px -12px rgba(16,33,43,.3);
+  padding:14px 16px;display:flex;gap:14px;align-items:center}
+.ph-cookies p{margin:0;font-size:13.5px;line-height:1.5;color:#2B343D}
+.ph-cookies a{color:#345D79;font-weight:600;text-decoration:underline}
+.ph-cookies .btn{padding:9px 16px;font-size:13px;flex:none}
+@media(max-width:560px){.ph-cookies{left:12px;right:12px;max-width:none;bottom:76px}}

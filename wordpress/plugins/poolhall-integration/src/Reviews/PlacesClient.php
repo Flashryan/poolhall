@@ -28,13 +28,72 @@ final class PlacesClient {
 		private readonly int $timeout = 15,
 	) {}
 
+	public const RESOLVED_PLACE_OPTION = 'poolhall_resolved_place_id';
+	private const SEARCH_ENDPOINT      = 'https://places.googleapis.com/v1/places:searchText';
+	private const SEARCH_QUERY         = 'Poolhall Recruitment, 11 St Pauls Square, Birmingham, UK';
+
 	public static function from_environment(): self {
-		$key      = self::config( 'POOLHALL_PLACES_API_KEY' );
-		$place_id = self::config( 'POOLHALL_PLACE_ID' );
-		if ( null === $key || null === $place_id ) {
-			throw new SourceException( 'Google Places credentials are not configured (POOLHALL_PLACES_API_KEY / POOLHALL_PLACE_ID).' );
+		$key = self::config( 'POOLHALL_PLACES_API_KEY' );
+		if ( null === $key ) {
+			throw new SourceException( 'Google Places credentials are not configured (POOLHALL_PLACES_API_KEY).' );
 		}
+
+		// Key-only activation: when no POOLHALL_PLACE_ID is configured, the
+		// Place ID is resolved once via Text Search and cached, so adding the
+		// API key to wp-config is the only step needed to go live.
+		$place_id = self::config( 'POOLHALL_PLACE_ID' );
+		if ( null === $place_id ) {
+			$stored   = get_option( self::RESOLVED_PLACE_OPTION, '' );
+			$place_id = is_string( $stored ) && '' !== $stored ? $stored : self::resolve_place_id( $key );
+		}
+
 		return new self( $key, $place_id );
+	}
+
+	/** One-off Text Search lookup; the resolved id is cached in an option. */
+	private static function resolve_place_id( string $key ): string {
+		$response = \wp_remote_post(
+			self::SEARCH_ENDPOINT,
+			array(
+				'timeout' => 15,
+				'headers' => array(
+					'Content-Type'     => 'application/json',
+					'X-Goog-Api-Key'   => $key,
+					'X-Goog-FieldMask' => 'places.id,places.displayName',
+				),
+				'body'    => \wp_json_encode( array( 'textQuery' => self::SEARCH_QUERY ) ),
+			)
+		);
+
+		if ( \is_wp_error( $response ) ) {
+			throw new SourceException( 'Place lookup failed: ' . $response->get_error_message() );
+		}
+		if ( 200 !== (int) \wp_remote_retrieve_response_code( $response ) ) {
+			throw new SourceException( sprintf( 'Place lookup returned HTTP %d.', (int) \wp_remote_retrieve_response_code( $response ) ) );
+		}
+
+		$decoded  = json_decode( (string) \wp_remote_retrieve_body( $response ), true );
+		$place_id = self::extract_place_id( is_array( $decoded ) ? $decoded : array() );
+		if ( '' === $place_id ) {
+			throw new SourceException( 'Place lookup returned no match for the Poolhall listing; set POOLHALL_PLACE_ID explicitly.' );
+		}
+
+		update_option( self::RESOLVED_PLACE_OPTION, $place_id, false );
+		return $place_id;
+	}
+
+	/**
+	 * First place id from a Text Search response.
+	 *
+	 * @param array<mixed> $decoded Decoded response.
+	 */
+	public static function extract_place_id( array $decoded ): string {
+		$places = $decoded['places'] ?? null;
+		if ( ! is_array( $places ) || array() === $places ) {
+			return '';
+		}
+		$first = $places[0];
+		return is_array( $first ) && isset( $first['id'] ) && is_string( $first['id'] ) ? $first['id'] : '';
 	}
 
 	public function fetch_snapshot(): ReviewsSnapshot {
