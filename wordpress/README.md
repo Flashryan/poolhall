@@ -80,6 +80,21 @@ everywhere `[poolhall_reviews]` renders. Failures back off for 30
 minutes and never break a page; the last good snapshot serves for up to
 7 days. Enable "Places API (New)" for the key in Google Cloud console.
 
+## Register your CV → Giig
+
+`/register/` is not a site-account signup: `[poolhall_register_form]`
+(`Applications\CvRegistration`) records the submission as a
+`poolhall_application` (kind `registration`), then creates the candidate
+in Giig via the same proven candidate-create endpoint the apply flow
+uses — name, email, phone, location, role sought, salary expectations
+and LinkedIn all land in the ATS with no manual re-keying. Giig has no
+CV-upload endpoint, so the CV file itself is emailed to the team and
+referenced in the Giig candidate Notes ("CV held by Poolhall: …").
+Failures queue and retry on the 4-hourly cron (max 5 attempts); the
+local record is always written first, so nothing is ever lost. The
+admin-post action is `poolhall_cv_register` — distinct from
+`poolhall_register`, which the candidate-portal account signup owns.
+
 ## Build status (docs/03-BUILD-PLAN.md)
 
 - **Phase 0 — repo & environments:** ✅ scaffolds, tests, lint, local WP loop.

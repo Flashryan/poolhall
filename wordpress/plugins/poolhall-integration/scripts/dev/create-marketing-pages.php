@@ -34,7 +34,7 @@ if ( ! did_action( 'elementor/loaded' ) ) {
 	exit( 1 );
 }
 $poolhall_pages = array();
-foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies', 'about', 'blog', 'registration-guide', 'interview-tips', 'cv-tips', 'sectors/construction', 'sectors/manufacturing', 'sectors/digital' ) as $poolhall_slug ) {
+foreach ( array( 'employers', 'sectors', 'services', 'contact', 'join-our-team', 'better-job-adverts', 'jobs', 'delivery-options', 'why-us', 'bespoke-search', 'hr-services', 'commitment', 'candidates', 'privacy-policy', 'terms', 'cookies', 'about', 'blog', 'registration-guide', 'interview-tips', 'cv-tips', 'sectors/construction', 'sectors/manufacturing', 'sectors/digital', 'register' ) as $poolhall_slug ) {
 	$poolhall_page = get_page_by_path( $poolhall_slug );
 	if ( ! $poolhall_page instanceof WP_Post ) {
 		printf( "FAIL: /%s/ page missing — run create-theme-shell.php first.\n", $poolhall_slug );
@@ -1695,6 +1695,44 @@ $sector_digital_data = $poolhall_sector_page(
 	)
 );
 
+$register_data = array(
+	$hero_slim(
+		'Candidates',
+		'Register your CV',
+		'One form, a couple of minutes. Your details go straight to our consultants and into our system, so when the right role lands we already know what you&rsquo;re after.'
+	),
+	$section(
+		'#FFFFFF',
+		array(
+			$container(
+				array(
+					'content_width'    => 'full',
+					'css_classes'      => 'ph-split',
+					'flex_align_items' => 'flex-start',
+				),
+				array(
+					$column(
+						array(
+							$eyebrow( 'What happens next' ),
+							$heading( 'A real conversation, not a database entry', 'h2', '#1B4068', $h2_clamp ),
+							$check_list(
+								array(
+									'One of the team calls you for a proper chat about what a great next move looks like.',
+									'Your CV and preferences are logged once, so you never repeat yourself.',
+									'We only put you forward for roles that genuinely fit, and always ask first.',
+									'No spam, no pressure. Just a heads-up when something worth your time comes up.',
+								)
+							),
+						)
+					),
+					$widget( 'shortcode', array( 'shortcode' => '[poolhall_register_form]' ) ),
+				),
+				true
+			),
+		)
+	),
+);
+
 // ----------------------------------------------------------- write all ----
 $write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
@@ -1710,6 +1748,7 @@ $write_page( $poolhall_pages['cv-tips'], $cv_tips_data );
 $write_page( $poolhall_pages['sectors/construction'], $sector_construction_data );
 $write_page( $poolhall_pages['sectors/manufacturing'], $sector_manufacturing_data );
 $write_page( $poolhall_pages['sectors/digital'], $sector_digital_data );
+$write_page( $poolhall_pages['register'], $register_data );
 
 // Regenerate CSS and clear caches (hard rule 12).
 \Elementor\Plugin::instance()->files_manager->clear_cache();

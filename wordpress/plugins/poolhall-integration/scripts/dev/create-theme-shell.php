@@ -41,6 +41,7 @@ $pages = array(
 	'commitment'         => 'Our Commitment',
 	'candidates'         => 'For Candidates',
 	// v2 nav pages (prototype ui.jsx nav model).
+	'register'           => 'Register Your CV',
 	'about'              => 'About Us',
 	'blog'               => 'Blog',
 	'registration-guide' => 'Registration Guide',

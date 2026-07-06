@@ -141,6 +141,7 @@ final class Plugin {
 		( new SchemaOutput( $options ) )->register();
 		( new \Poolhall\Integration\Reviews\ReviewsCarousel( $this->reviews_service() ) )->register();
 		( new \Poolhall\Integration\Jobs\JobRedirects() )->register();
+		$this->cv_registration()->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
@@ -215,10 +216,16 @@ final class Plugin {
 		return new \Poolhall\Integration\Applications\ApplicationService( new Logger(), $sink );
 	}
 
+	/** Register-your-CV flow with the Giig candidate sink attached. */
+	public function cv_registration(): \Poolhall\Integration\Applications\CvRegistration {
+		return new \Poolhall\Integration\Applications\CvRegistration( $this->candidate_sink(), new Logger() );
+	}
+
 	public function run_scheduled_sync(): void {
 		$this->sync_service()->run( 'cron' );
 		// Retry any applications whose Giig push failed (directive §8/§12).
 		$this->application_service()->retry_queued_pushes();
+		$this->cv_registration()->retry_queued();
 		// CachePolicy makes this a no-op unless the snapshot is >24h old.
 		$this->reviews_service()->refresh();
 		( new Logger() )->prune();

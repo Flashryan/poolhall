@@ -30,3 +30,27 @@ if ( ! function_exists( '__' ) ) {
 		return $text;
 	}
 }
+
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	function sanitize_text_field( string $value ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
+		return trim( (string) preg_replace( '/[\r\n\t ]+/', ' ', strip_tags( $value ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags
+	}
+}
+
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+	function sanitize_textarea_field( string $value ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
+		return trim( strip_tags( $value ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags
+	}
+}
+
+if ( ! function_exists( 'esc_url_raw' ) ) {
+	function esc_url_raw( string $url, ?array $protocols = null ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
+		unset( $protocols );
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+		$clean = filter_var( $url, FILTER_SANITIZE_URL );
+		return is_string( $clean ) ? $clean : '';
+	}
+}
