@@ -1629,71 +1629,30 @@ $cv_tips_data = $poolhall_guide_page(
 	(string) get_permalink( get_page_by_path( 'register' ) )
 );
 
-$poolhall_sector_page = static function ( string $name, string $intro, array $roles, array $points ) use ( $hero_slim, $section, $section_head, $poolhall_points_grid, $container, $widget, $button, $gap, $jobs_url, $employers_url ): array {
-	$chips = '<div class="ph-cluster">' . implode(
-		'',
-		array_map( static fn( string $r ): string => '<span class="ph-chip">' . esc_html( $r ) . '</span>', $roles )
-	) . '</div>';
-	return array(
-		$hero_slim( 'Sector', $name, $intro ),
-		$section(
-			'#FFFFFF',
-			array(
-				$section_head( 'Roles we recruit', 'The people we place', '' ),
-				$widget( 'text-editor', array( 'editor' => $chips ) ),
-				$container(
-					array(
-						'content_width'  => 'full',
-						'flex_direction' => 'row',
-						'flex_gap'       => $gap( 12 ),
-					),
-					array(
-						$button( 'View live roles', $jobs_url, 'primary' ),
-						$button( 'Hire in this sector', $employers_url . '#enquiry', 'navy' ),
-					),
-					true
-				),
-			)
+// Sector detail pages are the server-rendered prototype template
+// (V2Fragments::sector_page): photo pagehead + breadcrumb, roles split,
+// four points, live jobs in the sector, paired CTA bands. One full-bleed
+// shortcode mount so the fragment is the whole page.
+$poolhall_sector_page = static fn( string $sector ): array => array(
+	$container(
+		array(
+			'content_width' => 'full',
+			'padding'       => array(
+				'unit'     => 'px',
+				'top'      => '0',
+				'right'    => '0',
+				'bottom'   => '0',
+				'left'     => '0',
+				'isLinked' => true,
+			),
 		),
-		$section( '#F7F8FA', array( $section_head( 'Why Poolhall', 'Why teams in this sector work with us', '' ), $poolhall_points_grid( $points ) ) ),
-	);
-};
-
-$sector_construction_data = $poolhall_sector_page(
-	'Construction recruitment',
-	'Site supervision to commercial leadership: the people who deliver projects safely, on time and on budget.',
-	array( 'Site Managers', 'Project Managers', 'Quantity Surveyors', 'Estimators', 'Design Managers', 'Skilled Trades & Labour' ),
-	array(
-		array( 'We speak the language', 'CSCS, NVQs, JCT and NEC are not just acronyms to us. Briefs land with the right people because we understand them.' ),
-		array( 'Compliance first', 'Right-to-work, cards and tickets checked before anyone reaches your shortlist.' ),
-		array( 'Regional depth', 'West Midlands roots with live networks across the country&rsquo;s contractors and consultancies.' ),
-		array( 'Honest timelines', 'If a search will take three weeks, we say three weeks. No promises we can&rsquo;t keep.' ),
-	)
+		array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_sector_page sector="' . $sector . '"]' ) ) )
+	),
 );
 
-$sector_manufacturing_data = $poolhall_sector_page(
-	'Manufacturing recruitment',
-	'Hands-on specialists for the factory floor and the engineers who keep production moving.',
-	array( 'Welders & Fabricators', 'CNC Machinists & Programmers', 'Production Operatives', 'Maintenance Engineers', 'Quality & Compliance' ),
-	array(
-		array( 'Built in the Black Country', 'Our home turf is the UK&rsquo;s manufacturing heartland, and our network shows it.' ),
-		array( 'Skills, verified', 'Coding certificates, machine experience and tickets checked properly, not taken on trust.' ),
-		array( 'Shift-pattern realistic', 'We match people to the reality of the role: shifts, sites and travel included.' ),
-		array( 'Temp to perm, done right', 'Flexible routes that work for both sides, with clear terms from day one.' ),
-	)
-);
-
-$sector_digital_data = $poolhall_sector_page(
-	'Digital recruitment',
-	'Creative and performance marketers who grow brands, agency-side and in-house.',
-	array( 'Marketing Managers', 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'PR & Communications' ),
-	array(
-		array( 'Portfolio over buzzwords', 'We look at real campaigns and real numbers, so shortlists stand up to scrutiny.' ),
-		array( 'Agency and in-house', 'We know the difference in pace and culture, and match people accordingly.' ),
-		array( 'Hybrid-ready', 'Honest conversations about remote, hybrid and office expectations before anyone interviews.' ),
-		array( 'Growing market, old values', 'A modern sector recruited with the same care and honesty as everything we do.' ),
-	)
-);
+$sector_construction_data  = $poolhall_sector_page( 'construction' );
+$sector_manufacturing_data = $poolhall_sector_page( 'manufacturing' );
+$sector_digital_data       = $poolhall_sector_page( 'digital' );
 
 $register_data = array(
 	$hero_slim(

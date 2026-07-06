@@ -778,7 +778,7 @@ html, body {
    class names match the prototype's so the rendered output is the visual
    contract, not an approximation.
    ========================================================================== */
-.ph-v2-header,.ph-v2-footer,.ph-v2-hero,.ph-v2-strip,.ph-v2-ctas,.ph-v2-drawer-root{
+.ph-v2-header,.ph-v2-footer,.ph-v2-hero,.ph-v2-strip,.ph-v2-ctas,.ph-v2-drawer-root,.ph-sectorpage{
   --slate-950:#06182B;--slate-900:#0B2846;--slate-800:#123255;--slate-700:#1B4068;
   --steel-700:#2C566F;--steel-600:#345D79;--steel-500:#3E6E8E;--steel-200:#AFC8D6;--steel-100:#D7E3EA;--steel-50:#EDF3F6;
   --hivis-600:#E0A33F;--hivis-500:#FDBB5D;--hivis-400:#FECF87;--hivis-100:#FCEFD7;--hivis-50:#FEF8EC;--gold-ink:#8A5E12;
@@ -1074,3 +1074,55 @@ header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
 .ph-cookies a{color:#345D79;font-weight:600;text-decoration:underline}
 .ph-cookies .btn{padding:9px 16px;font-size:13px;flex:none}
 @media(max-width:560px){.ph-cookies{left:12px;right:12px;max-width:none;bottom:76px}}
+
+/* ---- sector page template (prototype screen-pages.jsx SectorPage) ---- */
+.ph-sectorpage{font-family:var(--font-body);font-size:17px;line-height:1.6;color:var(--fg-1);background:var(--concrete-100)}
+.ph-sectorpage .container{max-width:1240px;margin:0 auto;padding:0 32px}
+.ph-sectorpage h1,.ph-sectorpage h2,.ph-sectorpage h3{font-family:var(--font-display);color:var(--slate-900);margin:0;line-height:1.04;letter-spacing:-.02em;font-weight:800}
+.ph-sectorpage .h2{font-size:clamp(1.7rem,3vw,2.5rem)}
+.ph-sectorpage p{margin:0}
+.ph-sectorpage .lead{font-size:clamp(1.05rem,1.5vw,1.22rem);line-height:1.55;color:var(--fg-2);margin:0;font-weight:400}
+.ph-sectorpage .label{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--steel-600);margin:0 0 18px}
+.ph-sectorpage .label::before{content:"";width:22px;height:2px;background:var(--accent);display:inline-block}
+.ph-sectorpage .label .idx{color:var(--accent-ink)}
+.ph-sectorpage .label.on-dark{color:var(--steel-200)}
+.ph-sectorpage .section{padding:104px 0}
+.ph-sectorpage .section--white{background:#fff}
+.ph-sectorpage .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;margin-bottom:44px}
+.ph-sectorpage .btn{font-family:var(--font-display);font-weight:700;font-size:15px;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:var(--r-sm);padding:14px 24px;transition:background .16s,color .16s,border-color .16s;white-space:nowrap;text-decoration:none}
+.ph-sectorpage .btn-ghost{background:transparent;color:var(--slate-900);border:1.5px solid var(--border-strong)}
+.ph-sectorpage .btn-ghost:hover{border-color:var(--slate-900)}
+.ph-sectorpage .btn svg{width:16px;height:16px}
+.ph-sectorpage .pagehead{background:var(--slate-900);color:#fff;padding:62px 0 70px;position:relative;overflow:hidden}
+.ph-sectorpage .pagehead.photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5}
+.ph-sectorpage .pagehead.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(11,18,25,.95) 0%,rgba(11,18,25,.78) 40%,rgba(11,18,25,.34) 100%),linear-gradient(0deg,rgba(11,18,25,.6),rgba(11,18,25,0) 62%)}
+.ph-sectorpage .pagehead.photo::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--hivis-500);z-index:2}
+.ph-sectorpage .pagehead .container{position:relative;z-index:3}
+.ph-sectorpage .pagehead h1{color:#fff;font-size:clamp(2rem,3.6vw,3rem);font-weight:800}
+.ph-sectorpage .pagehead .lead{color:var(--fg-on-dark-2);margin-top:14px;max-width:54ch}
+.ph-sectorpage .crumb{display:flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:12.5px;color:var(--steel-200);padding:0 0 20px}
+.ph-sectorpage .crumb a{color:inherit;text-decoration:none}
+.ph-sectorpage .crumb a:hover{color:var(--accent)}
+.ph-sectorpage .crumb svg{width:14px;height:14px}
+.ph-sectorpage .split{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}
+.ph-sectorpage .media{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3.2;background:var(--slate-800)}
+.ph-sectorpage .media img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-sectorpage .rolegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+.ph-sectorpage .role{display:flex;gap:10px;align-items:center;font-family:var(--font-mono);font-size:13.5px;color:var(--slate-800);border-left:2px solid var(--hivis-500);padding-left:12px}
+.ph-sectorpage .points{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid var(--border);border-left:1px solid var(--border)}
+.ph-sectorpage .point{padding:30px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ph-sectorpage .point .pi{font-family:var(--font-mono);font-size:13px;color:var(--accent-ink);letter-spacing:.1em;margin-bottom:14px}
+.ph-sectorpage .point h3{font-size:1.24rem;font-weight:700;margin-bottom:10px}
+.ph-sectorpage .point p{font-size:15px;color:var(--fg-2);line-height:1.55;margin:0}
+.ph-sectorpage .secjobs{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:920px){
+  .ph-sectorpage .split{grid-template-columns:1fr;gap:36px}
+  .ph-sectorpage .points{grid-template-columns:1fr}
+  .ph-sectorpage .secjobs{grid-template-columns:1fr}
+  .ph-sectorpage .section{padding:72px 0}
+  .ph-sectorpage .section-head{flex-direction:column;align-items:flex-start;gap:18px}
+}
+@media(max-width:560px){
+  .ph-sectorpage .container{padding:0 20px}
+  .ph-sectorpage .rolegrid{grid-template-columns:1fr}
+}

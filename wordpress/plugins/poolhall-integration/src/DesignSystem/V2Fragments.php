@@ -29,6 +29,7 @@ final class V2Fragments {
 		'poolhall_v2_feature_strip' => 'feature_strip',
 		'poolhall_v2_featured_jobs' => 'featured_jobs',
 		'poolhall_v2_sector_tiles'  => 'sector_tiles',
+		'poolhall_v2_sector_page'   => 'sector_page',
 		'poolhall_v2_cta_bands'     => 'cta_bands',
 	);
 
@@ -101,6 +102,24 @@ final class V2Fragments {
 			return 'man';
 		}
 		return 'dig';
+	}
+
+	/**
+	 * Stricter than sector_key(): that helper buckets every unknown industry
+	 * as 'dig' (fine for card tinting), which would let Insurance or
+	 * Automotive roles onto the Digital sector page's job list.
+	 */
+	private function term_matches_key( string $term, string $key ): bool {
+		if ( 'dig' !== $key ) {
+			return $this->sector_key( $term ) === $key;
+		}
+		$s = strtolower( $term );
+		foreach ( array( 'market', 'digital', 'creative', 'media', 'seo' ) as $needle ) {
+			if ( str_contains( $s, $needle ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private function sector_photo( string $key ): string {
@@ -451,6 +470,140 @@ final class V2Fragments {
 				. '</span></a>';
 		}
 		return $out . '</div>';
+	}
+
+	// -------------------------------------------------------- sector page --
+
+	/**
+	 * Full sector template (prototype screen-pages.jsx SectorPage, §9.5):
+	 * photo pagehead with breadcrumb, "Roles we place" split, four numbered
+	 * points, live jobs in the sector, paired CTA bands.
+	 *
+	 * @param array<string,string>|string $atts Shortcode atts: sector=construction|manufacturing|digital.
+	 */
+	public function sector_page( $atts ): string {
+		$atts = shortcode_atts( array( 'sector' => 'construction' ), is_array( $atts ) ? $atts : array() );
+		$key  = $this->sector_key( (string) $atts['sector'] );
+
+		$copy = array(
+			'con' => array(
+				'name'  => 'Construction',
+				'blurb' => 'Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally.',
+				'roles' => array( 'Project & Site Managers', 'Quantity Surveyors', 'Site Engineers', 'Skilled Trades & Operatives', 'M&amp;E / HVAC Engineers', 'Estimators' ),
+			),
+			'man' => array(
+				'name'  => 'Manufacturing',
+				'blurb' => 'Welders, fabricators, production and engineering talent for the Black Country&rsquo;s manufacturing heartland.',
+				'roles' => array( 'Welders & Fabricators', 'CNC Machinists', 'Production Operatives', 'Maintenance Engineers', 'Quality Inspectors', 'Production Managers' ),
+			),
+			'dig' => array(
+				'name'  => 'Digital',
+				'blurb' => 'Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams.',
+				'roles' => array( 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'Designers', 'Developers', 'Marketing Managers' ),
+			),
+		)[ $key ];
+
+		$name  = $copy['name'];
+		$lower = strtolower( $name );
+		$photo = $this->sector_photo( $key );
+
+		$crumb = '<div class="crumb">'
+			. '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' )
+			. '<a href="' . esc_url( $this->url( 'sectors' ) ) . '">Sectors</a>' . $this->icon( 'chevron-right' )
+			. '<span>' . esc_html( $name ) . '</span></div>';
+
+		$head = '<div class="pagehead photo">'
+			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" />' : '' )
+			. '<div class="container">' . $crumb
+			. '<p class="label on-dark"><span class="idx">//</span> Sector</p>'
+			. '<h1>' . esc_html( $name ) . ' recruitment</h1>'
+			. '<p class="lead">' . wp_kses( $copy['blurb'], array() ) . '</p>'
+			. '</div></div>';
+
+		$role_items = '';
+		foreach ( $copy['roles'] as $role ) {
+			$role_items .= '<div class="role">' . wp_kses( $role, array() ) . '</div>';
+		}
+		$split = '<section class="section"><div class="container"><div class="split">'
+			. '<div>'
+			. '<p class="label"><span class="idx">01 /</span> Roles we place</p>'
+			. '<h2 class="h2">Talent across the whole ' . esc_html( $lower ) . ' chain.</h2>'
+			. '<p class="lead" style="margin-top:14px">From hands-on roles through to leadership, we help across the whole ' . esc_html( $lower ) . ' chain, with consultants who genuinely understand the work.</p>'
+			. '<div class="rolegrid">' . $role_items . '</div>'
+			. '</div>'
+			. '<div class="media">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( $name ) . '" />' : '' ) . '</div>'
+			. '</div></div></section>';
+
+		$points = '<section class="section section--white"><div class="container"><div class="points">'
+			. '<div class="point"><div class="pi">// 01</div><h3>We know the market</h3><p>Real sector knowledge means we understand the role, the rates and the right fit, first time.</p></div>'
+			. '<div class="point"><div class="pi">// 02</div><h3>A network that runs deep</h3><p>Years of relationships across ' . esc_html( $lower ) . ' mean we reach people the job boards never see.</p></div>'
+			. '<div class="point"><div class="pi">// 03</div><h3>Compliance handled</h3><p>Right-to-work, certs and checks managed properly, so you can hire with confidence.</p></div>'
+			. '<div class="point"><div class="pi">// 04</div><h3>A focused shortlist</h3><p>We send you a carefully chosen handful of strong candidates, so you can review them in the time you&rsquo;ve got.</p></div>'
+			. '</div></div></section>';
+
+		$jobs_html = '';
+		$job_ids   = $this->sector_job_ids( $key );
+		if ( array() !== $job_ids ) {
+			$cards = '';
+			foreach ( $job_ids as $post_id ) {
+				$cards .= $this->job_card( $post_id );
+			}
+			$jobs_html = '<section class="section"><div class="container">'
+				. '<div class="section-head"><div>'
+				. '<p class="label"><span class="idx">02 /</span> Open roles</p>'
+				. '<h2 class="h2">Live ' . esc_html( $name ) . ' jobs</h2>'
+				. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'jobs' ) ) . '">All jobs ' . $this->icon( 'arrow-right' ) . '</a></div>'
+				. '<div class="secjobs">' . $cards . '</div>'
+				. '</div></section>';
+		}
+
+		return '<div class="ph-sectorpage">' . $head . $split . $points . $jobs_html . '</div>' . $this->cta_bands();
+	}
+
+	/**
+	 * Published job ids in every sector term that maps to the given key —
+	 * the adapter creates Giig industry terms on demand, so one display
+	 * sector can span several taxonomy terms.
+	 *
+	 * @return int[]
+	 */
+	private function sector_job_ids( string $key ): array {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => JobPostType::TAX_SECTOR,
+				'hide_empty' => true,
+			)
+		); // phpcs:ignore WordPress.WP.DeprecatedParameters.Get_termsParam2Found -- array form is current.
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+		$ids = array();
+		foreach ( $terms as $term ) {
+			if ( $term instanceof \WP_Term && $this->term_matches_key( $term->name, $key ) ) {
+				$ids[] = $term->term_id;
+			}
+		}
+		if ( array() === $ids ) {
+			return array();
+		}
+		$found = get_posts(
+			array(
+				'post_type'      => JobPostType::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => 8,
+				'fields'         => 'ids',
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- bounded archive query on a tiny CPT.
+					array(
+						'taxonomy' => JobPostType::TAX_SECTOR,
+						'field'    => 'term_id',
+						'terms'    => $ids,
+					),
+				),
+			)
+		);
+		return array_map( 'intval', $found );
 	}
 
 	// ---------------------------------------------------------- CTA bands --
