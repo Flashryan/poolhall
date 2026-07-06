@@ -30,6 +30,7 @@ final class V2Fragments {
 		'poolhall_v2_featured_jobs' => 'featured_jobs',
 		'poolhall_v2_sector_tiles'  => 'sector_tiles',
 		'poolhall_v2_sector_page'   => 'sector_page',
+		'poolhall_v2_delivery'      => 'delivery',
 		'poolhall_v2_cta_bands'     => 'cta_bands',
 	);
 
@@ -68,23 +69,27 @@ final class V2Fragments {
 	private function icon( string $name ): string {
 		$stroke = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 		$paths  = array(
-			'phone'         => '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3A19.5 19.5 0 0 1 5.1 13 19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/>',
-			'mail'          => '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
-			'map-pin'       => '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
-			'briefcase'     => '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
-			'banknote'      => '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
-			'building'      => '<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
-			'arrow-right'   => '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-			'chevron-down'  => '<path d="m6 9 6 6 6-6"/>',
-			'chevron-right' => '<path d="m9 18 6-6-6-6"/>',
-			'menu'          => '<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>',
-			'x'             => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-			'star'          => '<path d="M11.5 2.6a.6.6 0 0 1 1 0l2.8 5.7 6.3.9a.6.6 0 0 1 .3 1l-4.5 4.4 1 6.3a.6.6 0 0 1-.8.6L12 18.6l-5.6 3a.6.6 0 0 1-.9-.7l1.1-6.3L2.1 10a.6.6 0 0 1 .3-1l6.3-.9z"/>',
-			'clock'         => '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-			'users'         => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-			'shield-check'  => '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
-			'linkedin'      => '<path fill="currentColor" stroke="none" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57zM22.22 0H1.77C.8 0 0 .78 0 1.74v20.51C0 23.21.8 24 1.77 24h20.45c.98 0 1.78-.79 1.78-1.75V1.74C24 .78 23.2 0 22.22 0z"/>',
-			'instagram'     => '<rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>',
+			'phone'          => '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3A19.5 19.5 0 0 1 5.1 13 19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/>',
+			'mail'           => '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+			'map-pin'        => '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+			'briefcase'      => '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+			'banknote'       => '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+			'building'       => '<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+			'arrow-right'    => '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+			'chevron-down'   => '<path d="m6 9 6 6 6-6"/>',
+			'chevron-right'  => '<path d="m9 18 6-6-6-6"/>',
+			'menu'           => '<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>',
+			'x'              => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+			'star'           => '<path d="M11.5 2.6a.6.6 0 0 1 1 0l2.8 5.7 6.3.9a.6.6 0 0 1 .3 1l-4.5 4.4 1 6.3a.6.6 0 0 1-.8.6L12 18.6l-5.6 3a.6.6 0 0 1-.9-.7l1.1-6.3L2.1 10a.6.6 0 0 1 .3-1l6.3-.9z"/>',
+			'clock'          => '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+			'users'          => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+			'shield-check'   => '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+			'user-check'     => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>',
+			'trending-up'    => '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+			'calendar-clock' => '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.25V14"/><path d="M22 16a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z"/>',
+			'hard-hat'       => '<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>',
+			'linkedin'       => '<path fill="currentColor" stroke="none" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57zM22.22 0H1.77C.8 0 0 .78 0 1.74v20.51C0 23.21.8 24 1.77 24h20.45c.98 0 1.78-.79 1.78-1.75V1.74C24 .78 23.2 0 22.22 0z"/>',
+			'instagram'      => '<rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>',
 		);
 		if ( ! isset( $paths[ $name ] ) ) {
 			return '';
@@ -557,7 +562,78 @@ final class V2Fragments {
 				. '</div></section>';
 		}
 
-		return '<div class="ph-sectorpage">' . $head . $split . $points . $jobs_html . '</div>' . $this->cta_bands();
+		return '<div class="ph-v2page">' . $head . $split . $points . $jobs_html . '</div>' . $this->cta_bands();
+	}
+
+	// ----------------------------------------------------- delivery options --
+
+	/**
+	 * Recruitment Delivery Options (prototype screen-pages.jsx Delivery,
+	 * §9.7): photo pagehead with breadcrumb, five numbered service cards in
+	 * a 3 + 2 grid (second card dark), the "Not sure which fits?" photo
+	 * band, then the paired CTA bands.
+	 */
+	public function delivery(): string {
+		$contact  = $this->url( 'contact' );
+		$services = array(
+			array( '01', 'users', 'Temporary', 'Flexible, compliant workforce when you need to scale up fast. Vetted, paid and managed by us.', 'sector-manufacturing.webp' ),
+			array( '02', 'user-check', 'Permanent', 'Full end-to-end search for permanent hires, sourced, screened and shortlisted to a brief.', 'poolhall-matt-desk.jpg' ),
+			array( '03', 'trending-up', 'Scale', 'Volume and project recruitment for growth phases, multiple hires through one accountable partner.', 'sector-digital.webp' ),
+			array( '04', 'calendar-clock', 'Pay Monthly', 'Spread the cost of a permanent placement across manageable monthly payments.', 'poolhall-office-culture.jpg' ),
+			array( '05', 'hard-hat', 'On-Site', 'A fully managed on-site service for high-volume, single-location requirements.', 'sector-construction.webp' ),
+		);
+
+		$card = function ( array $svc, bool $dark ) use ( $contact ): string {
+			[ $num, $icon, $title, $line, $img ] = $svc;
+			$photo                               = $this->image( $img );
+			return '<div class="svc' . ( $dark ? ' dark' : '' ) . '">'
+				. '<div class="svc-photo">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />' : '' ) . '</div>'
+				. '<div class="num">' . esc_html( $num ) . '</div>'
+				. '<span class="si">' . $this->icon( $icon ) . '</span>'
+				. '<h3>' . esc_html( $title ) . '</h3>'
+				. '<p>' . esc_html( $line ) . '</p>'
+				. '<a class="btn-text" href="' . esc_url( $contact ) . '">Enquire ' . $this->icon( 'arrow-right' ) . '</a>'
+				. '</div>';
+		};
+
+		$top = '';
+		foreach ( array_slice( $services, 0, 3 ) as $i => $svc ) {
+			$top .= $card( $svc, 1 === $i );
+		}
+		$bottom = '';
+		foreach ( array_slice( $services, 3 ) as $svc ) {
+			$bottom .= $card( $svc, false );
+		}
+
+		$photo = $this->sector_photo( 'con' );
+		$head  = '<div class="pagehead photo">'
+			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" />' : '' )
+			. '<div class="container">'
+			. '<div class="crumb">'
+			. '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' )
+			. '<a href="' . esc_url( $this->url( 'employers' ) ) . '">Employers</a>' . $this->icon( 'chevron-right' )
+			. '<span>Delivery Options</span></div>'
+			. '<p class="label on-dark"><span class="idx">//</span> For employers</p>'
+			. '<h1>Recruitment Delivery Options</h1>'
+			. '<p class="lead">Five ways to work together, all with the same care and quality. Whichever suits you best, you&rsquo;re in good hands.</p>'
+			. '</div></div>';
+
+		$grid = '<section class="section"><div class="container">'
+			. '<div class="svc-grid">' . $top . '</div>'
+			. '<div class="svc-grid svc-grid--two">' . $bottom . '</div>'
+			. '</div></section>';
+
+		$band_photo = $this->sector_photo( 'man' );
+		$band       = '<section class="photoband">'
+			. ( '' !== $band_photo ? '<img src="' . esc_url( $band_photo ) . '" alt="" />' : '' )
+			. '<div class="container"><div class="pb-inner">'
+			. '<p class="label on-dark"><span class="idx">//</span> Not sure which fits?</p>'
+			. '<h2 class="h2 on-dark">Tell us the brief and we&rsquo;ll point you the right way.</h2>'
+			. '<p>A single conversation is usually all it takes. We&rsquo;ll give you our honest take on what&rsquo;s likely to work for your role, your timeline and your budget.</p>'
+			. '<div class="acts"><a class="btn btn-primary" href="' . esc_url( $contact ) . '">Talk to us ' . $this->icon( 'arrow-right' ) . '</a></div>'
+			. '</div></div></section>';
+
+		return '<div class="ph-v2page">' . $head . $grid . $band . '</div>' . $this->cta_bands();
 	}
 
 	/**

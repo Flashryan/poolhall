@@ -50,7 +50,7 @@ final class JobsArchive {
 			. '<div class="ph-filter-panel__head"><span class="ph-h4">' . esc_html__( 'Filters', 'poolhall-integration' ) . '</span>'
 			. '<button type="button" class="ph-icon-button ph-filter-panel__close" data-ph-filters-close aria-label="' . esc_attr__( 'Close filters', 'poolhall-integration' ) . '">&times;</button></div>'
 			. $this->filters_form( $request, $facets )
-			. '</div>';
+			. '</aside>';
 
 		$results_col = '<section class="ph-jobs__results">'
 			. $this->results_head( $request, $facets, (int) $results->found_posts )

@@ -1215,25 +1215,26 @@ $points_page = static function ( string $he, string $ht, string $hl, string $se,
 	);
 };
 
+// Delivery options is the server-rendered prototype template
+// (V2Fragments::delivery, §9.7): photo pagehead + breadcrumb, five
+// numbered service cards in a 3 + 2 grid, photo band, CTA bands.
 $write_page(
 	$poolhall_pages['delivery-options'],
-	$points_page(
-		'Delivery options',
-		'Flexible ways to work with us',
-		'Choose the model that fits the role, the timeline and the budget. We will recommend the right approach when you enquire.',
-		'How we deliver',
-		'Five ways to hire',
-		array(
-			array( 'Temporary', 'Cover peaks, projects and absence with vetted temporary staff, managed end to end.' ),
-			array( 'Permanent', 'A thorough, committed search for permanent hires, from sourcing to offer management.' ),
-			array( 'Scale', 'Volume and multi-site hiring with the structure and reporting to keep it on track.' ),
-			array( 'Pay monthly', 'Spread the cost of a permanent hire across manageable monthly payments.' ),
-			array( 'On-site', 'An embedded, on-site resourcing partner for high-volume or ongoing requirements.' ),
+	array(
+		$container(
+			array(
+				'content_width' => 'full',
+				'padding'       => array(
+					'unit'     => 'px',
+					'top'      => '0',
+					'right'    => '0',
+					'bottom'   => '0',
+					'left'     => '0',
+					'isLinked' => true,
+				),
+			),
+			array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_delivery]' ) ) )
 		),
-		'Not sure which fits?',
-		'Tell us about the role and we will recommend the right approach, with no obligation.',
-		'Talk to our team',
-		$employers_url . '#enquiry'
 	)
 );
 
