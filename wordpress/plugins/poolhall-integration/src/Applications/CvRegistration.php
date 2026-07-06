@@ -98,45 +98,50 @@ final class CvRegistration {
 		}
 
 		$field = static function ( string $name, string $label, string $type = 'text', bool $required = false, string $autocomplete = '', string $placeholder = '' ): string {
-			return '<div class="ph-field">'
-				. '<label class="ph-field__label" for="ph-reg-' . esc_attr( $name ) . '">' . esc_html( $label )
-				. ( $required ? ' <span aria-hidden="true" style="color:#8A5E12">*</span>' : '' ) . '</label>'
-				. '<input class="ph-field__control" type="' . esc_attr( $type ) . '" id="ph-reg-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '"'
+			return '<div class="field">'
+				. '<label for="ph-reg-' . esc_attr( $name ) . '">' . esc_html( $label )
+				. ( $required ? ' <span class="req" aria-hidden="true">*</span>' : '' ) . '</label>'
+				. '<input class="input" type="' . esc_attr( $type ) . '" id="ph-reg-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '"'
 				. ( $required ? ' required' : '' )
 				. ( '' !== $autocomplete ? ' autocomplete="' . esc_attr( $autocomplete ) . '"' : '' )
 				. ( '' !== $placeholder ? ' placeholder="' . esc_attr( $placeholder ) . '"' : '' )
 				. ' /></div>';
 		};
 
+		$upload_icon = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8"/><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="m8 17 4-4 4 4"/></svg>';
+
 		return $notice
-			. '<form class="ph-form ph-register-form" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<form class="ph-v2reg ph-register-form" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />'
 			. wp_nonce_field( self::ACTION, '_wpnonce', true, false )
-			. '<div class="ph-field" style="position:absolute;left:-9999px" aria-hidden="true"><label>' . esc_html__( 'Company website', 'poolhall-integration' ) . '<input type="text" name="' . esc_attr( self::HONEYPOT ) . '" tabindex="-1" autocomplete="off" /></label></div>'
-			. '<div class="ph-grid-2">'
-			. $field( 'first_name', __( 'First name', 'poolhall-integration' ), 'text', true, 'given-name' )
-			. $field( 'last_name', __( 'Last name', 'poolhall-integration' ), 'text', true, 'family-name' )
+			. '<div class="field" style="position:absolute;left:-9999px" aria-hidden="true"><label>' . esc_html__( 'Company website', 'poolhall-integration' ) . '<input type="text" name="' . esc_attr( self::HONEYPOT ) . '" tabindex="-1" autocomplete="off" /></label></div>'
+			. '<div class="frow">'
+			. $field( 'first_name', __( 'First name', 'poolhall-integration' ), 'text', true, 'given-name', __( 'Jane', 'poolhall-integration' ) )
+			. $field( 'last_name', __( 'Last name', 'poolhall-integration' ), 'text', true, 'family-name', __( 'Smith', 'poolhall-integration' ) )
 			. '</div>'
-			. '<div class="ph-grid-2">'
-			. $field( 'email', __( 'Email', 'poolhall-integration' ), 'email', true, 'email' )
-			. $field( 'phone', __( 'Phone', 'poolhall-integration' ), 'tel', true, 'tel' )
+			. '<div class="frow">'
+			. $field( 'email', __( 'Email', 'poolhall-integration' ), 'email', true, 'email', 'jane@email.com' )
+			. $field( 'phone', __( 'Phone', 'poolhall-integration' ), 'tel', true, 'tel', '07700 900000' )
 			. '</div>'
-			. '<div class="ph-grid-2">'
+			. '<div class="frow">'
 			. $field( 'location', __( 'Where are you based?', 'poolhall-integration' ), 'text', false, 'address-level2', __( 'e.g. Wolverhampton', 'poolhall-integration' ) )
 			. $field( 'role_title', __( 'What kind of role?', 'poolhall-integration' ), 'text', false, '', __( 'e.g. Site Manager', 'poolhall-integration' ) )
 			. '</div>'
-			. '<div class="ph-grid-2">'
+			. '<div class="frow">'
 			. $field( 'salary_expectations', __( 'Salary expectations (optional)', 'poolhall-integration' ), 'text', false, '', __( 'e.g. &pound;40,000+', 'poolhall-integration' ) )
 			. $field( 'linkedin', __( 'LinkedIn (optional)', 'poolhall-integration' ), 'url', false, 'url', 'https://' )
 			. '</div>'
-			. '<div class="ph-field"><label class="ph-field__label" for="ph-reg-cv">' . esc_html__( 'Your CV', 'poolhall-integration' ) . ' <span aria-hidden="true" style="color:#8A5E12">*</span></label>'
-			. '<input class="ph-field__control" type="file" id="ph-reg-cv" name="cv" required accept=".pdf,.doc,.docx" />'
-			. '<p class="ph-small ph-text-muted">' . esc_html__( 'PDF or Word, up to 25 MB.', 'poolhall-integration' ) . '</p></div>'
-			. '<div class="ph-field"><label class="ph-field__label" for="ph-reg-message">' . esc_html__( 'Anything else we should know?', 'poolhall-integration' ) . '</label>'
-			. '<textarea class="ph-field__control" id="ph-reg-message" name="message" rows="4" placeholder="' . esc_attr__( 'Notice periods, must-haves, anything that matters to you&hellip;', 'poolhall-integration' ) . '"></textarea></div>'
-			. '<div class="ph-field"><label class="ph-consent"><input type="checkbox" name="consent" value="1" required /> '
-			. wp_kses_post( __( 'I&rsquo;m happy for Poolhall to hold my details and CV so they can contact me about relevant roles, as set out in the <a href="/privacy-policy/">privacy policy</a>.', 'poolhall-integration' ) ) . '</label></div>'
-			. '<button type="submit" class="ph-button ph-button--primary ph-button--lg">' . esc_html__( 'Register with Poolhall', 'poolhall-integration' ) . '</button>'
+			. '<div class="field"><label for="ph-reg-cv">' . esc_html__( 'Upload CV', 'poolhall-integration' ) . ' <span class="req" aria-hidden="true">*</span></label>'
+			. '<div class="upload">' . $upload_icon
+			. '<span class="ut">' . esc_html__( 'Drag &amp; drop or browse', 'poolhall-integration' ) . '</span>'
+			. '<span class="us">' . esc_html__( 'PDF or Word &middot; max 25 MB', 'poolhall-integration' ) . '</span>'
+			. '<input type="file" id="ph-reg-cv" name="cv" required accept=".pdf,.doc,.docx" />'
+			. '</div></div>'
+			. '<div class="field"><label for="ph-reg-message">' . esc_html__( 'Anything else we should know?', 'poolhall-integration' ) . '</label>'
+			. '<textarea id="ph-reg-message" name="message" rows="4" placeholder="' . esc_attr__( 'Notice periods, must-haves, anything that matters to you&hellip;', 'poolhall-integration' ) . '"></textarea></div>'
+			. '<label class="consent"><input type="checkbox" name="consent" value="1" required /> <span>'
+			. wp_kses_post( __( 'I consent to Poolhall holding my details per the <a href="/privacy-policy/">Privacy Policy</a>. <span class="req" aria-hidden="true">*</span>', 'poolhall-integration' ) ) . '</span></label>'
+			. '<button type="submit" class="btn btn-primary btn-block">' . esc_html__( 'Register now', 'poolhall-integration' ) . ' <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>'
 			. '</form>';
 	}
 
