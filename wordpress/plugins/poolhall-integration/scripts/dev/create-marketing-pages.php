@@ -1241,7 +1241,20 @@ $privacy_url = (string) get_permalink( $poolhall_pages['privacy-policy'] );
 
 $legal_page = static function ( string $title, string $intro, string $body_html ) use ( $hero_slim, $section, $container, $widget ): array {
 	return array(
-		$hero_slim( 'Legal', $title, $intro ),
+		$container(
+			array(
+				'content_width' => 'full',
+				'padding'       => array(
+					'unit'     => 'px',
+					'top'      => '0',
+					'right'    => '0',
+					'bottom'   => '0',
+					'left'     => '0',
+					'isLinked' => true,
+				),
+			),
+			array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_legal_head title="' . esc_attr( $title ) . '" lead="' . esc_attr( $intro ) . '" updated="Updated 1 June 2026"]' ) ) )
+		),
 		$section(
 			'#FFFFFF',
 			array(
@@ -1558,7 +1571,20 @@ $privacy_url = (string) get_permalink( $poolhall_pages['privacy-policy'] );
 
 $legal_page = static function ( string $title, string $intro, string $body_html ) use ( $hero_slim, $section, $container, $widget ): array {
 	return array(
-		$hero_slim( 'Legal', $title, $intro ),
+		$container(
+			array(
+				'content_width' => 'full',
+				'padding'       => array(
+					'unit'     => 'px',
+					'top'      => '0',
+					'right'    => '0',
+					'bottom'   => '0',
+					'left'     => '0',
+					'isLinked' => true,
+				),
+			),
+			array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_legal_head title="' . esc_attr( $title ) . '" lead="' . esc_attr( $intro ) . '" updated="Updated 1 June 2026"]' ) ) )
+		),
 		$section(
 			'#FFFFFF',
 			array(

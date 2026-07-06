@@ -113,11 +113,11 @@ $featured_card = array(
 			$widget(
 				'heading',
 				array(
-					'title'       => '',
-					'header_size' => 'h3',
-					'title_color' => '#1B4068',
+					'title'        => '',
+					'header_size'  => 'h3',
+					'title_color'  => '#1B4068',
 					'_css_classes' => 'ph-h3',
-					'__dynamic__' => array(
+					'__dynamic__'  => array(
 						'title' => $tag( 'post-title' ),
 						'link'  => $tag( 'post-url' ),
 					),
@@ -143,20 +143,20 @@ $featured_card = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => '',
-							'header_size' => 'p',
+							'title'        => '',
+							'header_size'  => 'p',
 							'_css_classes' => 'ph-job-salary',
-							'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
+							'__dynamic__'  => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
 						)
 					),
 					$widget(
 						'heading',
 						array(
-							'title'       => 'View job',
-							'header_size' => 'p',
-							'title_color' => '#8A5E12',
+							'title'        => 'View job',
+							'header_size'  => 'p',
+							'title_color'  => '#8A5E12',
 							'_css_classes' => 'ph-link ph-link--arrow',
-							'__dynamic__' => array( 'link' => $tag( 'post-url' ) ),
+							'__dynamic__'  => array( 'link' => $tag( 'post-url' ) ),
 						)
 					),
 				),
@@ -171,19 +171,19 @@ $featured_card = array(
 $result_row = array(
 	$container(
 		array(
-			'content_width'          => 'full',
-			'flex_direction'         => 'row',
-			'flex_direction_mobile'  => 'column',
-			'flex_justify_content'   => 'space-between',
-			'flex_align_items'       => 'center',
+			'content_width'           => 'full',
+			'flex_direction'          => 'row',
+			'flex_direction_mobile'   => 'column',
+			'flex_justify_content'    => 'space-between',
+			'flex_align_items'        => 'center',
 			'flex_align_items_mobile' => 'flex-start',
-			'flex_gap'               => array(
+			'flex_gap'                => array(
 				'unit'   => 'px',
 				'size'   => 16,
 				'column' => '16',
 				'row'    => '16',
 			),
-			'css_classes'            => 'ph-card ph-card--job',
+			'css_classes'             => 'ph-card ph-card--job',
 		),
 		array(
 			$container(
@@ -202,11 +202,11 @@ $result_row = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => '',
-							'header_size' => 'h3',
-							'title_color' => '#1B4068',
+							'title'        => '',
+							'header_size'  => 'h3',
+							'title_color'  => '#1B4068',
 							'_css_classes' => 'ph-h3',
-							'__dynamic__' => array(
+							'__dynamic__'  => array(
 								'title' => $tag( 'post-title' ),
 								'link'  => $tag( 'post-url' ),
 							),
@@ -218,21 +218,21 @@ $result_row = array(
 			),
 			$container(
 				array(
-					'content_width'    => 'full',
-					'flex_direction'   => 'column',
-					'flex_align_items' => 'flex-end',
+					'content_width'           => 'full',
+					'flex_direction'          => 'column',
+					'flex_align_items'        => 'flex-end',
 					'flex_align_items_mobile' => 'flex-start',
-					'flex_gap'         => array(
+					'flex_gap'                => array(
 						'unit'   => 'px',
 						'size'   => 8,
 						'column' => '8',
 						'row'    => '8',
 					),
-					'width'            => array(
+					'width'                   => array(
 						'unit' => '%',
 						'size' => 30,
 					),
-					'width_mobile'     => array(
+					'width_mobile'            => array(
 						'unit' => '%',
 						'size' => 100,
 					),
@@ -241,20 +241,20 @@ $result_row = array(
 					$widget(
 						'heading',
 						array(
-							'title'       => '',
-							'header_size' => 'p',
+							'title'        => '',
+							'header_size'  => 'p',
 							'_css_classes' => 'ph-job-salary',
-							'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
+							'__dynamic__'  => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
 						)
 					),
 					$widget(
 						'heading',
 						array(
-							'title'       => 'View job',
-							'header_size' => 'p',
-							'title_color' => '#8A5E12',
+							'title'        => 'View job',
+							'header_size'  => 'p',
+							'title_color'  => '#8A5E12',
 							'_css_classes' => 'ph-link ph-link--arrow',
-							'__dynamic__' => array( 'link' => $tag( 'post-url' ) ),
+							'__dynamic__'  => array( 'link' => $tag( 'post-url' ) ),
 						)
 					),
 				),
@@ -280,47 +280,16 @@ $archive_data = array(
 	$container(
 		array(
 			'content_width' => 'full',
-			'css_classes'   => 'ph-section--navy ph-hero--slim ph-pagehead',
-		),
-		array(
-			$container(
-				array(
-					'content_width'  => 'boxed',
-					'boxed_width'    => array(
-						'unit' => 'px',
-						'size' => 1152,
-					),
-					'flex_direction' => 'column',
-					'flex_gap'       => array(
-						'unit'   => 'px',
-						'size'   => 8,
-						'column' => '8',
-						'row'    => '8',
-					),
-				),
-				array(
-					$widget(
-						'heading',
-						array(
-							'title'       => 'Find your next role',
-							'header_size' => 'h1',
-							'title_color' => '#FFFFFF',
-							'_css_classes' => 'ph-h1',
-						)
-					),
-					$widget(
-						'heading',
-						array(
-							'title'       => 'Live roles across Construction, Manufacturing and Digital/Marketing in the West Midlands and beyond.',
-							'header_size' => 'p',
-							'title_color' => '#A7B4C8',
-							'_css_classes' => 'ph-body-lg',
-						)
-					),
-				),
-				true
+			'padding'       => array(
+				'unit'     => 'px',
+				'top'      => '0',
+				'right'    => '0',
+				'bottom'   => '0',
+				'left'     => '0',
+				'isLinked' => true,
 			),
-		)
+		),
+		array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_jobs_head]' ) ) )
 	),
 	$container(
 		array(
@@ -382,172 +351,16 @@ $single_data = array(
 	$container(
 		array(
 			'content_width' => 'full',
-			'css_classes'   => 'ph-section--navy ph-hero--job ph-pagehead',
-		),
-		array(
-			$container(
-				array(
-					'content_width'  => 'boxed',
-					'boxed_width'    => array(
-						'unit' => 'px',
-						'size' => 1152,
-					),
-					'flex_direction' => 'column',
-					'flex_gap'       => array(
-						'unit'   => 'px',
-						'size'   => 10,
-						'column' => '10',
-						'row'    => '10',
-					),
-				),
-				array(
-					$widget(
-						'heading',
-						array(
-							'title'       => '',
-							'header_size' => 'p',
-							'title_color' => '#FECF87',
-							'_css_classes' => 'ph-eyebrow',
-							'__dynamic__' => array( 'title' => $tag( 'post-terms', array( 'taxonomy' => 'poolhall_sector' ) ) ),
-						)
-					),
-					$widget(
-						'heading',
-						array(
-							'title'       => '',
-							'header_size' => 'h1',
-							'title_color' => '#FFFFFF',
-							'_css_classes' => 'ph-h1',
-							'__dynamic__' => array( 'title' => $tag( 'post-title' ) ),
-						)
-					),
-					$widget(
-						'heading',
-						array(
-							'title'       => '',
-							'header_size' => 'p',
-							'title_color' => '#A7B4C8',
-							'_css_classes' => 'ph-small',
-							'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'location_display' ) ) ),
-						)
-					),
-				),
-				true
+			'padding'       => array(
+				'unit'     => 'px',
+				'top'      => '0',
+				'right'    => '0',
+				'bottom'   => '0',
+				'left'     => '0',
+				'isLinked' => true,
 			),
-		)
-	),
-	$container(
-		array(
-			'content_width'         => 'full',
-			'background_background' => 'classic',
-			'background_color'      => '#F7F8FA',
-			'css_classes'           => 'ph-section',
 		),
-		array(
-			$container(
-				array(
-					'content_width'        => 'boxed',
-					'boxed_width'          => array(
-						'unit' => 'px',
-						'size' => 1152,
-					),
-					'flex_direction'        => 'row',
-					'flex_direction_mobile' => 'column',
-					'flex_align_items'      => 'flex-start',
-					'flex_gap'              => array(
-						'unit'   => 'px',
-						'size'   => 40,
-						'column' => '40',
-						'row'    => '40',
-					),
-				),
-				array(
-					$container(
-						array(
-							'content_width' => 'full',
-							'flex_grow'     => 1,
-							'width'         => array(
-								'unit' => '%',
-								'size' => 64,
-							),
-							'width_mobile'  => array(
-								'unit' => '%',
-								'size' => 100,
-							),
-						),
-						array(
-							$widget( 'theme-post-content', array() ),
-						),
-						true
-					),
-					$container(
-						array(
-							'content_width'  => 'full',
-							'flex_direction' => 'column',
-							'flex_gap'       => array(
-								'unit'   => 'px',
-								'size'   => 10,
-								'column' => '10',
-								'row'    => '10',
-							),
-							'width'          => array(
-								'unit' => '%',
-								'size' => 32,
-							),
-							'width_mobile'   => array(
-								'unit' => '%',
-								'size' => 100,
-							),
-							'css_classes'    => 'ph-card ph-sticky-card',
-						),
-						array(
-							$widget(
-								'heading',
-								array(
-									'title'       => '',
-									'header_size' => 'p',
-									'_css_classes' => 'ph-job-salary',
-									'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'salary_display' ) ) ),
-								)
-							),
-							$widget(
-								'heading',
-								array(
-									'title'       => '',
-									'header_size' => 'p',
-									'title_color' => '#4A555F',
-									'_css_classes' => 'ph-data',
-									'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'job_reference' ) ) ),
-								)
-							),
-							$widget(
-								'heading',
-								array(
-									'title'       => '',
-									'header_size' => 'p',
-									'title_color' => '#4A555F',
-									'_css_classes' => 'ph-small',
-									'__dynamic__' => array( 'title' => $tag( 'post-custom-field', array( 'custom_key' => 'location_display' ) ) ),
-								)
-							),
-							$widget( 'divider', array( 'color' => '#E6E9ED' ) ),
-							// Apply CTA. The shortcode renders the popup trigger when
-							// the apply channel is on, and the safe contact-page CTA
-							// (also the no-JS fallback) when it is off. Styling lives
-							// in the .ph-button classes, not Elementor widget settings.
-							$widget(
-								'shortcode',
-								array(
-									'shortcode' => '[poolhall_apply_button]',
-								)
-							),
-						),
-						true
-					),
-				),
-				true
-			),
-		)
+		array( $widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_job_single]' ) ) )
 	),
 );
 

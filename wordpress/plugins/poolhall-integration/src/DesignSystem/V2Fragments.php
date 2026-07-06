@@ -39,6 +39,9 @@ final class V2Fragments {
 		'poolhall_v2_register_page' => 'register_page',
 		'poolhall_v2_blog_index'    => 'blog_index',
 		'poolhall_v2_contact'       => 'contact_page',
+		'poolhall_v2_job_single'    => 'job_single',
+		'poolhall_v2_jobs_head'     => 'jobs_head',
+		'poolhall_v2_legal_head'    => 'legal_head',
 		'poolhall_v2_cta_bands'     => 'cta_bands',
 	);
 
@@ -1138,6 +1141,166 @@ final class V2Fragments {
 			. '<div class="cform">' . do_shortcode( '[poolhall_enquiry_form]' ) . '</div>'
 			. '</div></div></section>'
 			. '</div>';
+	}
+
+
+	// -------------------------------------------------------- job single --
+
+	/**
+	 * Single-job template (prototype screen-jobsingle.jsx, §9.4): photo
+	 * pagehead with breadcrumb + sector tag + mono meta row, job body
+	 * beside the sticky apply aside (salary, meta rows, apply, save,
+	 * "or call"), similar roles, and the mobile apply bar.
+	 */
+	public function job_single(): string {
+		$post = get_post();
+		if ( ! $post instanceof \WP_Post || JobPostType::POST_TYPE !== $post->post_type ) {
+			return '';
+		}
+
+		$sectors  = wp_get_object_terms( $post->ID, JobPostType::TAX_SECTOR, array( 'fields' => 'names' ) );
+		$sector   = is_array( $sectors ) && array() !== $sectors ? (string) $sectors[0] : '';
+		$key      = $this->sector_key( $sector );
+		$photo    = $this->sector_photo( $key );
+		$featured = '' !== (string) get_post_meta( $post->ID, 'is_featured', true );
+		$location = (string) get_post_meta( $post->ID, 'location_display', true );
+		$mode     = (string) get_post_meta( $post->ID, 'work_mode_raw', true );
+		$salary   = (string) get_post_meta( $post->ID, 'salary_display', true );
+		$types    = wp_get_object_terms( $post->ID, JobPostType::TAX_JOB_TYPE, array( 'fields' => 'names' ) );
+		$type     = is_array( $types ) && array() !== $types ? (string) $types[0] : '';
+		$ref      = (string) get_post_meta( $post->ID, 'source_job_id', true );
+		$posted   = (string) get_the_date( 'j M Y', $post );
+
+		$meta_row = '<div class="jmeta">';
+		if ( '' !== $location ) {
+			$meta_row .= '<span>' . $this->icon( 'map-pin' ) . esc_html( $location ) . '</span>';
+		}
+		if ( '' !== $mode ) {
+			$meta_row .= '<span>' . $this->icon( 'building' ) . esc_html( $mode ) . '</span>';
+		}
+		if ( '' !== $salary ) {
+			$meta_row .= '<span>' . $this->icon( 'banknote' ) . esc_html( $salary ) . '</span>';
+		}
+		$meta_row .= '<span>' . $this->icon( 'clock' ) . 'Posted ' . esc_html( $posted ) . '</span></div>';
+
+		$crumb = '<div class="crumb">'
+			. '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' )
+			. '<a href="' . esc_url( $this->url( 'jobs' ) ) . '">Jobs</a>' . $this->icon( 'chevron-right' )
+			. '<span>' . esc_html( '' !== $sector ? $sector : get_the_title( $post ) ) . '</span></div>';
+
+		$head = '<div class="pagehead photo">'
+			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" />' : '' )
+			. '<div class="container">' . $crumb
+			. '<div class="jtags">'
+			. ( '' !== $sector ? '<span class="jc-tag ' . esc_attr( $key ) . '">' . esc_html( $sector ) . '</span>' : '' )
+			. ( $featured ? '<span class="jfeat">' . $this->icon( 'star' ) . ' Featured</span>' : '' )
+			. '</div>'
+			. '<h1 style="max-width:20ch">' . esc_html( get_the_title( $post ) ) . '</h1>'
+			. $meta_row
+			. '</div></div>';
+
+		// Salary line splits into the big figure and the mono qualifier.
+		$sal_main = $salary;
+		$sal_per  = '' !== $type ? strtoupper( $type ) : '';
+		if ( str_contains( $salary, ' / ' ) ) {
+			[ $sal_main, $per ] = explode( ' / ', $salary, 2 );
+			$sal_per            = strtoupper( 'per ' . $per . ( '' !== $type ? ' · ' . $type : '' ) );
+		}
+
+		$rows = '';
+		foreach ( array(
+			array( 'Sector', $sector ),
+			array( 'Location', $location ),
+			array( 'Work mode', $mode ),
+			array( 'Type', $type ),
+			array( 'Reference', '' !== $ref ? '#' . $ref : '' ),
+		) as [ $label, $value ] ) {
+			if ( '' === $value ) {
+				continue;
+			}
+			$rows .= '<div class="r"><span>' . esc_html( $label ) . '</span><span>' . esc_html( $value ) . '</span></div>';
+		}
+
+		$aside = '<aside class="apply-aside">'
+			. ( '' !== $sal_main ? '<div class="sal">' . esc_html( $sal_main ) . '</div>' : '' )
+			. ( '' !== $sal_per ? '<div class="per">' . esc_html( $sal_per ) . '</div>' : '' )
+			. '<div class="aside-meta">' . $rows . '</div>'
+			. do_shortcode( '[poolhall_apply_button]' )
+			. '<button type="button" class="btn btn-ghost btn-block save-job" data-ph-save data-job-id="' . esc_attr( (string) $post->ID ) . '">Save job</button>'
+			. '<div class="orcall">or call 0121 516 3000</div>'
+			. '</aside>';
+
+		$body = '<div class="job-body">' . wpautop( wp_kses_post( $post->post_content ) ) . '</div>';
+
+		$similar     = '';
+		$similar_ids = array_values( array_diff( $this->sector_job_ids( $key ), array( $post->ID ) ) );
+		$similar_ids = array_slice( $similar_ids, 0, 2 );
+		if ( array() !== $similar_ids && '' !== $sector ) {
+			$cards = '';
+			foreach ( $similar_ids as $sid ) {
+				$cards .= $this->job_card( $sid );
+			}
+			$similar = '<section style="padding:0 0 96px">'
+				. '<div class="section-head"><div>'
+				. '<p class="label"><span class="idx">//</span> Similar roles</p>'
+				. '<h2 class="h2">More in ' . esc_html( $sector ) . '</h2>'
+				. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'jobs' ) ) . '">All jobs ' . $this->icon( 'arrow-right' ) . '</a></div>'
+				. '<div class="secjobs">' . $cards . '</div>'
+				. '</section>';
+		}
+
+		$mobile = '<div class="mobile-apply"><div class="ms">'
+			. ( '' !== $sal_main ? '<div class="v">' . esc_html( $sal_main ) . '</div>' : '' )
+			. '<div class="l">' . esc_html( trim( $type . ( '' !== $type && '' !== $location ? ' · ' : '' ) . $location ) ) . '</div>'
+			. '</div>' . do_shortcode( '[poolhall_apply_button]' ) . '</div>';
+
+		return '<div class="ph-v2page">' . $head
+			. '<div class="container"><div class="job-layout">' . $body . $aside . '</div>' . $similar . '</div>'
+			. $mobile
+			. '</div>';
+	}
+
+	// --------------------------------------------------- jobs archive head --
+
+	/** Jobs archive pagehead (prototype Jobs screen: photo header). */
+	public function jobs_head(): string {
+		return '<div class="ph-v2page">'
+			. $this->pagehead(
+				'Jobs',
+				'Find your next role',
+				'Live roles across Construction, Manufacturing and Digital/Marketing in the West Midlands and beyond.',
+				'sector-construction.webp'
+			)
+			. '</div>';
+	}
+
+	// --------------------------------------------------------- legal head --
+
+	/**
+	 * Legal pagehead (prototype Legal template): plain navy, breadcrumb,
+	 * title, lead and the mono updated line.
+	 *
+	 * @param array<string,string>|string $atts Shortcode atts: title, lead, updated.
+	 */
+	public function legal_head( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'title'   => 'Legal',
+				'lead'    => '',
+				'updated' => '',
+			),
+			is_array( $atts ) ? $atts : array()
+		);
+		return '<div class="ph-v2page">'
+			. '<div class="pagehead"><div class="container">'
+			. '<div class="crumb">'
+			. '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' )
+			. '<span>Legal</span>' . $this->icon( 'chevron-right' )
+			. '<span>' . esc_html( (string) $atts['title'] ) . '</span></div>'
+			. '<h1>' . esc_html( (string) $atts['title'] ) . '</h1>'
+			. ( '' !== $atts['lead'] ? '<p class="lead">' . esc_html( (string) $atts['lead'] ) . '</p>' : '' )
+			. ( '' !== $atts['updated'] ? '<p class="jupdated">' . esc_html( (string) $atts['updated'] ) . '</p>' : '' )
+			. '</div></div></div>';
 	}
 
 	// ---------------------------------------------------------- CTA bands --

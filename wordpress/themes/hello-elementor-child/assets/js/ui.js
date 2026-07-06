@@ -366,3 +366,29 @@
 		} );
 	}
 }() );
+
+/**
+ * Save job (single-job aside): client-side bookmark persisted in
+ * localStorage, per prototype §9.4 (v1 scope — no account required).
+ */
+( function () {
+	var btn = document.querySelector( '[data-ph-save]' );
+	if ( ! btn ) { return; }
+	var KEY = 'ph-saved-jobs';
+	var id = btn.getAttribute( 'data-job-id' );
+	var read = function () {
+		try { return JSON.parse( window.localStorage.getItem( KEY ) || '[]' ); } catch ( e ) { return []; }
+	};
+	var paint = function ( saved ) {
+		btn.classList.toggle( 'is-saved', saved );
+		btn.textContent = saved ? 'Saved' : 'Save job';
+	};
+	paint( read().indexOf( id ) !== -1 );
+	btn.addEventListener( 'click', function () {
+		var list = read();
+		var at = list.indexOf( id );
+		if ( at === -1 ) { list.push( id ); } else { list.splice( at, 1 ); }
+		try { window.localStorage.setItem( KEY, JSON.stringify( list ) ); } catch ( e ) { /* private mode */ }
+		paint( at === -1 );
+	} );
+}() );
