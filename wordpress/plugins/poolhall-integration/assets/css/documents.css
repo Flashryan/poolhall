@@ -54,3 +54,20 @@
 .poolhall-document-form button.gform_next_button:hover, .poolhall-document-form button.gform_button:hover { background: #E0A33F; }
 .poolhall-document-form button.gform_previous_button { background: transparent; color: var(--ph-navy); border: 1.5px solid var(--ph-border); border-radius: 3px; padding: 15px 26px; font-weight: 700; cursor: pointer; margin-right: 10px; }
 .poolhall-document-form .gform_save_link { color: var(--ph-navy); font-weight: 600; }
+
+/* GF theme-framework buttons (input or button, incl. the indigo defaults). */
+.poolhall-document-form { --gform-theme-color-primary: #FDBB5D; --gform-theme-color-primary-rgb: 253, 187, 93; --gform-theme-color-primary-contrast: #0B2846; --gform-theme-color-primary-darker: #E0A33F; --gform-theme-color-primary-lighter: #FECF87; }
+.poolhall-document-form input.gform-theme-button, .poolhall-document-form button.gform-theme-button,
+.gform_wrapper .poolhall-document-form .gform-theme-button {
+  background: var(--ph-gold) !important; color: var(--ph-navy) !important; border: 0 !important; box-shadow: none !important;
+  font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 700 !important; font-size: 15.5px !important;
+  border-radius: 3px !important; padding: 15px 26px !important; text-transform: none !important; }
+.poolhall-document-form input.gform-theme-button:hover, .poolhall-document-form button.gform-theme-button:hover { background: #E0A33F !important; }
+.poolhall-document-form input.gform_previous_button, .poolhall-document-form button.gform_previous_button {
+  background: transparent !important; color: var(--ph-navy) !important; border: 1.5px solid var(--ph-border) !important; margin-right: 10px; }
+.poolhall-document-form input.gform_previous_button:hover, .poolhall-document-form button.gform_previous_button:hover { border-color: var(--ph-navy) !important; }
+.poolhall-document-form .gform_save_link, .poolhall-document-form a.gform-theme-button--secondary {
+  background: transparent !important; color: var(--ph-navy) !important; border: 1.5px solid var(--ph-border) !important;
+  border-radius: 3px; padding: 13px 22px; font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: 14px; text-decoration: none; }
+.poolhall-document-form .gform_save_link { color: var(--ph-navy) !important; border-color: var(--ph-border) !important; }
+.poolhall-document-form .gform_save_link:hover { border-color: var(--ph-navy) !important; }
