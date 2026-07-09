@@ -1279,3 +1279,16 @@ header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
   .ph-v2page .mobile-apply .ms .l{font-family:var(--font-mono);font-size:11px;color:var(--mist-400)}
   .ph-v2page .mobile-apply .ph-button{width:auto;flex:none}
 }
+
+/* register form: CV attached state */
+.ph-v2page .ph-v2reg .upload.has-file{border-style:solid;border-color:#2E7D32;background:#F3FBF4}
+.ph-v2page .ph-v2reg .upload.has-file>svg,.ph-v2page .ph-v2reg .upload.has-file .ut,.ph-v2page .ph-v2reg .upload.has-file .us{display:none}
+.ph-v2page .ph-v2reg .upload-done{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ph-v2page .ph-v2reg .upload-done svg{width:44px;height:44px}
+.ph-v2page .ph-v2reg .upload-done .tick-ring{stroke:#2E7D32;stroke-width:3;stroke-dasharray:151;stroke-dashoffset:151;animation:ph-tick-ring .5s ease-out forwards}
+.ph-v2page .ph-v2reg .upload-done .tick-mark{stroke:#2E7D32;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36;animation:ph-tick-mark .35s .35s ease-out forwards}
+.ph-v2page .ph-v2reg .upload-done .upload-name{font-family:var(--font-display);font-weight:700;font-size:14.5px;color:#1B5E20;word-break:break-all}
+.ph-v2page .ph-v2reg .upload-done .upload-size{font-family:var(--font-mono);font-size:12px;color:#2E7D32}
+@keyframes ph-tick-ring{to{stroke-dashoffset:0}}
+@keyframes ph-tick-mark{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.ph-v2page .ph-v2reg .upload-done .tick-ring,.ph-v2page .ph-v2reg .upload-done .tick-mark{animation:none;stroke-dashoffset:0}}

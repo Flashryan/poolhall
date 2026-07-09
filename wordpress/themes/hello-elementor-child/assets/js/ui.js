@@ -392,3 +392,31 @@
 		paint( at === -1 );
 	} );
 }() );
+
+/**
+ * Register-form CV upload feedback: when a file is chosen the dashed box
+ * flips to a "attached" state with an animated tick and the filename.
+ */
+( function () {
+	var input = document.querySelector( '.ph-v2reg .upload input[type=file]' );
+	if ( ! input ) { return; }
+	var box = input.closest( '.upload' );
+	input.addEventListener( 'change', function () {
+		var old = box.querySelector( '.upload-done' );
+		if ( old ) { old.remove(); }
+		if ( ! input.files || ! input.files.length ) {
+			box.classList.remove( 'has-file' );
+			return;
+		}
+		var f = input.files[ 0 ];
+		var mb = ( f.size / 1048576 ).toFixed( 1 );
+		var done = document.createElement( 'span' );
+		done.className = 'upload-done';
+		done.innerHTML = '<svg viewBox="0 0 52 52" aria-hidden="true"><circle class="tick-ring" cx="26" cy="26" r="24" fill="none"/><path class="tick-mark" fill="none" d="M14 27l8 8 16-17"/></svg>'
+			+ '<span class="upload-name"></span><span class="upload-size"></span>';
+		done.querySelector( '.upload-name' ).textContent = f.name;
+		done.querySelector( '.upload-size' ).textContent = mb + ' MB attached - choose a different file?';
+		box.appendChild( done );
+		box.classList.add( 'has-file' );
+	} );
+}() );

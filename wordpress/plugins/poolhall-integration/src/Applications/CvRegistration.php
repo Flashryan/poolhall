@@ -315,6 +315,7 @@ final class CvRegistration {
 			salary_expectations: $request->salary_expectations,
 			linkedin: $request->linkedin,
 			notes: self::notes( $request->message, $cv_name ),
+			tags: 'Website,Pre-Registration',
 		);
 	}
 

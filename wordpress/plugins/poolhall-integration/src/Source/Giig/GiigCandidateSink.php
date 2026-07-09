@@ -69,14 +69,26 @@ final class GiigCandidateSink implements CandidateSink {
 			'Source'    => '' !== trim( $payload->source ) ? trim( $payload->source ) : 'Website',
 		);
 
+		// Giig expects SalaryExpectations as a plain number (2dp) plus a
+		// Currency enum; free text like "£45,000+" is silently dropped by
+		// the ATS. Parse the number out and keep the wording in Notes.
+		$notes      = $payload->notes;
+		$raw_salary = trim( $payload->salary_expectations );
+		$numeric    = self::numeric_salary( $raw_salary );
+		if ( '' !== $raw_salary ) {
+			$notes .= ( '' !== $notes ? "\n" : '' ) . 'Salary expectations (as entered): ' . $raw_salary;
+		}
+
 		$optional = array(
 			'EmailAddress'       => $payload->email,
 			'PhoneNumber'        => $payload->phone,
 			'RoleTitle'          => $payload->role_title,
 			'Location'           => $payload->location,
-			'SalaryExpectations' => $payload->salary_expectations,
+			'SalaryExpectations' => null !== $numeric ? number_format( $numeric, 2, '.', '' ) : '',
+			'Currency'           => null !== $numeric ? self::currency_enum( $raw_salary ) : '',
+			'Tags'               => $payload->tags,
 			'LinkedIn'           => $payload->linkedin,
-			'Notes'              => $payload->notes,
+			'Notes'              => $notes,
 		);
 		foreach ( $optional as $key => $value ) {
 			if ( '' !== trim( (string) $value ) ) {
@@ -89,6 +101,33 @@ final class GiigCandidateSink implements CandidateSink {
 		}
 
 		return $body;
+	}
+
+
+	/**
+	 * First number in a salary phrase, tolerating commas and a k suffix;
+	 * null when nothing confidently numeric is present.
+	 */
+	public static function numeric_salary( string $raw ): ?float {
+		if ( ! preg_match( '/(\d[\d,]*(?:\.\d+)?)\s*(k)?/i', $raw, $m ) || '' === $m[1] ) {
+			return null;
+		}
+		$value = (float) str_replace( ',', '', $m[1] );
+		if ( isset( $m[2] ) && '' !== $m[2] ) {
+			$value *= 1000;
+		}
+		return $value > 0 ? $value : null;
+	}
+
+	/** Giig Currency enum: 0=GBP, 1=USD, 2=EUR; default GBP for a UK agency. */
+	public static function currency_enum( string $raw ): string {
+		if ( str_contains( $raw, '$' ) ) {
+			return '1';
+		}
+		if ( str_contains( $raw, chr( 226 ) . chr( 130 ) . chr( 172 ) ) ) {
+			return '2';
+		}
+		return '0';
 	}
 
 	/**

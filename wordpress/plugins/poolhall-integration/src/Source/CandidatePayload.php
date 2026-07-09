@@ -29,6 +29,7 @@ final class CandidatePayload {
 		public readonly string $linkedin = '',
 		public readonly string $notes = '',
 		public readonly string $source = 'Website',
+		public readonly string $tags = '',
 	) {}
 
 	/** Giig requires a first and last name; without them there is nothing to create. */
