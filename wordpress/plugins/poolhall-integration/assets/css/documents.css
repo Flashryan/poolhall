@@ -1,0 +1,56 @@
+/* Candidate document forms (Gravity Forms) — styled to the v2 kit. */
+.poolhall-document-form { --ph-navy: #0B2846; --ph-gold: #FDBB5D; --ph-gold-ink: #8A5E12; --ph-border: #D4DAE0; --ph-mist: #5B6670; }
+.poolhall-document-form .gform_heading { margin-bottom: 18px; }
+.poolhall-document-form .gform_title { font-family: 'Archivo', system-ui, sans-serif; font-weight: 800; color: var(--ph-navy); font-size: 1.6rem; }
+.poolhall-document-form .gform_description { color: var(--ph-mist); font-size: 15.5px; }
+.poolhall-document-form .gfield_label, .poolhall-document-form legend.gfield_label { font-family: 'Archivo', system-ui, sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ph-navy); }
+.poolhall-document-form .gfield_required { color: var(--ph-gold-ink); }
+.poolhall-document-form input[type=text], .poolhall-document-form input[type=email], .poolhall-document-form input[type=tel],
+.poolhall-document-form input[type=number], .poolhall-document-form select, .poolhall-document-form textarea {
+  width: 100%; font-size: 15px; padding: 12px 14px; border: 1.5px solid var(--ph-border); border-radius: 3px; background: #fff; color: #11161B; }
+.poolhall-document-form input:focus, .poolhall-document-form select:focus, .poolhall-document-form textarea:focus { outline: none; border-color: #3E6E8E; }
+.poolhall-document-form .gfield_description { color: var(--ph-mist); font-size: 13px; }
+.poolhall-document-form .gchoice { padding: 6px 0; }
+.poolhall-document-form .gchoice input[type=checkbox], .poolhall-document-form .gchoice input[type=radio] { width: 20px; height: 20px; accent-color: var(--ph-navy); margin-right: 10px; }
+.poolhall-document-form .gchoice label { font-size: 15px; color: #11161B; }
+.poolhall-document-form .gform_footer input[type=submit], .poolhall-document-form .gform_page_footer .gform_next_button,
+.poolhall-document-form .gform_page_footer .gform_previous_button, .poolhall-document-form .gform_footer input.button {
+  font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: 15.5px; border: 0; cursor: pointer; border-radius: 3px; padding: 15px 26px; }
+.poolhall-document-form .gform_footer input[type=submit], .poolhall-document-form .gform_page_footer .gform_next_button {
+  background: var(--ph-gold); color: var(--ph-navy); }
+.poolhall-document-form .gform_footer input[type=submit]:hover, .poolhall-document-form .gform_page_footer .gform_next_button:hover { background: #E0A33F; }
+.poolhall-document-form .gform_page_footer .gform_previous_button { background: transparent; color: var(--ph-navy); border: 1.5px solid var(--ph-border); margin-right: 10px; }
+.poolhall-document-form .gf_progressbar { background: #EDF3F6; border-radius: 999px; overflow: hidden; }
+.poolhall-document-form .gf_progressbar_percentage { background: var(--ph-gold); color: var(--ph-navy); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.poolhall-document-form .gf_step { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; }
+.poolhall-document-form .gf_step_active .gf_step_number { background: var(--ph-navy); color: #fff; }
+.poolhall-document-form .gfield_error input, .poolhall-document-form .gfield_error textarea, .poolhall-document-form .gfield_error select { border-color: #B3261E; }
+.poolhall-document-form .validation_message, .poolhall-document-form .gfield_validation_message { color: #B3261E; font-size: 13px; background: none; border: 0; padding: 4px 0 0; }
+.poolhall-form-note { background: #EDF3F6; border: 1px solid #D7E3EA; border-radius: 4px; padding: 14px 16px; font-size: 14.5px; color: #2C566F; }
+.poolhall-form-note p { margin: 0 0 8px; } .poolhall-form-note p:last-child { margin: 0; }
+.poolhall-form-final { background: #FEF8EC; border-color: #FCEFD7; color: #6E4A0E; }
+.poolhall-terms-body { max-height: 320px; overflow-y: auto; background: #fff; }
+.ph-under18 { color: #8A5E12; background: #FEF8EC; border-radius: 3px; padding: 8px 10px; font-size: 13.5px; margin-top: 8px; }
+
+/* Signature pad */
+.poolhall-signature-field .ph-sig-pad-wrap { border: 1.5px dashed var(--ph-border); border-radius: 4px; background: #fff; }
+.poolhall-signature-field .ph-sig-pad { width: 100%; height: 160px; display: block; touch-action: none; }
+.poolhall-signature-field .ph-sig-actions { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.poolhall-signature-field .ph-sig-clear { background: none; border: 1.5px solid var(--ph-border); border-radius: 3px; padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--ph-navy); font-weight: 600; }
+.poolhall-signature-field .ph-sig-clear:hover { border-color: var(--ph-navy); }
+.poolhall-signature-field .ph-sig-hint { font-size: 12.5px; color: var(--ph-mist); }
+.poolhall-signature-field .ph-sig-typed { margin-top: 14px; font-size: 13.5px; color: var(--ph-mist); }
+.poolhall-signature-field .ph-sig-typed-label { font-weight: 600; color: var(--ph-navy); }
+.poolhall-signature-field .ph-sig-typed-input { margin-top: 6px; }
+
+@media (max-width: 640px) {
+  .poolhall-document-form .gform_page_footer { display: flex; flex-direction: column; gap: 10px; }
+  .poolhall-document-form .gform_page_footer .gform_previous_button { margin-right: 0; }
+}
+
+/* GF 2.9+ renders buttons as <button>; cover both markups. */
+.poolhall-document-form button.gform_next_button, .poolhall-document-form button.gform_button,
+.poolhall-document-form input.gform_button { font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: 15.5px; border: 0; cursor: pointer; border-radius: 3px; padding: 15px 26px; background: var(--ph-gold); color: var(--ph-navy); }
+.poolhall-document-form button.gform_next_button:hover, .poolhall-document-form button.gform_button:hover { background: #E0A33F; }
+.poolhall-document-form button.gform_previous_button { background: transparent; color: var(--ph-navy); border: 1.5px solid var(--ph-border); border-radius: 3px; padding: 15px 26px; font-weight: 700; cursor: pointer; margin-right: 10px; }
+.poolhall-document-form .gform_save_link { color: var(--ph-navy); font-weight: 600; }

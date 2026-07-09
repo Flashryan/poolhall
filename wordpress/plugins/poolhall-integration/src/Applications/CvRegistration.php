@@ -406,7 +406,57 @@ final class CvRegistration {
 		$headers     = array( 'Reply-To: ' . $request->full_name() . ' <' . $request->email . '>' );
 		$attachments = ( '' !== $cv_path && file_exists( $cv_path ) ) ? array( $cv_path ) : array();
 
-		return (bool) wp_mail( $inbox, 'New CV registration: ' . $request->full_name(), implode( "\n", $lines ), $headers, $attachments );
+		// Branded pre-registration PDF for the team (never sent to the candidate).
+		$pdf_path = $this->registration_pdf( $request, $cv_name, $record_id );
+		if ( '' !== $pdf_path ) {
+			$attachments[] = $pdf_path;
+		}
+
+		$sent = (bool) wp_mail( $inbox, 'New CV registration: ' . $request->full_name(), implode( "\n", $lines ), $headers, $attachments );
+
+		if ( '' !== $pdf_path ) {
+			wp_delete_file( $pdf_path );
+		}
+
+		// Simple candidate receipt — no submitted data included.
+		wp_mail(
+			$request->email,
+			'Poolhall Recruitment - registration received',
+			'Thank you. Your registration has been submitted to Poolhall Recruitment. A member of the team will contact you if anything else is required.' . "\n\n"
+			. 'Poolhall Recruitment Limited' . "\n" . '0121 516 3000 - jobs@poolhallrecruitment.co.uk'
+		);
+
+		return $sent;
+	}
+
+	/** Renders the pre-registration as a branded PDF; '' when the builder fails. */
+	private function registration_pdf( RegistrationRequest $request, string $cv_name, int $record_id ): string {
+		try {
+			$pdf = new \Poolhall\Integration\Documents\PdfBuilder( 'Candidate Pre-Registration' );
+			$pdf->section( 'Candidate details' );
+			$pdf->row( 'Name', $request->full_name() );
+			$pdf->row( 'Email', $request->email );
+			$pdf->row( 'Phone', $request->phone );
+			$pdf->row( 'Location', $request->location );
+			$pdf->row( 'Looking for', $request->role_title );
+			$pdf->row( 'Salary expectations', $request->salary_expectations );
+			$pdf->row( 'LinkedIn', $request->linkedin );
+			$pdf->row( 'Message', $request->message );
+			$pdf->row( 'CV file', $cv_name );
+			$pdf->row( 'Consent to store and process', 'Yes' );
+			$pdf->audit(
+				array(
+					'Record ID'            => (string) $record_id,
+					'Submission timestamp' => gmdate( 'Y-m-d H:i' ) . ' UTC',
+					'IP address'           => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+					'Browser / user agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+				)
+			);
+			return $pdf->save( 'Poolhall-Pre-Registration-' . $request->last_name . '-' . $request->first_name . '-' . $record_id . '.pdf' );
+		} catch ( \Throwable $t ) {
+			$this->logger->log( 'registration_pdf_failed', array( 'record' => (string) $record_id ) );
+			return '';
+		}
 	}
 
 	private function within_rate_limit(): bool {

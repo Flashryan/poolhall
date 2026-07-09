@@ -314,6 +314,7 @@ final class V2Fragments {
 				array(
 					array( 'Find a job', $this->url( 'jobs' ) ),
 					array( 'Register', $this->url( 'register' ) ),
+					array( 'Full registration', $this->url( 'candidate-registration' ) ),
 					array( 'CV tips', $this->url( 'cv-tips' ) ),
 					array( 'Interview tips', $this->url( 'interview-tips' ) ),
 				)
@@ -1288,6 +1289,7 @@ final class V2Fragments {
 				'title'   => 'Legal',
 				'lead'    => '',
 				'updated' => '',
+				'crumb'   => 'Legal',
 			),
 			is_array( $atts ) ? $atts : array()
 		);
@@ -1295,7 +1297,7 @@ final class V2Fragments {
 			. '<div class="pagehead"><div class="container">'
 			. '<div class="crumb">'
 			. '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' )
-			. '<span>Legal</span>' . $this->icon( 'chevron-right' )
+			. '<span>' . esc_html( (string) $atts['crumb'] ) . '</span>' . $this->icon( 'chevron-right' )
 			. '<span>' . esc_html( (string) $atts['title'] ) . '</span></div>'
 			. '<h1>' . esc_html( (string) $atts['title'] ) . '</h1>'
 			. ( '' !== $atts['lead'] ? '<p class="lead">' . esc_html( (string) $atts['lead'] ) . '</p>' : '' )

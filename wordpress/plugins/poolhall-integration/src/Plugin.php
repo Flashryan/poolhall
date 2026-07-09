@@ -142,6 +142,7 @@ final class Plugin {
 		( new \Poolhall\Integration\Reviews\ReviewsCarousel( $this->reviews_service() ) )->register();
 		( new \Poolhall\Integration\Jobs\JobRedirects() )->register();
 		$this->cv_registration()->register();
+		$this->document_workflow()->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
@@ -219,6 +220,11 @@ final class Plugin {
 	/** Register-your-CV flow with the Giig candidate sink attached. */
 	public function cv_registration(): \Poolhall\Integration\Applications\CvRegistration {
 		return new \Poolhall\Integration\Applications\CvRegistration( $this->candidate_sink(), new Logger() );
+	}
+
+	/** Gravity Forms candidate document workflow (signatures, PDFs, notifications). */
+	public function document_workflow(): \Poolhall\Integration\Documents\DocumentWorkflow {
+		return new \Poolhall\Integration\Documents\DocumentWorkflow( new Logger() );
 	}
 
 	public function run_scheduled_sync(): void {

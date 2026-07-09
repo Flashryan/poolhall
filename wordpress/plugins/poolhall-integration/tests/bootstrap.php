@@ -54,3 +54,9 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 		return is_string( $clean ) ? $clean : '';
 	}
 }
+
+if ( ! function_exists( 'esc_html' ) ) {
+	function esc_html( string $text ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
+		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
