@@ -318,7 +318,6 @@ final class V2Fragments {
 				array(
 					array( 'Find a job', $this->url( 'jobs' ) ),
 					array( 'Register', $this->url( 'register' ) ),
-					array( 'Full registration', $this->url( 'candidate-registration' ) ),
 					array( 'CV tips', $this->url( 'cv-tips' ) ),
 					array( 'Interview tips', $this->url( 'interview-tips' ) ),
 				)

@@ -143,6 +143,7 @@ final class Plugin {
 		( new \Poolhall\Integration\Jobs\JobRedirects() )->register();
 		$this->cv_registration()->register();
 		$this->document_workflow()->register();
+		( new \Poolhall\Integration\Onboarding\ReviewScreen( new \Poolhall\Integration\Onboarding\InviteManager() ) )->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
@@ -220,6 +221,11 @@ final class Plugin {
 	/** Register-your-CV flow with the Giig candidate sink attached. */
 	public function cv_registration(): \Poolhall\Integration\Applications\CvRegistration {
 		return new \Poolhall\Integration\Applications\CvRegistration( $this->candidate_sink(), new Logger() );
+	}
+
+	/** The configured candidate sink, exposed for the onboarding update path. */
+	public function candidate_sink_public(): \Poolhall\Integration\Source\CandidateSink {
+		return $this->candidate_sink();
 	}
 
 	/** Gravity Forms candidate document workflow (signatures, PDFs, notifications). */

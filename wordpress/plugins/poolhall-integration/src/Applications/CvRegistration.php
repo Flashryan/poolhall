@@ -194,6 +194,7 @@ final class CvRegistration {
 				'message'             => $request->message,
 				'cv_filename'         => $cv['name'],
 				'cv_status'           => 'pending',
+				'review_status'       => 'new',
 				'submitted_at'        => gmdate( \DateTimeInterface::ATOM ),
 			)
 		);
@@ -201,20 +202,52 @@ final class CvRegistration {
 		$this->push( $record_id, $request, $cv['name'] );
 
 		$sent = $this->notify( $request, $cv['path'], $cv['name'], $record_id );
+		// The CV is retained in the protected store either way so the
+		// recruiter review screen can offer a secure, admin-only download.
+		ApplicationRecord::update_meta( $record_id, 'cv_path', $cv['path'] );
 		if ( $sent ) {
-			ApplicationRecord::update_meta( $record_id, 'cv_status', 'emailed' );
-			$this->delete_file( $cv['path'] );
+			ApplicationRecord::update_meta( $record_id, 'cv_status', 'emailed_and_stored' );
 		} else {
 			ApplicationRecord::update_meta( $record_id, 'cv_status', 'stored_pending' );
-			ApplicationRecord::update_meta( $record_id, 'cv_path', $cv['path'] );
 			$this->logger->log( 'registration_mail_failed', array( 'record' => (string) $record_id ) );
 		}
 
 		$this->redirect( $back, $sent ? 'sent' : 'received', array() );
 	}
 
+	/** A previous registration with this email that already has a Giig id. */
+	private function existing_candidate_id( string $email, int $current ): string {
+		$prior = get_posts(
+			array(
+				'post_type'      => 'poolhall_application',
+				'post_status'    => 'any',
+				'posts_per_page' => 5,
+				'fields'         => 'ids',
+				'exclude'        => array( $current ),
+				'meta_key'       => 'applicant_email', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- exact-match reconciliation lookup.
+				'meta_value'     => $email, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			)
+		);
+		foreach ( $prior as $pid ) {
+			$existing = (string) get_post_meta( (int) $pid, 'giig_candidate_id', true );
+			if ( '' !== $existing ) {
+				return $existing;
+			}
+		}
+		return '';
+	}
+
 	/** Create the Giig candidate; queue for cron retry on failure. */
 	private function push( int $record_id, RegistrationRequest $request, string $cv_name ): void {
+		// Duplicate protection: Giig has no idempotency key, so reconcile by
+		// exact email against our own records before creating again.
+		$existing = $this->existing_candidate_id( $request->email, $record_id );
+		if ( '' !== $existing ) {
+			ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
+			ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $existing );
+			ApplicationRecord::update_meta( $record_id, 'giig_push_note', 'Reused existing candidate (same email) instead of creating a duplicate.' );
+			return;
+		}
 		if ( ! $this->sink->is_configured() ) {
 			ApplicationRecord::update_meta( $record_id, 'giig_push', 'unconfigured' );
 			return;

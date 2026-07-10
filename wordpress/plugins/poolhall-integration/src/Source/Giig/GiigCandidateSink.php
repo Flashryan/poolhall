@@ -57,6 +57,25 @@ final class GiigCandidateSink implements CandidateSink {
 	}
 
 	/**
+	 * POST /candidate/update — updates supported basics on an existing
+	 * candidate. Requires Giig sensitive-endpoint access; throws on error.
+	 *
+	 * @param array<string,string> $fields PascalCase Giig fields.
+	 */
+	public function update_candidate( string $candidate_id, array $fields ): void {
+		$body = array( 'CandidateId' => $candidate_id );
+		foreach ( $fields as $key => $value ) {
+			if ( '' !== trim( $value ) ) {
+				$body[ $key ] = trim( $value );
+			}
+		}
+		if ( null !== $this->company_id && '' !== $this->company_id ) {
+			$body['CompanyId'] = $this->company_id;
+		}
+		$this->client->post_json( '/public/api/v1/candidate/update', $body );
+	}
+
+	/**
 	 * Map our neutral payload onto Giig's candidate-create fields. Optional
 	 * fields are omitted when empty rather than sent blank.
 	 *

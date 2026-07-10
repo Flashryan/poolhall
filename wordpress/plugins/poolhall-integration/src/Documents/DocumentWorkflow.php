@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Poolhall\Integration\Documents;
 
+use Poolhall\Integration\Onboarding\InviteManager;
+use Poolhall\Integration\Source\Giig\GiigCandidateSink;
 use Poolhall\Integration\Support\Logger;
 
 /**
@@ -29,7 +31,10 @@ final class DocumentWorkflow {
 	public const HIDDEN_PAGES_OPTION = 'poolhall_hidden_doc_pages';
 	private const ADMIN_EMAIL        = 'jobs@poolhallrecruitment.co.uk';
 
-	public function __construct( private readonly Logger $logger ) {
+	public function __construct(
+		private readonly Logger $logger,
+		private readonly InviteManager $invites = new InviteManager(),
+	) {
 	}
 
 	public function register(): void {
@@ -39,6 +44,8 @@ final class DocumentWorkflow {
 		add_action( 'init', array( $this, 'register_field' ), 5 );
 		add_action( 'gform_after_submission', array( $this, 'handle_submission' ), 10, 2 );
 		add_action( 'gform_enqueue_scripts', array( $this, 'enqueue_assets' ), 10, 1 );
+		add_filter( 'gform_get_form_filter', array( $this, 'gate_form' ), 10, 2 );
+		add_filter( 'gform_pre_render', array( $this, 'prefill_form' ) );
 		add_filter( 'wp_robots', array( $this, 'noindex_hidden_pages' ) );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_hidden_from_sitemap' ), 10, 2 );
 		add_action( 'pre_get_posts', array( $this, 'exclude_hidden_from_search' ) );
@@ -112,6 +119,84 @@ final class DocumentWorkflow {
 		return array_map( 'intval', $map );
 	}
 
+
+	/** Which document kind a form id belongs to; '' when not ours. */
+	private function kind_for_form( int $form_id ): string {
+		$map  = array_map( 'intval', (array) get_option( self::FORM_MAP_OPTION, array() ) );
+		$kind = array_search( $form_id, $map, true );
+		return false === $kind ? '' : (string) $kind;
+	}
+
+	private function current_token(): string {
+		return isset( $_GET[ InviteManager::QUERY_ARG ] ) ? sanitize_text_field( wp_unslash( $_GET[ InviteManager::QUERY_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the token itself is the credential.
+	}
+
+	/**
+	 * Document forms only render for a valid, unexpired, unused invite —
+	 * an unlinked URL is not access control.
+	 *
+	 * @param string $form_string Rendered form HTML.
+	 * @param array  $form        Form meta.
+	 */
+	public function gate_form( $form_string, $form ) {
+		$kind = is_array( $form ) ? $this->kind_for_form( (int) $form['id'] ) : '';
+		if ( '' === $kind ) {
+			return $form_string;
+		}
+		if ( 0 === $this->invites->validate( $this->current_token(), $kind ) ) {
+			return '<div class="poolhall-form-note poolhall-form-final"><p><strong>This form needs a personal invitation link.</strong> '
+				. 'Links are sent by the Poolhall team, are unique to you, and expire after 14 days. '
+				. 'If yours has expired or already been used, call us on 0121 516 3000 or email jobs@poolhallrecruitment.co.uk and we&rsquo;ll send a fresh one.</p></div>';
+		}
+		return $form_string;
+	}
+
+	/**
+	 * Prefills the safe basics (never bank/NI/health) from the invited
+	 * candidate's pre-registration record, shown for correction.
+	 *
+	 * @param array $form Form meta.
+	 * @return array
+	 */
+	public function prefill_form( $form ) {
+		$kind = is_array( $form ) ? $this->kind_for_form( (int) $form['id'] ) : '';
+		if ( '' === $kind ) {
+			return $form;
+		}
+		$record = $this->invites->validate( $this->current_token(), $kind );
+		if ( 0 === $record ) {
+			return $form;
+		}
+		$data = $this->invites->prefill( $record );
+		$map  = 'full' === $kind
+			? array(
+				2  => 'first_name',
+				3  => 'last_name',
+				11 => 'email',
+				12 => 'phone',
+				91 => 'full_name',
+				92 => 'role_title',
+			)
+			: array(
+				1 => 'full_name',
+				2 => 'email',
+				3 => 'role_title',
+			);
+		$full = trim( $data['first_name'] . ' ' . $data['last_name'] );
+		foreach ( $form['fields'] as $field ) {
+			$key = $map[ (int) $field->id ] ?? '';
+			if ( '' === $key ) {
+				continue;
+			}
+			$value = 'full_name' === $key ? $full : (string) ( $data[ $key ] ?? '' );
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Gravity Forms' own property name.
+			if ( '' !== $value && '' === (string) $field->defaultValue ) {
+				$field->defaultValue = $value; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Gravity Forms' own property name.
+			}
+		}
+		return $form;
+	}
+
 	// -------------------------------------------------------- submission --
 
 	/**
@@ -125,12 +210,52 @@ final class DocumentWorkflow {
 			return;
 		}
 
+		$record = $this->invites->validate( $this->current_token(), (string) $kind );
+		if ( $record > 0 ) {
+			$this->invites->mark_used( $record, (string) $kind );
+			if ( 'full' === $kind ) {
+				$this->update_giig_candidate( $record, $entry );
+			}
+		}
+
 		try {
 			$this->process( (string) $kind, $entry, $form );
 		} catch ( \Throwable $t ) {
 			// Entry is already stored by Gravity Forms — nothing is lost.
 			$this->note( $entry, 'Document pipeline error: ' . $t->getMessage() );
 			$this->logger->log( 'document_pipeline_error', array( 'entry' => (string) ( $entry['id'] ?? '' ) ) );
+		}
+	}
+
+
+	/**
+	 * Updates the pre-registration's existing Giig candidate (basics only)
+	 * instead of creating a duplicate. Requires Giig's sensitive-endpoint
+	 * access for /candidate/update; failures are noted, never fatal.
+	 */
+	private function update_giig_candidate( int $record, array $entry ): void {
+		$candidate_id = (string) get_post_meta( $record, 'giig_candidate_id', true );
+		if ( '' === $candidate_id ) {
+			return;
+		}
+		try {
+			$sink = \Poolhall\Integration\Plugin::instance()->candidate_sink_public();
+			if ( ! $sink instanceof GiigCandidateSink ) {
+				return;
+			}
+			$sink->update_candidate(
+				$candidate_id,
+				array(
+					'FirstName'    => trim( (string) ( $entry['2'] ?? '' ) ),
+					'LastName'     => trim( (string) ( $entry['3'] ?? '' ) ),
+					'EmailAddress' => trim( (string) ( $entry['11'] ?? '' ) ),
+					'PhoneNumber'  => trim( (string) ( $entry['12'] ?? '' ) ),
+					'RoleTitle'    => trim( (string) ( $entry['92'] ?? '' ) ),
+				)
+			);
+			$this->note( $entry, 'Giig candidate #' . $candidate_id . ' updated from the full registration (no duplicate created).' );
+		} catch ( \Throwable $t ) {
+			$this->note( $entry, 'Giig candidate update skipped: ' . $t->getMessage() . ' (candidate remains #' . $candidate_id . ').' );
 		}
 	}
 
