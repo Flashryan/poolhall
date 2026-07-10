@@ -36,6 +36,7 @@ final class V2Fragments {
 		'poolhall_v2_about'         => 'about',
 		'poolhall_v2_points'        => 'points',
 		'poolhall_v2_services'      => 'services',
+		'poolhall_v2_flexibility'   => 'flexibility',
 		'poolhall_v2_register_page' => 'register_page',
 		'poolhall_v2_blog_index'    => 'blog_index',
 		'poolhall_v2_contact'       => 'contact_page',
@@ -279,6 +280,9 @@ final class V2Fragments {
 		foreach ( $accred as $src ) {
 			$chips .= '<span class="chip"><img src="' . esc_url( $src ) . '" alt="Accreditation logo" loading="lazy" /></span>';
 		}
+		// Text badges until the official artwork arrives (cert pending).
+		$chips .= '<span class="chip chip--text">Cyber Essentials</span>'
+			. '<span class="chip chip--text">Black Country Chamber of Commerce</span>';
 
 		return '<footer class="ph-v2-footer"><div class="container">'
 			. '<div class="footer-top">'
@@ -376,8 +380,8 @@ final class V2Fragments {
 			. '<div class="hero-stage">' . $slides . '</div>'
 			. '<div class="container"><div class="hero-inner">'
 			. '<p class="label on-dark"><span class="idx">//</span> Recruitment, done well</p>'
-			. '<h1 class="display on-dark">West Midlands roots.<br /><em>National</em> recruitment reach.</h1>'
-			. '<p class="lead on-dark">We help the people who build, make and market British business find their next move, across Construction, Manufacturing and Digital. Independent, down-to-earth and always happy to talk things through.</p>'
+			. '<h1 class="display on-dark">Construction. Manufacturing.<br /><em>Digital.</em></h1>'
+			. '<p class="lead on-dark">Specialist recruitment for the people who build, make and market British business. West Midlands roots, national reach, and a team that&rsquo;s always happy to talk things through.</p>'
 			. '<div class="hero-cta">'
 			. '<a class="btn btn-primary btn-lg" href="' . esc_url( $this->url( 'jobs' ) ) . '">Find work' . $this->icon( 'arrow-right' ) . '</a>'
 			. '<a class="btn btn-ghost-light btn-lg" href="' . esc_url( $this->url( 'employers' ) ) . '">Hire talent</a>'
@@ -753,8 +757,8 @@ final class V2Fragments {
 			. '</div>';
 	}
 
-	/** The five delivery services as the prototype's 3 + 2 grid. */
-	private function svc_grids( string $cta, string $href ): string {
+	/** The delivery services as the prototype's grid (optionally excluding one). */
+	private function svc_grids( string $cta, string $href, string $exclude = '' ): string {
 		$services = array(
 			array( '01', 'users', 'Temporary', 'Flexible, compliant workforce when you need to scale up fast. Vetted, paid and managed by us.', 'sector-manufacturing.webp' ),
 			array( '02', 'user-check', 'Permanent', 'Full end-to-end search for permanent hires, sourced, screened and shortlisted to a brief.', 'poolhall-matt-desk.jpg' ),
@@ -763,6 +767,12 @@ final class V2Fragments {
 			array( '05', 'hard-hat', 'On-Site', 'A fully managed on-site service for high-volume, single-location requirements.', 'sector-construction.webp' ),
 		);
 
+		if ( '' !== $exclude ) {
+			$services = array_values( array_filter( $services, static fn( array $s ): bool => strtolower( str_replace( ' ', '-', $s[2] ) ) !== strtolower( $exclude ) ) );
+			foreach ( $services as $i => $svc ) {
+				$services[ $i ][0] = str_pad( (string) ( $i + 1 ), 2, '0', STR_PAD_LEFT );
+			}
+		}
 		$top = '';
 		foreach ( array_slice( $services, 0, 3 ) as $i => $svc ) {
 			$top .= $this->svc_card( $svc[0], $svc[1], $svc[2], $svc[3], $svc[4], 1 === $i, $cta, $href );
@@ -791,9 +801,33 @@ final class V2Fragments {
 		return '<div class="ph-v2page is-embed">' . $this->points_grid( $items ) . '</div>';
 	}
 
-	/** [poolhall_v2_services] — the five ways grid inside a builder page. */
-	public function services(): string {
-		return '<div class="ph-v2page is-embed">' . $this->svc_grids( 'Learn more', $this->url( 'delivery-options' ) ) . '</div>';
+	/** [poolhall_v2_services] — the ways-of-working grid inside a builder page. */
+	public function services( $atts = array() ): string {
+		$atts = shortcode_atts( array( 'exclude' => '' ), is_array( $atts ) ? $atts : array() );
+		return '<div class="ph-v2page is-embed">' . $this->svc_grids( 'Learn more', $this->url( 'delivery-options' ), (string) $atts['exclude'] ) . '</div>';
+	}
+
+	/**
+	 * [poolhall_v2_flexibility] — "shaped around you" band with the
+	 * illustrative rebate-vs-fee toggle (deliberately unquantified) and
+	 * Pay Monthly framed as an advantage rather than a hiring method.
+	 */
+	public function flexibility(): string {
+		return '<div class="ph-v2page is-embed"><div class="flexi">'
+			. '<div class="flexi-copy">'
+			. '<h3>Terms that flex, not a one-size fee</h3>'
+			. '<p>Every placement is backed by a rebate period, and we&rsquo;ll shape the balance to suit you: a longer safety net, a leaner fee, or spreading the cost with our <strong>Pay Monthly</strong> option. It&rsquo;s a conversation, not a rate card.</p>'
+			. '<ul class="checklist">'
+			. '<li>' . $this->icon( 'circle-check' ) . '<span><strong>Pay Monthly</strong> &mdash; spread a permanent fee across manageable payments.</span></li>'
+			. '<li>' . $this->icon( 'circle-check' ) . '<span><strong>Rebate protection</strong> &mdash; every hire is guaranteed; you choose how long the net stretches.</span></li>'
+			. '<li>' . $this->icon( 'circle-check' ) . '<span><strong>No surprises</strong> &mdash; terms confirmed in writing before any engagement.</span></li>'
+			. '</ul></div>'
+			. '<div class="flexi-toggle" data-ph-flexi>'
+			. '<p class="ft-title">Slide to see how we flex</p>'
+			. '<div class="ft-labels"><span class="ft-left is-on">Longer rebate protection</span><span class="ft-right">Leaner fee</span></div>'
+			. '<input type="range" min="0" max="100" value="30" aria-label="Illustrative balance between rebate period and fee" />'
+			. '<p class="ft-note">Illustrative only &mdash; we&rsquo;ll agree the balance that fits your role and budget.</p>'
+			. '</div></div></div>';
 	}
 
 	// ------------------------------------------------- secondary template --
@@ -1013,31 +1047,21 @@ final class V2Fragments {
 			'<a class="btn btn-primary" href="' . esc_url( $this->url( 'contact' ) ) . '">Get in touch ' . $this->icon( 'arrow-right' ) . '</a>'
 		);
 
-		$people = array(
-			array( 'team-matthew.jpg', 'Founder', 'Matthew Tonks', array( 'Construction', 'Manufacturing' ) ),
-			array( 'team-jay.jpg', 'Recruitment Partner', 'Jay Thornton', array( 'Marketing & PR', 'Digital' ) ),
-			array( 'team-sam.jpg', 'Marketing Specialist', 'Sam Ogle', array( 'Brand', 'Content' ) ),
-		);
-		$tcards = '';
-		foreach ( $people as [ $img, $role, $name, $tags ] ) {
-			$photo = $this->image( $img );
-			$chips = '';
-			foreach ( $tags as $tag ) {
-				$chips .= '<span class="ttag">' . esc_html( $tag ) . '</span>';
-			}
-			$tcards .= '<div class="tcard">'
-				. '<div class="tphoto">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( $name ) . '" />' : '' ) . '</div>'
-				. '<p class="trole">' . esc_html( strtoupper( $role ) ) . '</p>'
-				. '<h3>' . esc_html( $name ) . '</h3>'
-				. '<div class="ttags">' . $chips . '</div>'
-				. '</div>';
-		}
+		$founder_photo = $this->image( 'poolhall-matthew-portrait.jpg' );
+		$tcards        = '<div class="tcard tcard--founder">'
+			. '<div class="tphoto">' . ( '' !== $founder_photo ? '<img src="' . esc_url( $founder_photo ) . '" alt="Matthew Tonks" />' : '' ) . '</div>'
+			. '<p class="trole">FOUNDER</p>'
+			. '<h3>Matthew Tonks</h3>'
+			. '<div class="ttags"><span class="ttag">Construction</span><span class="ttag">Manufacturing</span><span class="ttag">Digital</span></div>'
+			. '<p class="tbio">Poolhall is founder-led: when you call, you speak to the person whose name is on the business, backed by a trusted network of sector specialists.</p>'
+			. '</div>';
+
 		$team = '<section class="section section--white"><div class="container">'
 			. '<div class="section-head"><div>'
-			. '<p class="label"><span class="idx">03 /</span> The people behind it</p>'
-			. '<h2 class="h2">A small team you&rsquo;ll actually deal with</h2>'
+			. '<p class="label"><span class="idx">03 /</span> The person behind it</p>'
+			. '<h2 class="h2">Founder-led, personally accountable</h2>'
 			. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'join-our-team' ) ) . '">Meet the team ' . $this->icon( 'arrow-right' ) . '</a></div>'
-			. '<div class="team-grid">' . $tcards . '</div>'
+			. '<div class="team-grid team-grid--single">' . $tcards . '</div>'
 			. '</div></section>';
 
 		return '<div class="ph-v2page">'

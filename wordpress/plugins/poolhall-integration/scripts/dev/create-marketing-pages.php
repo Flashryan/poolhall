@@ -435,7 +435,7 @@ $employers_data = array(
 		array(
 			$section_head( 'Recruitment delivery options', 'Five ways to work with us', 'Whatever the shape of your hiring need, there&rsquo;s a model that fits.' ),
 			// Prototype photo-top service cards (3 + 2, dark second card).
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_services]' ) ),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_services exclude="pay-monthly"]' ) ),
 			$container(
 				array(
 					'content_width'        => 'full',
@@ -450,12 +450,13 @@ $employers_data = array(
 		)
 	),
 
-	// Service tiers (directive §11.6 — the build-critical addition).
+	// Flexible terms band (client feedback: tiers removed; rebate/fee
+	// balance shown as an illustrative toggle, Pay Monthly as an advantage).
 	$section(
 		'#FFFFFF',
 		array(
-			$section_head( 'Service levels', 'Three tiers, one standard of care', 'Pick the level of support that fits the role. Every tier is delivered by the same senior consultants.' ),
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_service_tiers]' ) ),
+			$section_head( 'How we work with you', 'Shaped around your hiring, not a rate card', 'The same senior consultants on every brief, with commercial terms we flex to fit.' ),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_flexibility]' ) ),
 		)
 	),
 

@@ -1292,3 +1292,19 @@ header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
 @keyframes ph-tick-ring{to{stroke-dashoffset:0}}
 @keyframes ph-tick-mark{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.ph-v2page .ph-v2reg .upload-done .tick-ring,.ph-v2page .ph-v2reg .upload-done .tick-mark{animation:none;stroke-dashoffset:0}}
+
+/* client feedback round: hero scrim lighter on the right, founder card, flex toggle, text badges */
+.ph-v2-hero::after{background:linear-gradient(100deg,rgba(14,22,30,.92) 0%,rgba(14,22,30,.6) 36%,rgba(14,22,30,.14) 66%,rgba(14,22,30,0) 100%)!important}
+.ph-v2page .team-grid--single{grid-template-columns:minmax(0,520px);justify-content:center}
+.ph-v2page .tcard--founder .tbio{font-size:14.5px;color:var(--fg-2);line-height:1.6;margin:14px 0 0}
+.ph-v2-footer .chip--text{display:inline-flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#0B2846;background:#fff;border-radius:3px;padding:9px 12px;font-weight:600}
+.ph-v2page .flexi{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.ph-v2page .flexi-copy h3{font-family:var(--font-display);font-size:1.35rem;font-weight:800;color:var(--slate-900);margin:0 0 10px}
+.ph-v2page .flexi-copy p{color:var(--fg-2);font-size:15.5px;line-height:1.6;margin:0}
+.ph-v2page .flexi-toggle{background:#fff;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow-2);padding:28px}
+.ph-v2page .flexi-toggle .ft-title{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist-400);margin:0 0 16px}
+.ph-v2page .flexi-toggle .ft-labels{display:flex;justify-content:space-between;gap:12px;font-family:var(--font-display);font-weight:700;font-size:13.5px;color:var(--mist-500);margin-bottom:10px}
+.ph-v2page .flexi-toggle .ft-labels .is-on{color:var(--slate-900)}
+.ph-v2page .flexi-toggle input[type=range]{width:100%;accent-color:#FDBB5D;height:28px}
+.ph-v2page .flexi-toggle .ft-note{font-size:12.5px;color:var(--mist-400);margin:12px 0 0}
+@media(max-width:920px){.ph-v2page .flexi{grid-template-columns:1fr;gap:28px}}

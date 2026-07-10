@@ -420,3 +420,23 @@
 		box.classList.add( 'has-file' );
 	} );
 }() );
+
+/**
+ * Employers flexibility toggle: purely illustrative — emphasise whichever
+ * end of the rebate/fee balance the slider is nearer.
+ */
+( function () {
+	var wrap = document.querySelector( '[data-ph-flexi]' );
+	if ( ! wrap ) { return; }
+	var range = wrap.querySelector( 'input[type=range]' );
+	var left = wrap.querySelector( '.ft-left' );
+	var right = wrap.querySelector( '.ft-right' );
+	if ( ! range || ! left || ! right ) { return; }
+	var paint = function () {
+		var v = parseInt( range.value, 10 );
+		left.classList.toggle( 'is-on', v <= 50 );
+		right.classList.toggle( 'is-on', v > 50 );
+	};
+	range.addEventListener( 'input', paint );
+	paint();
+}() );
