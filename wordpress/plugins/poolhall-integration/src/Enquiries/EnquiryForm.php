@@ -71,6 +71,9 @@ final class EnquiryForm {
 		}
 		$html .= $this->text_field( 'email', __( 'Email', 'poolhall-integration' ), 'email', 'email', true, $codes, array( 'email_invalid' ) );
 		$html .= $this->text_field( 'phone', __( 'Phone', 'poolhall-integration' ), 'tel', 'tel', false, $codes, array() );
+		if ( EnquiryRequest::KIND_HIRING === $kind ) {
+			$html .= $this->text_field( 'website', __( 'Company website (optional)', 'poolhall-integration' ), 'url', 'url', false, $codes, array() );
+		}
 		$html .= '</div>';
 
 		if ( EnquiryRequest::KIND_CONTACT === $kind ) {

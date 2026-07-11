@@ -87,6 +87,17 @@ final class RegistrationRequestTest extends TestCase {
 		self::assertTrue( $payload->is_valid() );
 	}
 
+	public function test_cv_link_is_appended_to_notes_when_given(): void {
+		$request = RegistrationRequest::from_post( $this->post() );
+		$link    = 'https://example.com/wp-admin/admin-post.php?action=poolhall_cv_download&record=7&key=abc';
+
+		$with = CvRegistration::payload( $request, 'jane-smith-cv.pdf', $link );
+		self::assertStringContainsString( 'Download CV (Poolhall admin login required): ' . $link, $with->notes );
+
+		$without = CvRegistration::payload( $request, 'jane-smith-cv.pdf' );
+		self::assertStringNotContainsString( 'Download CV', $without->notes );
+	}
+
 	public function test_skills_default_to_empty_when_absent(): void {
 		$post = $this->post();
 		unset( $post['skills'] );

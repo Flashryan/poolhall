@@ -87,15 +87,16 @@ final class EnquiryService {
 				'' !== $request->company ? $request->company : $request->name
 			),
 			array(
-				'kind'          => 'enquiry',
-				'company_name'  => $request->company,
-				'contact_name'  => $request->name,
-				'contact_email' => $request->email,
-				'contact_phone' => $request->phone,
-				'message'       => $request->message,
-				'enquiry_kind'  => $request->kind,
-				'review_status' => 'new',
-				'submitted_at'  => gmdate( \DateTimeInterface::ATOM ),
+				'kind'            => 'enquiry',
+				'company_name'    => $request->company,
+				'company_website' => $request->website,
+				'contact_name'    => $request->name,
+				'contact_email'   => $request->email,
+				'contact_phone'   => $request->phone,
+				'message'         => $request->message,
+				'enquiry_kind'    => $request->kind,
+				'review_status'   => 'new',
+				'submitted_at'    => gmdate( \DateTimeInterface::ATOM ),
 			)
 		);
 	}
@@ -129,6 +130,9 @@ final class EnquiryService {
 		);
 		if ( '' !== $request->company ) {
 			$lines[] = 'Company: ' . $request->company;
+		}
+		if ( '' !== $request->website ) {
+			$lines[] = 'Website: ' . $request->website;
 		}
 		$lines[] = 'Email: ' . $request->email;
 		if ( '' !== $request->phone ) {

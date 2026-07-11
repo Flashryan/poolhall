@@ -201,7 +201,14 @@ final class CvRegistration {
 			)
 		);
 
-		$this->push( $record_id, $request, $cv['name'] );
+		// Per-record download key so the Giig Notes can carry a stable CV
+		// link. The key alone grants nothing: download_cv() still requires a
+		// logged-in admin — this only replaces the session-bound nonce so the
+		// link keeps working from inside the ATS.
+		$cv_key = wp_generate_password( 32, false );
+		ApplicationRecord::update_meta( $record_id, 'cv_key', $cv_key );
+
+		$this->push( $record_id, $request, $cv['name'], self::cv_link( $record_id, $cv_key ) );
 
 		$sent = $this->notify( $request, $cv['path'], $cv['name'], $record_id );
 		// The CV is retained in the protected store either way so the
@@ -239,8 +246,13 @@ final class CvRegistration {
 		return '';
 	}
 
+	/** Admin-post CV download URL for a record (admin login still required). */
+	public static function cv_link( int $record_id, string $cv_key ): string {
+		return admin_url( 'admin-post.php?action=poolhall_cv_download&record=' . $record_id . '&key=' . rawurlencode( $cv_key ) );
+	}
+
 	/** Create the Giig candidate; queue for cron retry on failure. */
-	private function push( int $record_id, RegistrationRequest $request, string $cv_name ): void {
+	private function push( int $record_id, RegistrationRequest $request, string $cv_name, string $cv_link = '' ): void {
 		// Duplicate protection: Giig has no idempotency key, so reconcile by
 		// exact email against our own records before creating again.
 		$existing = $this->existing_candidate_id( $request->email, $record_id );
@@ -257,6 +269,7 @@ final class CvRegistration {
 						'Candidate re-registered via the website pre-registration form.'
 						. ( '' !== $request->role_title ? ' Looking for: ' . $request->role_title . '.' : '' )
 						. ' Updated details and new CV are with the applications inbox (record #' . $record_id . ').'
+						. ( '' !== $cv_link ? "\nNew CV (Poolhall admin login required): " . $cv_link : '' )
 					);
 				} catch ( \Throwable $t ) {
 					$this->logger->log( 'giig_note_failed', array( 'record' => (string) $record_id ) );
@@ -270,7 +283,7 @@ final class CvRegistration {
 		}
 
 		try {
-			$result = $this->sink->register_candidate( self::payload( $request, $cv_name ) );
+			$result = $this->sink->register_candidate( self::payload( $request, $cv_name, $cv_link ) );
 			ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
 			ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $result->source_candidate_id );
 			$this->logger->log(
@@ -326,6 +339,7 @@ final class CvRegistration {
 				continue;
 			}
 
+			$cv_key  = (string) get_post_meta( $record_id, 'cv_key', true );
 			$payload = new CandidatePayload(
 				first_name: (string) get_post_meta( $record_id, 'applicant_first', true ),
 				last_name: (string) get_post_meta( $record_id, 'applicant_last', true ),
@@ -335,7 +349,11 @@ final class CvRegistration {
 				location: (string) get_post_meta( $record_id, 'location', true ),
 				salary_expectations: (string) get_post_meta( $record_id, 'salary_expectations', true ),
 				linkedin: (string) get_post_meta( $record_id, 'linkedin', true ),
-				notes: self::notes( (string) get_post_meta( $record_id, 'message', true ), (string) get_post_meta( $record_id, 'cv_filename', true ) ),
+				notes: self::notes(
+					(string) get_post_meta( $record_id, 'message', true ),
+					(string) get_post_meta( $record_id, 'cv_filename', true ),
+					'' !== $cv_key ? self::cv_link( $record_id, $cv_key ) : ''
+				),
 				tags: 'Website,Pre-Registration',
 				skills: (string) get_post_meta( $record_id, 'skills', true ),
 			);
@@ -355,7 +373,7 @@ final class CvRegistration {
 	// ------------------------------------------------------------ helpers --
 
 	/** Map the request onto the Giig candidate payload (pure, testable). */
-	public static function payload( RegistrationRequest $request, string $cv_name ): CandidatePayload {
+	public static function payload( RegistrationRequest $request, string $cv_name, string $cv_link = '' ): CandidatePayload {
 		return new CandidatePayload(
 			first_name: $request->first_name,
 			last_name: $request->last_name,
@@ -365,16 +383,19 @@ final class CvRegistration {
 			location: $request->location,
 			salary_expectations: $request->salary_expectations,
 			linkedin: $request->linkedin,
-			notes: self::notes( $request->message, $cv_name ),
+			notes: self::notes( $request->message, $cv_name, $cv_link ),
 			tags: 'Website,Pre-Registration',
 			skills: $request->skills,
 		);
 	}
 
-	private static function notes( string $message, string $cv_name ): string {
+	private static function notes( string $message, string $cv_name, string $cv_link = '' ): string {
 		$notes = trim( $message );
 		if ( '' !== $cv_name ) {
 			$notes .= ( '' !== $notes ? "\n\n" : '' ) . 'CV held by Poolhall: ' . $cv_name;
+		}
+		if ( '' !== $cv_link ) {
+			$notes .= "\nDownload CV (Poolhall admin login required): " . $cv_link;
 		}
 		return $notes;
 	}

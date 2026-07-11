@@ -107,4 +107,13 @@ final class EnquiryRequestTest extends TestCase {
 		$candidate_contact = EnquiryRequest::from_post( EnquiryRequest::KIND_CONTACT, $this->post( array( 'enquirer_type' => 'candidate' ) ) );
 		self::assertFalse( $candidate_contact->is_employer() );
 	}
+
+	public function test_website_is_captured_optionally_and_capped(): void {
+		$request = EnquiryRequest::from_post( EnquiryRequest::KIND_HIRING, $this->post( array( 'website' => ' https://acme.example ' ) ) );
+		self::assertSame( 'https://acme.example', $request->website );
+		self::assertSame( array(), $request->validation_errors() );
+
+		$absent = EnquiryRequest::from_post( EnquiryRequest::KIND_HIRING, $this->post() );
+		self::assertSame( '', $absent->website );
+	}
 }

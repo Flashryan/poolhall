@@ -70,7 +70,9 @@ final class EnquiryReviewScreen {
 			$error   = (string) get_post_meta( $id, 'giig_push_error', true );
 			$message = (string) get_post_meta( $id, 'message', true );
 
-			echo '<tr><td><strong>' . esc_html( (string) get_post_meta( $id, 'company_name', true ) ) . '</strong></td>';
+			$website = (string) get_post_meta( $id, 'company_website', true );
+			echo '<tr><td><strong>' . esc_html( (string) get_post_meta( $id, 'company_name', true ) ) . '</strong>'
+				. ( '' !== $website ? '<br /><a href="' . esc_url( $website ) . '" target="_blank" rel="noopener">' . esc_html( $website ) . '</a>' : '' ) . '</td>';
 			echo '<td>' . esc_html( (string) get_post_meta( $id, 'contact_name', true ) )
 				. '<br /><span style="color:#666">' . esc_html( (string) get_post_meta( $id, 'contact_email', true ) ) . '</span>'
 				. '<br /><span style="color:#666">' . esc_html( (string) get_post_meta( $id, 'contact_phone', true ) ) . '</span></td>';
@@ -128,6 +130,7 @@ final class EnquiryReviewScreen {
 			$giig_id = $this->sink->create_company(
 				$company,
 				array(
+					'Website'      => (string) get_post_meta( $record, 'company_website', true ),
 					'EmailAddress' => (string) get_post_meta( $record, 'contact_email', true ),
 					'PhoneNumber'  => (string) get_post_meta( $record, 'contact_phone', true ),
 					'Notes'        => 'Contact: ' . (string) get_post_meta( $record, 'contact_name', true )

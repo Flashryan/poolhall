@@ -28,6 +28,9 @@ final class ReviewScreen {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_post_poolhall_review_action', array( $this, 'handle_action' ) );
 		add_action( 'admin_post_poolhall_cv_download', array( $this, 'download_cv' ) );
+		// Logged-out clicks (e.g. the CV link in Giig Notes) go to wp-login
+		// and return here afterwards, instead of dead-ending on a 400.
+		add_action( 'admin_post_nopriv_poolhall_cv_download', 'auth_redirect' );
 	}
 
 	public function menu(): void {
@@ -148,8 +151,8 @@ final class ReviewScreen {
 	}
 
 	public function download_cv(): void {
-		$record = isset( $_GET['record'] ) ? (int) $_GET['record'] : 0;
-		if ( ! current_user_can( self::CAP ) || ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '', 'poolhall_cv_' . $record ) ) {
+		$record = isset( $_GET['record'] ) ? (int) $_GET['record'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified in download_authorised() below.
+		if ( ! current_user_can( self::CAP ) || ! $this->download_authorised( $record ) ) {
 			wp_die( 'Not allowed.' );
 		}
 		$path = (string) get_post_meta( $record, 'cv_path', true );
@@ -160,7 +163,27 @@ final class ReviewScreen {
 		header( 'Content-Type: application/octet-stream' );
 		header( 'Content-Disposition: attachment; filename="' . basename( $path ) . '"' );
 		header( 'Content-Length: ' . (string) filesize( $path ) );
-		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- capability + nonce checked, protected path.
+		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- capability + nonce/key checked, protected path.
 		exit;
+	}
+
+	/**
+	 * Second factor after the capability check: the session-bound nonce from
+	 * the admin table, OR the record's stable cv_key — the latter so the CV
+	 * link written into Giig Notes keeps working across sessions. The key
+	 * alone never grants access; a logged-in admin is always required.
+	 */
+	private function download_authorised( int $record ): bool {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- this IS the nonce/key check.
+		$key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		if ( '' !== $key ) {
+			$stored = (string) get_post_meta( $record, 'cv_key', true );
+			if ( '' !== $stored && hash_equals( $stored, $key ) ) {
+				return true;
+			}
+		}
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		// phpcs:enable
+		return false !== wp_verify_nonce( $nonce, 'poolhall_cv_' . $record );
 	}
 }

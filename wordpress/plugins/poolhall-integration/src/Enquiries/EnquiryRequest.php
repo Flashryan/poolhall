@@ -38,7 +38,8 @@ final class EnquiryRequest {
 		public readonly string $phone,
 		public readonly string $enquirer_type,
 		public readonly string $message,
-		public readonly bool $consented
+		public readonly bool $consented,
+		public readonly string $website = ''
 	) {
 	}
 
@@ -54,7 +55,8 @@ final class EnquiryRequest {
 			self::clean( $fields['phone'] ?? '', self::MAX_FIELD ),
 			self::clean_type( $fields['enquirer_type'] ?? '' ),
 			self::clean( $fields['message'] ?? '', self::MAX_MESSAGE ),
-			'1' === ( $fields['consent'] ?? '' )
+			'1' === ( $fields['consent'] ?? '' ),
+			self::clean( $fields['website'] ?? '', self::MAX_FIELD )
 		);
 	}
 
