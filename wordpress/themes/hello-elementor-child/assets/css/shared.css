@@ -1066,14 +1066,26 @@ header.elementor:has(.ph-v2-header){position:sticky;top:0;z-index:80}
 @media(prefers-reduced-motion:reduce){.ph-backtop{transition:none}}
 .ph-backtop svg{transform:rotate(-90deg)}
 
-/* essential-cookies notice */
-.ph-cookies{position:fixed;left:18px;bottom:18px;z-index:76;max-width:min(420px,calc(100vw - 96px));
-  background:#fff;border:1px solid #E6E9ED;border-radius:4px;box-shadow:0 10px 30px -12px rgba(16,33,43,.3);
-  padding:14px 16px;display:flex;gap:14px;align-items:center}
+/* essential-cookies notice: slim full-width bottom bar so it never sits on
+   top of forms, filters or body copy (it previously floated bottom-left and
+   covered content on every page until dismissed) */
+.ph-cookies{position:fixed;left:0;right:0;bottom:0;z-index:76;
+  background:#fff;border-top:1px solid #E6E9ED;box-shadow:0 -8px 24px -16px rgba(16,33,43,.35);
+  padding:11px clamp(16px,4vw,32px);display:flex;gap:16px;align-items:center;justify-content:center}
 .ph-cookies p{margin:0;font-size:13.5px;line-height:1.5;color:#2B343D}
 .ph-cookies a{color:#345D79;font-weight:600;text-decoration:underline}
-.ph-cookies .btn{padding:9px 16px;font-size:13px;flex:none}
-@media(max-width:560px){.ph-cookies{left:12px;right:12px;max-width:none;bottom:76px}}
+.ph-cookies .btn{padding:8px 18px;font-size:13px;flex:none}
+@media(max-width:560px){.ph-cookies{flex-wrap:wrap;gap:10px;padding:10px 14px;justify-content:flex-start}}
+
+/* job-row save heart + saved-view toggle (jobs archive) */
+.ph-job-save{width:40px;height:40px;border-radius:50%;border:1px solid #E6E9ED;background:#fff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#8A94A6;
+  transition:color .15s,border-color .15s,background .15s;flex:none}
+.ph-job-save:hover{color:#0B2846;border-color:#0B2846}
+.ph-job-save.is-saved{color:#fff;background:#0B2846;border-color:#0B2846}
+.ph-job-save.is-saved svg{fill:currentColor}
+.ph-job-save svg{width:18px;height:18px}
+.ph-jobs__saved-toggle.is-on{background:#0B2846!important;color:#fff!important;border-color:#0B2846!important}
 
 /* ---- sector page template (prototype screen-pages.jsx SectorPage) ---- */
 .ph-v2page{font-family:var(--font-body);font-size:17px;line-height:1.6;color:var(--fg-1);background:var(--concrete-100)}

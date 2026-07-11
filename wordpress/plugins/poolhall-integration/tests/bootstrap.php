@@ -55,6 +55,16 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_strip_all_tags' ) ) {
+	function wp_strip_all_tags( string $text, bool $remove_breaks = false ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
+		$text = strip_tags( (string) preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $text ) );
+		if ( $remove_breaks ) {
+			$text = (string) preg_replace( '/[\r\n\t ]+/', ' ', $text );
+		}
+		return trim( $text );
+	}
+}
+
 if ( ! function_exists( 'esc_html' ) ) {
 	function esc_html( string $text ): string { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed
 		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );

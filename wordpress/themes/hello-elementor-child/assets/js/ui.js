@@ -372,25 +372,62 @@
  * localStorage, per prototype §9.4 (v1 scope — no account required).
  */
 ( function () {
-	var btn = document.querySelector( '[data-ph-save]' );
-	if ( ! btn ) { return; }
 	var KEY = 'ph-saved-jobs';
-	var id = btn.getAttribute( 'data-job-id' );
+	var btns = document.querySelectorAll( '[data-ph-save]' );
+	var toggle = document.querySelector( '[data-ph-saved-filter]' );
+	if ( ! btns.length && ! toggle ) { return; }
 	var read = function () {
 		try { return JSON.parse( window.localStorage.getItem( KEY ) || '[]' ); } catch ( e ) { return []; }
 	};
-	var paint = function ( saved ) {
-		btn.classList.toggle( 'is-saved', saved );
-		btn.textContent = saved ? 'Saved' : 'Save job';
-	};
-	paint( read().indexOf( id ) !== -1 );
-	btn.addEventListener( 'click', function () {
-		var list = read();
-		var at = list.indexOf( id );
-		if ( at === -1 ) { list.push( id ); } else { list.splice( at, 1 ); }
+	var write = function ( list ) {
 		try { window.localStorage.setItem( KEY, JSON.stringify( list ) ); } catch ( e ) { /* private mode */ }
-		paint( at === -1 );
+	};
+	var paintCount = function () {
+		var n = String( read().length );
+		document.querySelectorAll( '[data-ph-saved-count]' ).forEach( function ( el ) { el.textContent = n; } );
+	};
+	var paint = function ( btn, saved ) {
+		btn.classList.toggle( 'is-saved', saved );
+		if ( btn.hasAttribute( 'data-ph-save-icon' ) ) {
+			btn.setAttribute( 'aria-pressed', saved ? 'true' : 'false' );
+			btn.setAttribute( 'aria-label', saved ? 'Remove from saved jobs' : 'Save job' );
+		} else {
+			btn.textContent = saved ? 'Saved' : 'Save job';
+		}
+	};
+	// Saved-only view on the jobs archive (rows carry data-ph-job-row).
+	var applyFilter = function () {
+		if ( ! toggle ) { return; }
+		var on = toggle.classList.contains( 'is-on' );
+		var list = read();
+		document.querySelectorAll( '[data-ph-job-row]' ).forEach( function ( row ) {
+			row.style.display = ( ! on || list.indexOf( row.getAttribute( 'data-ph-job-row' ) ) !== -1 ) ? '' : 'none';
+		} );
+		var empty = document.querySelector( '[data-ph-saved-empty]' );
+		if ( empty ) { empty.style.display = ( on && ! list.length ) ? '' : 'none'; }
+	};
+	btns.forEach( function ( btn ) {
+		var id = btn.getAttribute( 'data-job-id' );
+		paint( btn, read().indexOf( id ) !== -1 );
+		btn.addEventListener( 'click', function ( e ) {
+			e.preventDefault();
+			var list = read();
+			var at = list.indexOf( id );
+			if ( at === -1 ) { list.push( id ); } else { list.splice( at, 1 ); }
+			write( list );
+			paint( btn, at === -1 );
+			paintCount();
+			applyFilter();
+		} );
 	} );
+	if ( toggle ) {
+		toggle.addEventListener( 'click', function () {
+			toggle.classList.toggle( 'is-on' );
+			toggle.setAttribute( 'aria-pressed', toggle.classList.contains( 'is-on' ) ? 'true' : 'false' );
+			applyFilter();
+		} );
+	}
+	paintCount();
 }() );
 
 /**

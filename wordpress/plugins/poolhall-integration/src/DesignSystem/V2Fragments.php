@@ -64,6 +64,47 @@ final class V2Fragments {
 	}
 
 	/** Attachment URL by the keyed sideload used across the setup scripts. */
+	/**
+	 * Drops the "Location: / Travel: / Job Type: / Salary: ..." boilerplate
+	 * Giig descriptions open with — the same facts already render as chips
+	 * and in the apply aside, so repeating them costs the first screen of
+	 * every job page and the whole card snippet. Only lines inside the
+	 * first dozen are considered, and nothing is touched unless at least
+	 * two metadata lines match (so free-text that merely mentions
+	 * "Location:" mid-sentence is left alone).
+	 */
+	public static function strip_leading_meta( string $text ): string {
+		// Synced descriptions arrive as <p>-block HTML with no newlines, so
+		// block closers count as line breaks alongside literal newlines. The
+		// delimiters are captured and re-emitted, keeping untouched markup
+		// byte-identical.
+		$parts = preg_split( '/(<\/p>|<br\s*\/?>|<\/div>|<\/li>|\r\n|\r|\n)/i', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
+		if ( ! is_array( $parts ) ) {
+			return $text;
+		}
+		$pattern = '/^\s*(job\s+title|location|travel|job\s+type|salary|start\s+date|duration|sector|contract(\s+type)?|hours)\s*:/i';
+
+		$out     = array();
+		$removed = 0;
+		$seen    = 0;
+		$total   = count( $parts );
+		for ( $i = 0; $i < $total; $i += 2 ) {
+			$content = (string) $parts[ $i ];
+			$delim   = (string) ( $parts[ $i + 1 ] ?? '' );
+			$plain   = trim( wp_strip_all_tags( $content ) );
+			if ( $seen < 12 && '' !== $plain ) {
+				++$seen;
+				if ( 1 === preg_match( $pattern, $plain ) ) {
+					++$removed;
+					continue; // Drop the metadata line and its trailing break.
+				}
+			}
+			$out[] = $content . $delim;
+		}
+
+		return $removed >= 2 ? implode( '', $out ) : $text;
+	}
+
 	private function image( string $filename ): string {
 		$found = get_posts(
 			array(
@@ -441,7 +482,7 @@ final class V2Fragments {
 		$types    = wp_get_object_terms( $post_id, JobPostType::TAX_JOB_TYPE, array( 'fields' => 'names' ) );
 		$type     = is_array( $types ) && array() !== $types ? (string) $types[0] : '';
 		$ref      = (string) get_post_meta( $post_id, 'source_job_id', true );
-		$snip     = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $post_id ) ), 24, '&hellip;' );
+		$snip     = wp_trim_words( wp_strip_all_tags( str_replace( '<', ' <', self::strip_leading_meta( (string) get_post_field( 'post_content', $post_id ) ) ) ), 24, '&hellip;' );
 
 		$meta = '';
 		if ( '' !== $location ) {
@@ -1255,11 +1296,34 @@ final class V2Fragments {
 			. '<div class="orcall">or call 0121 516 3000</div>'
 			. '</aside>';
 
-		$body = '<div class="job-body">' . wpautop( wp_kses_post( $post->post_content ) ) . '</div>';
+		$body = '<div class="job-body">' . wpautop( wp_kses_post( self::strip_leading_meta( $post->post_content ) ) ) . '</div>';
 
+		// Similar roles share the job's actual sector term. No bucket
+		// fallback: Engineering and Marketing both land in the catch-all
+		// bucket, which put a Web Developer under "More in Engineering" —
+		// fewer-but-honest beats filled-but-wrong.
 		$similar     = '';
-		$similar_ids = array_values( array_diff( $this->sector_job_ids( $key ), array( $post->ID ) ) );
-		$similar_ids = array_slice( $similar_ids, 0, 2 );
+		$similar_ids = array();
+		$term_ids    = wp_get_object_terms( $post->ID, JobPostType::TAX_SECTOR, array( 'fields' => 'ids' ) );
+		if ( is_array( $term_ids ) && array() !== $term_ids ) {
+			$similar_ids = get_posts(
+				array(
+					'post_type'      => JobPostType::POST_TYPE,
+					'post_status'    => 'publish',
+					'posts_per_page' => 2,
+					'fields'         => 'ids',
+					'post__not_in'   => array( $post->ID ),
+					'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- two-item lookup on a small job set.
+						array(
+							'taxonomy' => JobPostType::TAX_SECTOR,
+							'field'    => 'term_id',
+							'terms'    => array_map( 'intval', $term_ids ),
+						),
+					),
+				)
+			);
+			$similar_ids = array_map( 'intval', $similar_ids );
+		}
 		if ( array() !== $similar_ids && '' !== $sector ) {
 			$cards = '';
 			foreach ( $similar_ids as $sid ) {

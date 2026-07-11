@@ -79,13 +79,17 @@ final class JobCardBits {
 		$posted = (string) get_post_meta( $post->ID, 'date_posted', true );
 		$stamp  = '' !== $posted ? strtotime( $posted ) : strtotime( $post->post_date_gmt );
 		if ( false !== $stamp ) {
-			$items[] = '<span class="ph-job-meta__item">' . $clock . esc_html(
-				sprintf(
+			// Precise ages read fine for a month; "8 months ago" just makes a
+			// live role look stale, so older postings cap at 30+ days.
+			$age     = time() - $stamp;
+			$age_str = $age > 30 * DAY_IN_SECONDS
+				? __( '30+ days ago', 'poolhall-integration' )
+				: sprintf(
 					/* translators: %s: human-readable age, e.g. "3 days". */
 					__( '%s ago', 'poolhall-integration' ),
 					human_time_diff( $stamp )
-				)
-			) . '</span>';
+				);
+			$items[] = '<span class="ph-job-meta__item">' . $clock . esc_html( $age_str ) . '</span>';
 		}
 
 		$html = '';
@@ -93,7 +97,14 @@ final class JobCardBits {
 			$html .= '<span class="ph-job-meta">' . implode( '', $items ) . '</span>';
 		}
 
-		$summary = get_the_excerpt( $post );
+		// Summaries come from the description with the leading Location:/
+		// Salary:/Job Type: boilerplate removed — those fields are already
+		// shown as chips, so repeating them wastes the whole snippet.
+		$summary = \Poolhall\Integration\DesignSystem\V2Fragments::strip_leading_meta(
+			(string) get_post_field( 'post_content', $post )
+		);
+		// Space before tags so adjacent paragraphs don't fuse ("roleJoin a…").
+		$summary = trim( wp_strip_all_tags( str_replace( '<', ' <', $summary ) ) );
 		if ( '' !== $summary ) {
 			$html .= '<span class="ph-job-summary ph-body">' . esc_html( wp_trim_words( $summary, 24 ) ) . '</span>';
 		}

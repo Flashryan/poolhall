@@ -90,6 +90,8 @@ final class JobsArchive {
 			. '<div class="ph-jobs__head-text"><h1 class="ph-h3" style="color: var(--ph-color-navy-700); margin: 0;">' . esc_html( $title ) . '</h1>'
 			. '<p class="ph-small ph-text-muted" style="margin: 0;">' . esc_html( $count ) . '</p></div>'
 			. '<div class="ph-jobs__head-actions">'
+			. '<button type="button" class="ph-button ph-button--ghost ph-jobs__saved-toggle" data-ph-saved-filter aria-pressed="false">'
+			. esc_html__( 'Saved', 'poolhall-integration' ) . ' (<span data-ph-saved-count>0</span>)</button>'
 			. '<button type="button" class="ph-button ph-button--ghost ph-jobs__filter-toggle" data-ph-filters-open aria-controls="ph-jobs-filters">'
 			. esc_html__( 'Filters', 'poolhall-integration' ) . '</button>'
 			. $this->sort_form( $request )
@@ -255,7 +257,12 @@ final class JobsArchive {
 			$rows .= $this->row( get_post() );
 		}
 
-		return '<div class="ph-jobs__list">' . $rows . '</div>' . $this->pagination( $results, $request );
+		$saved_empty = '<div class="ph-card ph-empty-state" data-ph-saved-empty style="display:none">'
+			. '<h2 class="ph-h4" style="margin: 0;">' . esc_html__( 'No saved jobs yet', 'poolhall-integration' ) . '</h2>'
+			. '<p class="ph-body">' . esc_html__( 'Tap the heart on any role to keep it here for later.', 'poolhall-integration' ) . '</p>'
+			. '</div>';
+
+		return '<div class="ph-jobs__list">' . $rows . '</div>' . $saved_empty . $this->pagination( $results, $request );
 	}
 
 	private function row( ?\WP_Post $post ): string {
@@ -265,7 +272,9 @@ final class JobsArchive {
 		$permalink = (string) get_permalink( $post );
 		$salary    = (string) get_post_meta( $post->ID, 'salary_display', true );
 
-		return '<article class="ph-card ph-card--job ph-job-row">'
+		$heart = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+
+		return '<article class="ph-card ph-card--job ph-job-row" data-ph-job-row="' . esc_attr( (string) $post->ID ) . '">'
 			. '<div class="ph-job-row__main">'
 			. $this->cards->render_flair()
 			. '<h2 class="ph-h3" style="margin: 0;"><a class="ph-job-row__title" href="' . esc_url( $permalink ) . '">' . esc_html( get_the_title( $post ) ) . '</a></h2>'
@@ -274,6 +283,7 @@ final class JobsArchive {
 			. '<div class="ph-job-row__aside">'
 			. ( '' !== $salary ? '<span class="ph-job-salary">' . esc_html( $salary ) . '</span>' : '' )
 			. '<a class="ph-link ph-link--arrow" href="' . esc_url( $permalink ) . '" tabindex="-1">' . esc_html__( 'View job', 'poolhall-integration' ) . '</a>'
+			. '<button type="button" class="ph-job-save" data-ph-save data-ph-save-icon data-job-id="' . esc_attr( (string) $post->ID ) . '" aria-pressed="false" aria-label="' . esc_attr__( 'Save job', 'poolhall-integration' ) . '">' . $heart . '</button>'
 			. '</div></article>';
 	}
 
