@@ -121,6 +121,7 @@ final class Plugin {
 		$enquiries = new \Poolhall\Integration\Enquiries\EnquiryService( new WpMailer(), new Logger() );
 		( new \Poolhall\Integration\Enquiries\EnquiryEndpoints( $enquiries ) )->register();
 		( new \Poolhall\Integration\Enquiries\EnquiryForm() )->register();
+		( new \Poolhall\Integration\Enquiries\EnquiryReviewScreen( $this->company_sink() ) )->register();
 
 		// Candidate application popup: first-party capture emailed to Poolhall
 		// (build reference applypopupjourney.html). Not a Giig push.
@@ -196,6 +197,19 @@ final class Plugin {
 			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment(), $company, self::giig_candidate_list() );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			return new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
+		}
+	}
+
+	/**
+	 * Giig company sink for the employer-enquiry review screen; null when
+	 * credentials are absent (the screen then explains it is unconfigured).
+	 */
+	private function company_sink(): ?\Poolhall\Integration\Source\Giig\GiigCompanySink {
+		try {
+			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+			return new \Poolhall\Integration\Source\Giig\GiigCompanySink( GiigClient::from_environment(), $company );
+		} catch ( \Poolhall\Integration\Source\SourceException ) {
+			return null;
 		}
 	}
 

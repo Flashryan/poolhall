@@ -84,6 +84,15 @@ final class EnquiryRequest {
 		return $errors;
 	}
 
+	/**
+	 * A business-development lead rather than a message: the hiring form,
+	 * or the contact form with "Employer looking to hire" selected. Only
+	 * these are stored for the Giig company-creation review queue.
+	 */
+	public function is_employer(): bool {
+		return self::KIND_HIRING === $this->kind || 'employer' === $this->enquirer_type;
+	}
+
 	private static function clean( mixed $value, int $max ): string {
 		if ( ! is_string( $value ) ) {
 			return '';

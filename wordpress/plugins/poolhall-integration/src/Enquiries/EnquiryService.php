@@ -57,6 +57,13 @@ final class EnquiryService {
 			);
 		}
 
+		// Record employer leads first (never-lose, same as applications):
+		// the review screen offers one-click Giig company creation, and the
+		// lead survives even if the notification email fails below.
+		if ( $request->is_employer() ) {
+			$this->store_employer_lead( $request );
+		}
+
 		if ( ! $this->mailer->send( $this->inbox( $request->kind ), $this->subject( $request ), $this->body( $request ) ) ) {
 			$this->logger->log( 'enquiry_mail_failed', array( 'kind' => $request->kind ) );
 			return array(
@@ -69,6 +76,27 @@ final class EnquiryService {
 		return array(
 			'status' => self::STATUS_SENT,
 			'errors' => array(),
+		);
+	}
+
+	private function store_employer_lead( EnquiryRequest $request ): void {
+		\Poolhall\Integration\Applications\ApplicationRecord::store(
+			sprintf(
+				/* translators: %s: company name (or contact name when no company given). */
+				__( '%s — employer enquiry', 'poolhall-integration' ),
+				'' !== $request->company ? $request->company : $request->name
+			),
+			array(
+				'kind'          => 'enquiry',
+				'company_name'  => $request->company,
+				'contact_name'  => $request->name,
+				'contact_email' => $request->email,
+				'contact_phone' => $request->phone,
+				'message'       => $request->message,
+				'enquiry_kind'  => $request->kind,
+				'review_status' => 'new',
+				'submitted_at'  => gmdate( \DateTimeInterface::ATOM ),
+			)
 		);
 	}
 

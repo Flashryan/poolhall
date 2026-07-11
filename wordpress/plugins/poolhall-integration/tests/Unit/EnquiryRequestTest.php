@@ -96,4 +96,15 @@ final class EnquiryRequestTest extends TestCase {
 
 		self::assertSame( EnquiryRequest::KIND_CONTACT, $request->kind );
 	}
+
+	public function test_is_employer_for_hiring_form_and_employer_contact_type(): void {
+		$hiring = EnquiryRequest::from_post( EnquiryRequest::KIND_HIRING, $this->post( array( 'enquirer_type' => '' ) ) );
+		self::assertTrue( $hiring->is_employer() );
+
+		$employer_contact = EnquiryRequest::from_post( EnquiryRequest::KIND_CONTACT, $this->post( array( 'enquirer_type' => 'employer' ) ) );
+		self::assertTrue( $employer_contact->is_employer() );
+
+		$candidate_contact = EnquiryRequest::from_post( EnquiryRequest::KIND_CONTACT, $this->post( array( 'enquirer_type' => 'candidate' ) ) );
+		self::assertFalse( $candidate_contact->is_employer() );
+	}
 }
