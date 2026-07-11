@@ -23,6 +23,7 @@ final class RegistrationRequest {
 	private const MAX_NAME    = 100;
 	private const MAX_PHONE   = 40;
 	private const MAX_SHORT   = 160;
+	private const MAX_SKILLS  = 300;
 	private const MAX_MESSAGE = 4000;
 
 	public function __construct(
@@ -35,7 +36,8 @@ final class RegistrationRequest {
 		public readonly string $salary_expectations,
 		public readonly string $linkedin,
 		public readonly string $message,
-		public readonly bool $consented
+		public readonly bool $consented,
+		public readonly string $skills = ''
 	) {
 	}
 
@@ -53,7 +55,8 @@ final class RegistrationRequest {
 			self::clean( $fields['salary_expectations'] ?? '', self::MAX_SHORT ),
 			self::clean_url( $fields['linkedin'] ?? '' ),
 			self::clean_multiline( $fields['message'] ?? '', self::MAX_MESSAGE ),
-			'1' === ( $fields['consent'] ?? '' )
+			'1' === ( $fields['consent'] ?? '' ),
+			self::clean( $fields['skills'] ?? '', self::MAX_SKILLS )
 		);
 	}
 

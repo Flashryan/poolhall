@@ -193,10 +193,21 @@ final class Plugin {
 		}
 		try {
 			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
-			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment(), $company );
+			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment(), $company, self::giig_candidate_list() );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			return new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
 		}
+	}
+
+	/**
+	 * Optional Giig list every website-created candidate is filed into
+	 * (e.g. "Website Registrations"). Lists are created in the Giig UI —
+	 * there is no API endpoint — so this stays empty until the client makes
+	 * one and its id is saved here. Not a secret, hence an option.
+	 */
+	private static function giig_candidate_list(): ?string {
+		$list = trim( (string) get_option( 'poolhall_giig_candidate_list', '' ) );
+		return '' !== $list ? $list : null;
 	}
 
 	/**
@@ -211,7 +222,7 @@ final class Plugin {
 			// Short per-call timeout: the two-step push runs inside the
 			// candidate's own request, which must never outlive PHP's 30s
 			// budget (a timeout mid-request would break the modal's JSON).
-			$sink = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment( 8 ), $company );
+			$sink = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment( 8 ), $company, self::giig_candidate_list() );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			$sink = null; // Credentials absent: first-party capture only.
 		}

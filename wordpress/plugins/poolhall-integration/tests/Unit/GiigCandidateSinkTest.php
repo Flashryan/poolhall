@@ -71,6 +71,28 @@ final class GiigCandidateSinkTest extends TestCase {
 		self::assertArrayNotHasKey( 'CompanyId', $without );
 	}
 
+	public function test_candidate_list_included_only_when_given(): void {
+		$with    = GiigCandidateSink::request_body( new CandidatePayload( 'Jane', 'Smith' ), null, '1234' );
+		$without = GiigCandidateSink::request_body( new CandidatePayload( 'Jane', 'Smith' ) );
+
+		self::assertSame( '1234', $with['CandidateList'] );
+		self::assertArrayNotHasKey( 'CandidateList', $without );
+	}
+
+	public function test_skills_map_to_giig_skills_field(): void {
+		$payload = new CandidatePayload(
+			first_name: 'Jane',
+			last_name: 'Smith',
+			skills: 'AutoCAD, CNC programming, PPC'
+		);
+		$body    = GiigCandidateSink::request_body( $payload );
+
+		self::assertSame( 'AutoCAD, CNC programming, PPC', $body['Skills'] );
+
+		$empty = GiigCandidateSink::request_body( new CandidatePayload( 'Jane', 'Smith' ) );
+		self::assertArrayNotHasKey( 'Skills', $empty );
+	}
+
 	public function test_extract_candidate_id_reads_common_shapes(): void {
 		self::assertSame( '4321', GiigCandidateSink::extract_candidate_id( array( 'CandidateId' => 4321 ) ) );
 		self::assertSame( '4321', GiigCandidateSink::extract_candidate_id( array( 'candidateId' => '4321' ) ) );

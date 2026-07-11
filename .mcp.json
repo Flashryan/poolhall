@@ -15,6 +15,13 @@
         "WP_API_USERNAME": "poolhall-admin",
         "WP_API_PASSWORD": "${NOVAMIRA_WP_APP_PASSWORD}"
       }
+    },
+    "novamira-visual-lightslat": {
+      "command": "npx",
+      "args": ["-y", "novamira-visual-mcp@latest"],
+      "env": {
+        "NOVAMIRA_VISUAL_WORKSPACE_URL": "https://lightslategrey-hare-335761.hostingersite.com/wp-admin/admin-post.php?action=novamira-visual"
+      }
     }
   }
 }

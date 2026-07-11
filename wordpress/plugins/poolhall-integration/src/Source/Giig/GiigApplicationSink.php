@@ -42,6 +42,7 @@ final class GiigApplicationSink implements ApplicationSink {
 	public function __construct(
 		private readonly GiigClient $client,
 		private readonly ?string $company_id = null,
+		private readonly ?string $candidate_list = null,
 	) {}
 
 	public function capabilities(): ApplicationCapabilities {
@@ -57,7 +58,7 @@ final class GiigApplicationSink implements ApplicationSink {
 		$candidate_id = $this->cached_candidate_id( $payload->idempotency_key );
 
 		if ( null === $candidate_id ) {
-			$decoded      = $this->client->post_json( self::PATH_CANDIDATE, self::candidate_body( $payload, $this->company_id ) );
+			$decoded      = $this->client->post_json( self::PATH_CANDIDATE, self::candidate_body( $payload, $this->company_id, $this->candidate_list ) );
 			$candidate_id = GiigCandidateSink::extract_candidate_id( $decoded );
 			if ( '' === $candidate_id ) {
 				throw new SourceException( 'Giig candidate create returned no CandidateId.', true );
@@ -85,7 +86,7 @@ final class GiigApplicationSink implements ApplicationSink {
 	 *
 	 * @return array<string,string>
 	 */
-	public static function candidate_body( ApplicationPayload $payload, ?string $company_id = null ): array {
+	public static function candidate_body( ApplicationPayload $payload, ?string $company_id = null, ?string $candidate_list = null ): array {
 		$notes = trim( (string) $payload->message );
 		if ( null !== $payload->cv_original_filename && '' !== $payload->cv_original_filename ) {
 			$notes .= ( '' !== $notes ? "\n\n" : '' ) . 'CV held by Poolhall: ' . $payload->cv_original_filename;
@@ -111,6 +112,9 @@ final class GiigApplicationSink implements ApplicationSink {
 
 		if ( null !== $company_id && '' !== $company_id ) {
 			$body['CompanyId'] = $company_id;
+		}
+		if ( null !== $candidate_list && '' !== $candidate_list ) {
+			$body['CandidateList'] = $candidate_list;
 		}
 
 		return $body;

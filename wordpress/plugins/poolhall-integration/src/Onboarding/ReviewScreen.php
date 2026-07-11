@@ -99,6 +99,7 @@ final class ReviewScreen {
 			$link  = $this->invites->link( $token, 'candidate-registration' );
 			$this->send_invite( $email, $first, 'complete your full registration', $link );
 			update_post_meta( $record, 'review_status', 'invite_sent' );
+			$this->giig_note( $record, 'Approved on the website: full registration invite emailed to the candidate (single-use link, expires in 14 days).' );
 		} elseif ( 'send_starter' === $do ) {
 			$token = $this->invites->create( $record, array( 'starter', 'terms' ) );
 			$this->send_invite(
@@ -108,9 +109,30 @@ final class ReviewScreen {
 				$this->invites->link( $token, 'candidate-starter-statement' ) . "\n" . $this->invites->link( $token, 'candidate-terms' )
 			);
 			update_post_meta( $record, 'review_status', 'invite_sent' );
+			$this->giig_note( $record, 'Starter statement and candidate terms invites emailed to the candidate from the website (single-use links, expire in 14 days).' );
 		}
 		wp_safe_redirect( admin_url( 'admin.php?page=poolhall-candidates' ) );
 		exit;
+	}
+
+	/**
+	 * Mirrors the review action onto the Giig candidate timeline (invite
+	 * links themselves are never included — they are credentials). Non-fatal.
+	 */
+	private function giig_note( int $record, string $note ): void {
+		$candidate_id = (string) get_post_meta( $record, 'giig_candidate_id', true );
+		if ( '' === $candidate_id ) {
+			return;
+		}
+		try {
+			$sink = \Poolhall\Integration\Plugin::instance()->candidate_sink_public();
+			if ( $sink instanceof \Poolhall\Integration\Source\Giig\GiigCandidateSink ) {
+				$sink->add_note( $candidate_id, $note );
+			}
+		} catch ( \Throwable $t ) {
+			// The review action itself succeeded; a missed ATS note is not worth surfacing.
+			unset( $t );
+		}
 	}
 
 	private function send_invite( string $email, string $first, string $what, string $links ): void {

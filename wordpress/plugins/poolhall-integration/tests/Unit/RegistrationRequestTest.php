@@ -28,6 +28,7 @@ final class RegistrationRequestTest extends TestCase {
 				'linkedin'            => 'https://www.linkedin.com/in/janesmith',
 				'message'             => 'Four weeks notice.',
 				'consent'             => '1',
+				'skills'              => 'AutoCAD, CNC programming',
 			),
 			$overrides
 		);
@@ -80,8 +81,18 @@ final class RegistrationRequestTest extends TestCase {
 		self::assertSame( 'Wolverhampton', $payload->location );
 		self::assertSame( '£45,000+', $payload->salary_expectations );
 		self::assertSame( 'https://www.linkedin.com/in/janesmith', $payload->linkedin );
+		self::assertSame( 'AutoCAD, CNC programming', $payload->skills );
 		self::assertStringContainsString( 'Four weeks notice.', $payload->notes );
 		self::assertStringContainsString( 'jane-smith-cv.pdf', $payload->notes );
 		self::assertTrue( $payload->is_valid() );
+	}
+
+	public function test_skills_default_to_empty_when_absent(): void {
+		$post = $this->post();
+		unset( $post['skills'] );
+		$request = RegistrationRequest::from_post( $post );
+
+		self::assertSame( '', $request->skills );
+		self::assertSame( array(), $request->validation_errors() );
 	}
 }

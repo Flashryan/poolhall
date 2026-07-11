@@ -216,6 +216,7 @@ final class DocumentWorkflow {
 			if ( 'full' === $kind ) {
 				$this->update_giig_candidate( $record, $entry );
 			}
+			$this->giig_timeline_note( $record, $entry, (string) $kind );
 		}
 
 		try {
@@ -256,6 +257,41 @@ final class DocumentWorkflow {
 			$this->note( $entry, 'Giig candidate #' . $candidate_id . ' updated from the full registration (no duplicate created).' );
 		} catch ( \Throwable $t ) {
 			$this->note( $entry, 'Giig candidate update skipped: ' . $t->getMessage() . ' (candidate remains #' . $candidate_id . ').' );
+		}
+	}
+
+	/**
+	 * Logs the completed document on the candidate's Giig timeline so the
+	 * recruiter sees onboarding progress inside the ATS. Only the fact of
+	 * completion is sent — never form content (hard GDPR rule). Non-fatal.
+	 */
+	private function giig_timeline_note( int $record, array $entry, string $kind ): void {
+		$candidate_id = (string) get_post_meta( $record, 'giig_candidate_id', true );
+		if ( '' === $candidate_id ) {
+			return;
+		}
+		$what = match ( $kind ) {
+			'full'    => 'Full Candidate Registration',
+			'starter' => 'Starter Statement & P45 form',
+			'terms'   => 'Candidate Terms',
+			default   => '',
+		};
+		if ( '' === $what ) {
+			return;
+		}
+		try {
+			$sink = \Poolhall\Integration\Plugin::instance()->candidate_sink_public();
+			if ( ! $sink instanceof GiigCandidateSink ) {
+				return;
+			}
+			$sink->add_note(
+				$candidate_id,
+				'Candidate completed and signed the ' . $what . ' on the website.'
+				. ' The signed PDF is on its way to ' . self::ADMIN_EMAIL . ' (entry #' . (string) ( $entry['id'] ?? '' ) . ').'
+			);
+			$this->note( $entry, 'Logged on Giig candidate #' . $candidate_id . ' timeline.' );
+		} catch ( \Throwable $t ) {
+			$this->logger->log( 'giig_note_failed', array( 'entry' => (string) ( $entry['id'] ?? '' ) ) );
 		}
 	}
 

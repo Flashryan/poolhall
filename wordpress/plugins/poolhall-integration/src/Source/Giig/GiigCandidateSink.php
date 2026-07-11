@@ -30,11 +30,13 @@ use Poolhall\Integration\Source\SourceException;
  */
 final class GiigCandidateSink implements CandidateSink {
 
-	private const PATH = '/public/api/v1/candidate';
+	private const PATH      = '/public/api/v1/candidate';
+	private const PATH_NOTE = '/public/api/v1/activity/note';
 
 	public function __construct(
 		private readonly GiigClient $client,
 		private readonly ?string $company_id = null,
+		private readonly ?string $candidate_list = null,
 	) {}
 
 	public function is_configured(): bool {
@@ -46,7 +48,7 @@ final class GiigCandidateSink implements CandidateSink {
 			throw new SourceException( 'Candidate payload is missing a first or last name.' );
 		}
 
-		$decoded = $this->client->post_json( self::PATH, self::request_body( $payload, $this->company_id ) );
+		$decoded = $this->client->post_json( self::PATH, self::request_body( $payload, $this->company_id, $this->candidate_list ) );
 		$id      = self::extract_candidate_id( $decoded );
 
 		if ( '' === $id ) {
@@ -76,12 +78,35 @@ final class GiigCandidateSink implements CandidateSink {
 	}
 
 	/**
+	 * POST /activity/note — writes a note onto the candidate's Giig timeline
+	 * so website events (form completions, invites, re-registrations) are
+	 * visible in the ATS without checking email or WP admin.
+	 *
+	 * Contract proven live 2026-07-11: Source, Id and Note are required;
+	 * Subject is coerced to "General" by the API, so the note text carries
+	 * the meaning. Never include sensitive data in $note (hard GDPR rule).
+	 *
+	 * @throws SourceException On transport or API failure.
+	 */
+	public function add_note( string $candidate_id, string $note ): void {
+		$this->client->post_json(
+			self::PATH_NOTE,
+			array(
+				'Source'     => 'Website',
+				'RecordType' => 'candidate',
+				'Id'         => $candidate_id,
+				'Note'       => $note,
+			)
+		);
+	}
+
+	/**
 	 * Map our neutral payload onto Giig's candidate-create fields. Optional
 	 * fields are omitted when empty rather than sent blank.
 	 *
 	 * @return array<string,string>
 	 */
-	public static function request_body( CandidatePayload $payload, ?string $company_id = null ): array {
+	public static function request_body( CandidatePayload $payload, ?string $company_id = null, ?string $candidate_list = null ): array {
 		$body = array(
 			'FirstName' => trim( $payload->first_name ),
 			'LastName'  => trim( $payload->last_name ),
@@ -105,6 +130,7 @@ final class GiigCandidateSink implements CandidateSink {
 			'Location'           => $payload->location,
 			'SalaryExpectations' => null !== $numeric ? number_format( $numeric, 2, '.', '' ) : '',
 			'Currency'           => null !== $numeric ? self::currency_enum( $raw_salary ) : '',
+			'Skills'             => $payload->skills,
 			'Tags'               => $payload->tags,
 			'LinkedIn'           => $payload->linkedin,
 			'Notes'              => $notes,
@@ -117,6 +143,9 @@ final class GiigCandidateSink implements CandidateSink {
 
 		if ( null !== $company_id && '' !== $company_id ) {
 			$body['CompanyId'] = $company_id;
+		}
+		if ( null !== $candidate_list && '' !== $candidate_list ) {
+			$body['CandidateList'] = $candidate_list;
 		}
 
 		return $body;

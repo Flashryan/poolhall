@@ -131,6 +131,7 @@ final class CvRegistration {
 			. $field( 'salary_expectations', __( 'Salary expectations (optional)', 'poolhall-integration' ), 'text', false, '', __( 'e.g. &pound;40,000+', 'poolhall-integration' ) )
 			. $field( 'linkedin', __( 'LinkedIn (optional)', 'poolhall-integration' ), 'url', false, 'url', 'https://' )
 			. '</div>'
+			. $field( 'skills', __( 'Key skills (optional)', 'poolhall-integration' ), 'text', false, '', __( 'e.g. AutoCAD, CNC programming, PPC — comma separated', 'poolhall-integration' ) )
 			. '<div class="field"><label for="ph-reg-cv">' . esc_html__( 'Upload CV', 'poolhall-integration' ) . ' <span class="req" aria-hidden="true">*</span></label>'
 			. '<div class="upload">' . $upload_icon
 			. '<span class="ut">' . esc_html__( 'Drag &amp; drop or browse', 'poolhall-integration' ) . '</span>'
@@ -191,6 +192,7 @@ final class CvRegistration {
 				'role_title'          => $request->role_title,
 				'salary_expectations' => $request->salary_expectations,
 				'linkedin'            => $request->linkedin,
+				'skills'              => $request->skills,
 				'message'             => $request->message,
 				'cv_filename'         => $cv['name'],
 				'cv_status'           => 'pending',
@@ -246,6 +248,20 @@ final class CvRegistration {
 			ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
 			ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $existing );
 			ApplicationRecord::update_meta( $record_id, 'giig_push_note', 'Reused existing candidate (same email) instead of creating a duplicate.' );
+			// Surface the repeat interest on the Giig timeline — otherwise the
+			// reuse is invisible in the ATS. Nothing sensitive in the note.
+			if ( $this->sink instanceof \Poolhall\Integration\Source\Giig\GiigCandidateSink ) {
+				try {
+					$this->sink->add_note(
+						$existing,
+						'Candidate re-registered via the website pre-registration form.'
+						. ( '' !== $request->role_title ? ' Looking for: ' . $request->role_title . '.' : '' )
+						. ' Updated details and new CV are with the applications inbox (record #' . $record_id . ').'
+					);
+				} catch ( \Throwable $t ) {
+					$this->logger->log( 'giig_note_failed', array( 'record' => (string) $record_id ) );
+				}
+			}
 			return;
 		}
 		if ( ! $this->sink->is_configured() ) {
@@ -320,6 +336,8 @@ final class CvRegistration {
 				salary_expectations: (string) get_post_meta( $record_id, 'salary_expectations', true ),
 				linkedin: (string) get_post_meta( $record_id, 'linkedin', true ),
 				notes: self::notes( (string) get_post_meta( $record_id, 'message', true ), (string) get_post_meta( $record_id, 'cv_filename', true ) ),
+				tags: 'Website,Pre-Registration',
+				skills: (string) get_post_meta( $record_id, 'skills', true ),
 			);
 
 			try {
@@ -349,6 +367,7 @@ final class CvRegistration {
 			linkedin: $request->linkedin,
 			notes: self::notes( $request->message, $cv_name ),
 			tags: 'Website,Pre-Registration',
+			skills: $request->skills,
 		);
 	}
 
@@ -424,6 +443,7 @@ final class CvRegistration {
 			'Location: ' . ( '' !== $request->location ? $request->location : '(not given)' ),
 			'Looking for: ' . ( '' !== $request->role_title ? $request->role_title : '(not given)' ),
 			'Salary expectations: ' . ( '' !== $request->salary_expectations ? $request->salary_expectations : '(not given)' ),
+			'Key skills: ' . ( '' !== $request->skills ? $request->skills : '(not given)' ),
 			'LinkedIn: ' . ( '' !== $request->linkedin ? $request->linkedin : '(not given)' ),
 			'',
 			'Message:',
@@ -474,6 +494,7 @@ final class CvRegistration {
 			$pdf->row( 'Location', $request->location );
 			$pdf->row( 'Looking for', $request->role_title );
 			$pdf->row( 'Salary expectations', $request->salary_expectations );
+			$pdf->row( 'Key skills', $request->skills );
 			$pdf->row( 'LinkedIn', $request->linkedin );
 			$pdf->row( 'Message', $request->message );
 			$pdf->row( 'CV file', $cv_name );

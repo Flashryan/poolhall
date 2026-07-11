@@ -68,6 +68,14 @@ final class GiigApplicationSinkTest extends TestCase {
 		self::assertArrayNotHasKey( 'CompanyId', $body );
 	}
 
+	public function test_candidate_body_includes_candidate_list_when_given(): void {
+		$with    = GiigApplicationSink::candidate_body( $this->payload(), null, '1234' );
+		$without = GiigApplicationSink::candidate_body( $this->payload() );
+
+		self::assertSame( '1234', $with['CandidateList'] );
+		self::assertArrayNotHasKey( 'CandidateList', $without );
+	}
+
 	public function test_applicant_body_uses_salary_from_or_zero(): void {
 		$with = GiigApplicationSink::applicant_body( $this->payload(), '555' );
 		self::assertSame( '555', $with['CandidateId'] );
