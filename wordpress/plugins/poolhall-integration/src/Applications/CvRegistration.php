@@ -79,7 +79,8 @@ final class CvRegistration {
 				. '<h3 class="ph-h3">' . esc_html__( 'You&rsquo;re registered', 'poolhall-integration' ) . '</h3>'
 				. '<p class="ph-body">' . esc_html__( 'Thanks! Your details and CV are with the team, and one of us will call for a proper conversation about what you&rsquo;re after.', 'poolhall-integration' ) . '</p>'
 				. '<p class="ph-body"><a class="ph-button ph-button--primary" href="' . esc_url( home_url( '/jobs/' ) ) . '">' . esc_html__( 'Browse live jobs', 'poolhall-integration' ) . '</a></p>'
-				. '</div>';
+				. '</div>'
+				. do_shortcode( '[poolhall_v2_job_matches]' );
 		}
 
 		$notice = '';
@@ -219,6 +220,22 @@ final class CvRegistration {
 		} else {
 			ApplicationRecord::update_meta( $record_id, 'cv_status', 'stored_pending' );
 			$this->logger->log( 'registration_mail_failed', array( 'record' => (string) $record_id ) );
+		}
+
+		// Opaque hint token so the confirmation screen can show matching live
+		// roles: the role/skills text stays server-side in a short transient,
+		// never in the URL (hard rule: no personal data in URL parameters).
+		if ( '' !== $request->role_title || '' !== $request->skills ) {
+			$match_token = strtolower( wp_generate_password( 16, false ) );
+			set_transient(
+				'poolhall_reg_match_' . $match_token,
+				array(
+					'role'   => $request->role_title,
+					'skills' => $request->skills,
+				),
+				15 * 60
+			);
+			$back = add_query_arg( 'm', $match_token, $back );
 		}
 
 		$this->redirect( $back, $sent ? 'sent' : 'received', array() );

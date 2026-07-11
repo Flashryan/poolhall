@@ -50,6 +50,40 @@ final class GiigCompanySinkTest extends TestCase {
 		self::assertSame( array( 'Name' => 'Acme' ), $body );
 	}
 
+	public function test_contact_body_uses_giig_contact_field_names(): void {
+		$body = GiigCompanySink::contact_body(
+			'Jane',
+			'Smith',
+			array(
+				'Email'         => 'jane@acme.example',
+				'ContactNumber' => '0121 000 0000',
+				'Company'       => 'Acme Fabrication Ltd',
+			),
+			'166598'
+		);
+
+		self::assertSame( 'Jane', $body['FirstName'] );
+		self::assertSame( 'Smith', $body['LastName'] );
+		self::assertSame( 'jane@acme.example', $body['Email'] );
+		self::assertSame( '0121 000 0000', $body['ContactNumber'] );
+		self::assertSame( 'Acme Fabrication Ltd', $body['Company'] );
+		self::assertSame( '166598', $body['CompanyId'] );
+		self::assertArrayNotHasKey( 'EmailAddress', $body );
+		self::assertArrayNotHasKey( 'PhoneNumber', $body );
+	}
+
+	public function test_contact_body_drops_empty_optionals(): void {
+		$body = GiigCompanySink::contact_body( 'Jane', '-', array( 'Email' => ' ' ) );
+
+		self::assertSame(
+			array(
+				'FirstName' => 'Jane',
+				'LastName'  => '-',
+			),
+			$body
+		);
+	}
+
 	public function test_extract_company_id_reads_common_shapes(): void {
 		self::assertSame( '777', GiigCompanySink::extract_company_id( array( 'id' => 777 ) ) );
 		self::assertSame( '777', GiigCompanySink::extract_company_id( array( 'data' => array( 'Id' => '777' ) ) ) );

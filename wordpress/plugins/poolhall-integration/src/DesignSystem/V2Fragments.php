@@ -44,6 +44,7 @@ final class V2Fragments {
 		'poolhall_v2_jobs_head'     => 'jobs_head',
 		'poolhall_v2_legal_head'    => 'legal_head',
 		'poolhall_v2_cta_bands'     => 'cta_bands',
+		'poolhall_v2_job_matches'   => 'job_matches',
 	);
 
 	public function __construct( private readonly FeaturedQuery $featured ) {
@@ -1282,6 +1283,71 @@ final class V2Fragments {
 			. '<div class="container"><div class="job-layout">' . $body . $aside . '</div>' . $similar . '</div>'
 			. $mobile
 			. '</div>';
+	}
+
+	/**
+	 * Live roles on the registration confirmation, personalised where
+	 * possible: the redirect carries an opaque `m` token whose short-lived
+	 * transient holds what the candidate said they're after (role/skills,
+	 * server-side only — no personal data in the URL). Falls back to the
+	 * latest live roles when the hint is missing or matches nothing.
+	 */
+	public function job_matches(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display hint on a GET back-redirect.
+		$token = isset( $_GET['m'] ) ? preg_replace( '/[^a-z0-9]/', '', sanitize_key( wp_unslash( $_GET['m'] ) ) ) : '';
+
+		$role = '';
+		if ( '' !== $token && strlen( $token ) <= 24 ) {
+			$hint = get_transient( 'poolhall_reg_match_' . $token );
+			if ( is_array( $hint ) ) {
+				$role = trim( (string) ( $hint['role'] ?? '' ) );
+				if ( '' === $role ) {
+					$role = trim( (string) ( $hint['skills'] ?? '' ) );
+				}
+			}
+		}
+
+		$ids = array();
+		if ( '' !== $role ) {
+			$ids = get_posts(
+				array(
+					'post_type'      => JobPostType::POST_TYPE,
+					'post_status'    => 'publish',
+					'posts_per_page' => 3,
+					'fields'         => 'ids',
+					's'              => $role,
+				)
+			);
+		}
+		$personal = array() !== $ids;
+		if ( ! $personal ) {
+			$ids = get_posts(
+				array(
+					'post_type'      => JobPostType::POST_TYPE,
+					'post_status'    => 'publish',
+					'posts_per_page' => 3,
+					'fields'         => 'ids',
+					'orderby'        => 'date',
+					'order'          => 'DESC',
+				)
+			);
+		}
+		if ( array() === $ids ) {
+			return '';
+		}
+
+		$cards = '';
+		foreach ( $ids as $post_id ) {
+			$cards .= $this->job_card( (int) $post_id );
+		}
+
+		return '<section style="padding:56px 0 0">'
+			. '<div class="section-head"><div>'
+			. '<p class="label"><span class="idx">//</span> While you&rsquo;re here</p>'
+			. '<h2 class="h2">' . ( $personal ? 'Live roles matching what you&rsquo;re after' : 'Live roles right now' ) . '</h2>'
+			. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'jobs' ) ) . '">All jobs ' . $this->icon( 'arrow-right' ) . '</a></div>'
+			. '<div class="secjobs">' . $cards . '</div>'
+			. '</section>';
 	}
 
 	// --------------------------------------------------- jobs archive head --

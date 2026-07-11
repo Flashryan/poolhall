@@ -78,9 +78,11 @@ final class EnquiryReviewScreen {
 				. '<br /><span style="color:#666">' . esc_html( (string) get_post_meta( $id, 'contact_phone', true ) ) . '</span></td>';
 			echo '<td>' . esc_html( get_the_date( 'j M Y H:i', $r ) ) . '</td>';
 			echo '<td>' . esc_html( mb_substr( $message, 0, 160 ) . ( mb_strlen( $message ) > 160 ? '…' : '' ) ) . '</td>';
+			$contact_id = (string) get_post_meta( $id, 'giig_contact_id', true );
 			echo '<td>' . ( '' !== $giig
 				? '<a href="https://app.giighire.com/companies/' . esc_attr( $giig ) . '" target="_blank" rel="noopener">#' . esc_html( $giig ) . '</a>'
-				: '&mdash;' ) . '</td>';
+				: '&mdash;' )
+				. ( '' !== $contact_id ? '<br /><span style="color:#666">contact #' . esc_html( $contact_id ) . '</span>' : '' ) . '</td>';
 			echo '<td><code>' . esc_html( str_replace( '_', ' ', $status ) ) . '</code>'
 				. ( '' !== $error && 'company_created' !== $status ? '<br /><span style="color:#b32d2e">' . esc_html( $error ) . '</span>' : '' ) . '</td>';
 			echo '<td>';
@@ -143,6 +145,47 @@ final class EnquiryReviewScreen {
 			delete_post_meta( $record, 'giig_push_error' );
 		} catch ( SourceException $e ) {
 			update_post_meta( $record, 'giig_push_error', $e->getMessage() );
+			return;
+		}
+
+		$this->create_contact( $record, $company );
+	}
+
+	/**
+	 * The person behind the approved enquiry becomes a Giig contact attached
+	 * to the new company, with the enquiry message on their timeline. The
+	 * company is the primary outcome, so contact failures are recorded but
+	 * never undo the company_created status. Giig dedupes contacts by email,
+	 * so re-approving a repeat enquiry updates rather than duplicates.
+	 */
+	private function create_contact( int $record, string $company ): void {
+		$name = trim( (string) get_post_meta( $record, 'contact_name', true ) );
+		if ( '' === $name || null === $this->sink ) {
+			return;
+		}
+		$parts = preg_split( '/\s+/', $name, 2 );
+		$first = is_array( $parts ) && '' !== ( $parts[0] ?? '' ) ? $parts[0] : $name;
+		$last  = is_array( $parts ) && isset( $parts[1] ) && '' !== $parts[1] ? $parts[1] : '-';
+
+		try {
+			$contact_id = $this->sink->create_contact(
+				$first,
+				$last,
+				array(
+					'Email'         => (string) get_post_meta( $record, 'contact_email', true ),
+					'ContactNumber' => (string) get_post_meta( $record, 'contact_phone', true ),
+					'Company'       => $company,
+				)
+			);
+			update_post_meta( $record, 'giig_contact_id', $contact_id );
+
+			$message = (string) get_post_meta( $record, 'message', true );
+			$this->sink->add_contact_note(
+				$contact_id,
+				'Hiring enquiry via the website (record #' . $record . "):\n\n" . $message
+			);
+		} catch ( SourceException $e ) {
+			update_post_meta( $record, 'giig_push_error', 'Company created; contact step failed: ' . $e->getMessage() );
 		}
 	}
 }

@@ -24,7 +24,9 @@ use Poolhall\Integration\Source\SourceException;
  */
 final class GiigCompanySink {
 
-	private const PATH = '/public/api/v1/company';
+	private const PATH         = '/public/api/v1/company';
+	private const PATH_CONTACT = '/public/api/v1/contact';
+	private const PATH_NOTE    = '/public/api/v1/activity/note';
 
 	public function __construct(
 		private readonly GiigClient $client,
@@ -51,6 +53,69 @@ final class GiigCompanySink {
 			throw new SourceException( 'Giig company create returned no company id.', true );
 		}
 		return $id;
+	}
+
+	/**
+	 * Create the hiring contact and attach them to the company by name
+	 * (POST /contact; probed live 2026-07-11: FirstName is the only hard
+	 * requirement, the endpoint dedupes by Email server-side, and the
+	 * Company field attaches — or creates — the named company).
+	 *
+	 * @param array<string,string> $optional Optional Giig contact fields
+	 *                                       (Email, ContactNumber, JobTitle,
+	 *                                       Company).
+	 * @throws SourceException On transport/API failure or a missing id.
+	 */
+	public function create_contact( string $first_name, string $last_name, array $optional = array() ): string {
+		$decoded = $this->client->post_json( self::PATH_CONTACT, self::contact_body( $first_name, $last_name, $optional, $this->company_id ) );
+		$id      = self::extract_company_id( $decoded, $this->company_id );
+
+		if ( '' === $id ) {
+			throw new SourceException( 'Giig contact create returned no contact id.', true );
+		}
+		return $id;
+	}
+
+	/**
+	 * Contact-create body. Note Giig's contact field names differ from
+	 * candidates: Email (not EmailAddress) and ContactNumber (not
+	 * PhoneNumber).
+	 *
+	 * @param array<string,string> $optional Optional Giig contact fields.
+	 * @return array<string,string>
+	 */
+	public static function contact_body( string $first_name, string $last_name, array $optional = array(), ?string $company_id = null ): array {
+		$body = array(
+			'FirstName' => trim( $first_name ),
+			'LastName'  => trim( $last_name ),
+		);
+		foreach ( array( 'Email', 'ContactNumber', 'JobTitle', 'Company' ) as $key ) {
+			if ( isset( $optional[ $key ] ) && '' !== trim( $optional[ $key ] ) ) {
+				$body[ $key ] = trim( $optional[ $key ] );
+			}
+		}
+		if ( null !== $company_id && '' !== $company_id ) {
+			$body['CompanyId'] = $company_id;
+		}
+		return $body;
+	}
+
+	/**
+	 * Note on the contact's Giig timeline (POST /activity/note with
+	 * RecordType=contact) — how the enquiry message reaches the CRM.
+	 *
+	 * @throws SourceException On transport or API failure.
+	 */
+	public function add_contact_note( string $contact_id, string $note ): void {
+		$this->client->post_json(
+			self::PATH_NOTE,
+			array(
+				'Source'     => 'Website',
+				'RecordType' => 'contact',
+				'Id'         => $contact_id,
+				'Note'       => $note,
+			)
+		);
 	}
 
 	/**
