@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "novamira-visual-sstest-mn": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
