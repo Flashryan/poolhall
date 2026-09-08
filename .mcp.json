@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "novamira-visual-sstest-mn": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "novamira-visual-mcp@latest"
+      ],
+      "env": {
+        "NOVAMIRA_VISUAL_WORKSPACE_URL": "https://sstest.mnadevelopment.co.uk/wp-admin/admin-post.php?action=novamira-visual"
+      }
+    }
+  }
+}
