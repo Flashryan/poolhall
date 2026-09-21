@@ -479,20 +479,22 @@
 }() );
 
 /**
- * PRL brand mark: the logo's initials as a fine outline, offset off the
- * right of the "people at the heart of it" split. Each letter drifts up
- * into view and back out again as the section crosses the viewport, so
- * the mark reads as a slow signature rather than a static watermark.
+ * PRL brand mark: the logo's initials as a fine outline resting on the
+ * bottom edge of the "people at the heart of it" section, behind the
+ * photography. Each letter travels with the scroll rather than simply
+ * fading — downward as you scroll down, upward as you scroll back — so
+ * the mark reads as a slow signature that follows your direction.
  *
  * Injected rather than authored into the page because it is purely
- * decorative — no JS simply means no ornament, and the Elementor layout
+ * decorative: no JS just means no ornament, and the Elementor layout
  * never has to be rebuilt to carry it.
  */
 ( function () {
 	var collage = document.querySelector( '.ph-media-collage' );
 	if ( ! collage ) { return; }
 
-	var host = collage.closest( '.ph-split' );
+	// The section, not the split, so the mark can rest on its bottom edge.
+	var host = collage.closest( 'section' ) || collage.closest( '.ph-split' );
 	if ( ! host || host.querySelector( '.ph-brandmark' ) ) { return; }
 
 	var mark = document.createElement( 'div' );
@@ -521,11 +523,14 @@
 		return t * t * ( 3 - 2 * t );
 	};
 
-	var RISE = 38;      // px each letter travels on its way in and out.
-	var SPAN = 0.17;    // Share of the pass a single letter takes to arrive.
+	var TRAVEL  = 70;   // px a letter covers across its whole pass.
+	var SPAN    = 0.16; // Share of the pass a single letter takes to arrive.
 	var STAGGER = 0.07; // Gap between P, R and L.
 
+	var direction = 1;  // 1 while scrolling down, -1 while scrolling back up.
+	var lastY = window.pageYOffset || document.documentElement.scrollTop || 0;
 	var pending = false;
+
 	var paint = function () {
 		pending = false;
 		var box = host.getBoundingClientRect();
@@ -536,16 +541,25 @@
 		var progress = clamp( ( viewport - box.top ) / ( viewport + box.height ) );
 
 		for ( var i = 0; i < letters.length; i++ ) {
-			var arrive = smooth( clamp( ( progress - ( 0.16 + i * STAGGER ) ) / SPAN ) );
-			var depart = smooth( clamp( ( progress - ( 0.62 + i * STAGGER ) ) / SPAN ) );
-			var shown = arrive * ( 1 - depart );
+			var arrive = smooth( clamp( ( progress - ( 0.20 + i * STAGGER ) ) / SPAN ) );
+			var depart = smooth( clamp( ( progress - ( 0.66 + i * STAGGER ) ) / SPAN ) );
 
-			letters[ i ].style.opacity = shown.toFixed( 3 );
-			letters[ i ].style.transform = 'translateY(' + ( ( 1 - shown ) * RISE ).toFixed( 1 ) + 'px)';
+			// -1 before arriving, 0 while shown, +1 once gone: the letter keeps
+			// moving one way through its whole life, and the sign flips with the
+			// scroll direction so it leads the eye the way the page is going.
+			var offset = ( arrive + depart - 1 ) * direction * TRAVEL;
+
+			letters[ i ].style.opacity = ( arrive * ( 1 - depart ) ).toFixed( 3 );
+			letters[ i ].style.transform = 'translateY(' + offset.toFixed( 1 ) + 'px)';
 		}
 	};
 
 	var schedule = function () {
+		var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+		if ( y !== lastY ) {
+			direction = y > lastY ? 1 : -1;
+			lastY = y;
+		}
 		if ( pending ) { return; }
 		pending = true;
 		window.requestAnimationFrame( paint );
