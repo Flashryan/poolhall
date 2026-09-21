@@ -61,16 +61,7 @@ final class JobPostingSchema {
 		bool $direct_apply,
 	): ?array {
 		// Gate: required facts must exist and be accurate.
-		if ( '' === trim( $this->hiring_org_name ) || '' === trim( $this->hiring_org_url ) ) {
-			return null;
-		}
-		if ( '' === trim( $job->title ) || '' === trim( $job->description_html ) || null === $job->date_posted ) {
-			return null;
-		}
-		// A job with no resolvable location cannot be represented accurately
-		// unless it is fully remote.
-		$has_location = null !== $job->address_locality || null !== $job->address_region || null !== $job->location_display;
-		if ( WorkMode::Remote !== $job->work_mode && ! $has_location ) {
+		if ( array() !== $this->problems( $job ) ) {
 			return null;
 		}
 
@@ -133,6 +124,67 @@ final class JobPostingSchema {
 		}
 
 		return $schema;
+	}
+
+	/**
+	 * Why this job would carry no JobPosting markup — empty means eligible.
+	 *
+	 * Same gate `build()` applies, exposed so the Google Jobs admin screen
+	 * can tell staff exactly what to fix instead of silently omitting the
+	 * markup. Messages are written for a non-technical reader.
+	 *
+	 * @return string[]
+	 */
+	public function problems( SourceJob $job ): array {
+		$problems = array();
+
+		if ( '' === trim( $this->hiring_org_name ) ) {
+			$problems[] = __( 'The hiring organisation name is not set (Google Jobs settings).', 'poolhall-integration' );
+		}
+		if ( '' === trim( $this->hiring_org_url ) ) {
+			$problems[] = __( 'The hiring organisation website is not set (Google Jobs settings).', 'poolhall-integration' );
+		}
+		if ( '' === trim( $job->title ) ) {
+			$problems[] = __( 'The job has no title.', 'poolhall-integration' );
+		}
+		if ( '' === trim( $job->description_html ) ) {
+			$problems[] = __( 'The job has no description. Add the full advert text in Giig.', 'poolhall-integration' );
+		}
+		if ( null === $job->date_posted ) {
+			$problems[] = __( 'The job has no posting date from Giig.', 'poolhall-integration' );
+		}
+
+		// A job with no resolvable location cannot be represented accurately
+		// unless it is fully remote.
+		$has_location = null !== $job->address_locality || null !== $job->address_region || null !== $job->location_display;
+		if ( WorkMode::Remote !== $job->work_mode && ! $has_location ) {
+			$problems[] = __( 'The job has no location, and is not marked fully remote. Add a location in Giig.', 'poolhall-integration' );
+		}
+
+		return $problems;
+	}
+
+	/**
+	 * Non-blocking gaps: the job still qualifies, but filling these makes the
+	 * Google listing richer and lets candidates filter to it (salary and
+	 * employment-type filters are the two candidates use most).
+	 *
+	 * @return string[]
+	 */
+	public function recommendations( SourceJob $job ): array {
+		$notes = array();
+
+		if ( ! $job->salary->is_reliable() ) {
+			$notes[] = __( 'No structured salary — the listing cannot appear in salary-filtered searches. Add a salary range in Giig.', 'poolhall-integration' );
+		}
+		if ( null === $this->employment_type( $job->job_type ) ) {
+			$notes[] = __( 'No employment type (full-time, contract…) — set the job type in Giig.', 'poolhall-integration' );
+		}
+		if ( null === $this->hiring_org_logo ) {
+			$notes[] = __( 'No organisation logo set — Google may show the listing without your logo.', 'poolhall-integration' );
+		}
+
+		return $notes;
 	}
 
 	/**

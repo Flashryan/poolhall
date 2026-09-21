@@ -10,10 +10,7 @@ declare(strict_types=1);
 namespace Poolhall\Integration\Schema;
 
 use Poolhall\Integration\Jobs\JobPostType;
-use Poolhall\Integration\Source\SourceJob;
 use Poolhall\Integration\Support\Options;
-use Poolhall\Integration\Support\Salary;
-use Poolhall\Integration\Support\WorkMode;
 
 /**
  * Prints JobPosting JSON-LD in <head> on published, unexpired single job
@@ -26,6 +23,59 @@ final class SchemaOutput {
 
 	public function register(): void {
 		add_action( 'wp_head', array( $this, 'print_schema' ) );
+		// Expiry hygiene (Google "Remove a job posting"): a closed role must
+		// stop being advertised as live. Keeping the page reachable but
+		// unindexed and out of the sitemap is Google's recommended route and
+		// preserves inbound links, unlike deleting it.
+		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_expired_from_sitemap' ), 10, 2 );
+		add_filter( 'wp_robots', array( $this, 'noindex_expired' ) );
+	}
+
+	/**
+	 * Drop expired roles from the jobs sitemap.
+	 *
+	 * @param array<string,mixed> $args      Query args.
+	 * @param string              $post_type Post type being mapped.
+	 * @return array<string,mixed>
+	 */
+	public function exclude_expired_from_sitemap( $args, $post_type ) {
+		if ( JobPostType::POST_TYPE !== $post_type || ! is_array( $args ) ) {
+			return $args;
+		}
+
+		// Same comparison the jobs archive uses: ATOM strings sort
+		// lexicographically at a fixed +00:00 offset, so a plain string
+		// compare is correct and avoids MySQL's DATETIME cast choking on
+		// the 'T' separator.
+		$meta_query   = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
+		$meta_query[] = array(
+			'key'     => 'expires_at',
+			'value'   => gmdate( \DateTimeInterface::ATOM ),
+			'compare' => '>',
+		);
+
+		$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- sitemap generation is cached and bounded.
+
+		return $args;
+	}
+
+	/**
+	 * Tell search engines to drop an expired role rather than keep listing a
+	 * job nobody can apply for.
+	 *
+	 * @param array<string,mixed> $robots Robots directives.
+	 * @return array<string,mixed>
+	 */
+	public function noindex_expired( $robots ) {
+		if ( ! is_array( $robots ) || ! is_singular( JobPostType::POST_TYPE ) ) {
+			return $robots;
+		}
+		$post = get_post();
+		if ( $post instanceof \WP_Post && JobFromPost::is_expired( $post->ID ) ) {
+			$robots['noindex']  = true;
+			$robots['nofollow'] = false;
+		}
+		return $robots;
 	}
 
 	public function print_schema(): void {
@@ -37,16 +87,15 @@ final class SchemaOutput {
 			return;
 		}
 
-		$expires_raw = (string) get_post_meta( $post->ID, 'expires_at', true );
-		if ( '' === $expires_raw ) {
+		$expires_at = JobFromPost::expires_at( $post->ID );
+		if ( null === $expires_at ) {
 			return;
 		}
-		$expires_at = new \DateTimeImmutable( $expires_raw );
-		if ( new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) >= $expires_at ) {
+		if ( JobFromPost::is_expired( $post->ID ) ) {
 			return; // Expired jobs must not carry JobPosting markup.
 		}
 
-		$job = $this->job_from_post( $post->ID );
+		$job = JobFromPost::build( $post->ID );
 		if ( null === $job ) {
 			return;
 		}
@@ -71,67 +120,5 @@ final class SchemaOutput {
 		echo '<script type="application/ld+json">'
 			. wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 			. '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD from wp_json_encode.
-	}
-
-	/** Rebuild a SourceJob from stored post meta. */
-	private function job_from_post( int $post_id ): ?SourceJob {
-		$meta = static fn( string $key ): string => (string) get_post_meta( $post_id, $key, true );
-		$nul  = static function ( string $key ) use ( $post_id ): ?string {
-			$value = (string) get_post_meta( $post_id, $key, true );
-			return '' === $value ? null : $value;
-		};
-
-		$source_job_id = $meta( 'source_job_id' );
-		if ( '' === $source_job_id ) {
-			return null;
-		}
-
-		$date_posted = null;
-		if ( null !== $nul( 'date_posted' ) ) {
-			try {
-				$date_posted = new \DateTimeImmutable( $meta( 'date_posted' ), new \DateTimeZone( 'UTC' ) );
-			} catch ( \Exception ) {
-				$date_posted = null;
-			}
-		}
-
-		$min = $nul( 'salary_min' );
-		$max = $nul( 'salary_max' );
-
-		return new SourceJob(
-			source: '' !== $meta( 'source' ) ? $meta( 'source' ) : 'giig',
-			source_job_id: $source_job_id,
-			title: get_the_title( $post_id ),
-			description_html: (string) get_post_field( 'post_content', $post_id ),
-			salary: new Salary(
-				display: $meta( 'salary_display' ),
-				currency: $nul( 'salary_currency' ),
-				min: null === $min ? null : (float) $min,
-				max: null === $max ? null : (float) $max,
-				period: $nul( 'salary_period' ),
-			),
-			work_mode: WorkMode::from_source( $nul( 'work_mode_raw' ) ),
-			work_mode_raw: $nul( 'work_mode_raw' ),
-			location_display: $nul( 'location_display' ),
-			address_locality: $nul( 'address_locality' ),
-			address_region: $nul( 'address_region' ),
-			address_country: $nul( 'address_country' ),
-			sector: null,
-			job_type: $this->first_term( $post_id, JobPostType::TAX_JOB_TYPE ),
-			experience_requirement: $nul( 'experience_requirement' ),
-			education_requirement: $nul( 'education_requirement' ),
-			date_posted: $date_posted,
-			source_company_id: $nul( 'source_company_id' ),
-			source_url: $nul( 'source_url' ),
-			job_reference: $nul( 'job_reference' ),
-		);
-	}
-
-	private function first_term( int $post_id, string $taxonomy ): ?string {
-		$terms = get_the_terms( $post_id, $taxonomy );
-		if ( ! is_array( $terms ) || array() === $terms ) {
-			return null;
-		}
-		return $terms[0]->name;
 	}
 }

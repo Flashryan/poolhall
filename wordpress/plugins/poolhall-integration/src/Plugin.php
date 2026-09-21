@@ -148,6 +148,7 @@ final class Plugin {
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
+			( new \Poolhall\Integration\Admin\GoogleJobsPage( $options ) )->register();
 		}
 	}
 

@@ -160,4 +160,78 @@ final class JobPostingSchemaTest extends TestCase {
 		self::assertNotNull( $schema );
 		self::assertArrayNotHasKey( 'employmentType', $schema );
 	}
+
+	public function test_problems_is_empty_for_an_eligible_job(): void {
+		self::assertSame( array(), $this->generator->problems( $this->job() ) );
+	}
+
+	public function test_problems_name_each_missing_required_fact(): void {
+		$problems = $this->generator->problems(
+			$this->job(
+				array(
+					'description_html' => '',
+					'date_posted'      => null,
+				)
+			)
+		);
+
+		self::assertCount( 2, $problems );
+		self::assertStringContainsString( 'description', implode( ' ', $problems ) );
+		self::assertStringContainsString( 'posting date', implode( ' ', $problems ) );
+	}
+
+	public function test_problems_flag_a_located_nowhere_onsite_job(): void {
+		$problems = $this->generator->problems(
+			$this->job(
+				array(
+					'location_display' => null,
+					'address_locality' => null,
+					'address_region'   => null,
+				)
+			)
+		);
+
+		self::assertCount( 1, $problems );
+		self::assertStringContainsString( 'no location', $problems[0] );
+	}
+
+	public function test_unset_organisation_blocks_every_job(): void {
+		$generator = new JobPostingSchema( '', '' );
+
+		$problems = $generator->problems( $this->job() );
+
+		self::assertCount( 2, $problems );
+		self::assertNull(
+			$generator->build(
+				$this->job(),
+				'https://example.com/jobs/site-manager/',
+				new \DateTimeImmutable( '2026-06-27T09:14:00Z' ),
+				false
+			)
+		);
+	}
+
+	public function test_recommendations_cover_non_blocking_gaps_only(): void {
+		self::assertSame( array(), $this->generator->recommendations( $this->job() ) );
+
+		$notes = $this->generator->recommendations(
+			$this->job(
+				array(
+					'salary'   => new Salary( 'Competitive', null, null, null, null ),
+					'job_type' => null,
+				)
+			)
+		);
+
+		self::assertCount( 2, $notes );
+		self::assertStringContainsString( 'salary', implode( ' ', $notes ) );
+		self::assertStringContainsString( 'employment type', implode( ' ', $notes ) );
+	}
+
+	public function test_missing_logo_is_only_a_recommendation(): void {
+		$generator = new JobPostingSchema( 'Poolhall Recruitment Ltd', 'https://www.poolhallrecruitment.co.uk/' );
+
+		self::assertSame( array(), $generator->problems( $this->job() ) );
+		self::assertStringContainsString( 'logo', implode( ' ', $generator->recommendations( $this->job() ) ) );
+	}
 }
