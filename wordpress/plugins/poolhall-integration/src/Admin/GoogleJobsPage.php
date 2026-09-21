@@ -99,8 +99,12 @@ final class GoogleJobsPage {
 	public function checks(): array {
 		$checks = array();
 
-		$public    = '1' === (string) get_option( 'blog_public' );
-		$protected = '1' === (string) get_option( 'password_protected_status', '0' );
+		$public = '1' === (string) get_option( 'blog_public' );
+		// The option outlives the plugin that sets it, so a leftover flag must
+		// not be reported as live protection — that sends staff hunting for a
+		// setting that is already off while the real blocker goes unmentioned.
+		$protected = '1' === (string) get_option( 'password_protected_status', '0' )
+			&& class_exists( 'Password_Protected' );
 
 		$checks[] = array(
 			'label'  => __( 'Search engines can reach the site', 'poolhall-integration' ),
