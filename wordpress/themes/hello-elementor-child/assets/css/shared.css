@@ -422,6 +422,72 @@ textarea.ph-field__control { min-block-size: clamp(8rem, 16svh, 12rem); padding-
 .ph-media-collage__item img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
 .ph-media-collage__item--tall { grid-row: span 2; }
 
+/* ---- PRL brand mark -------------------------------------------------
+   The logo's initials as a fine outline, stacked in a lane off the right
+   of the "people at the heart of it" split and cropping at the section
+   edge. Each letter drifts in and back out on scroll (see ui.js).
+
+   Stacked rather than set on one line because the section's right half is
+   solid photography: laid out horizontally the mark disappears behind the
+   collage, whereas the lane gives all three initials clear air. The
+   collage yields the lane via margin-inline-end below.
+
+   Sizing, stroke, colour and lane width are custom properties, so the
+   whole treatment retunes from this one block.                          */
+.ph-brandmark-host { position: relative; overflow: hidden; }
+/* Real content always paints above the mark: the collage and copy are not
+   positioned, so without this the absolutely-placed mark would cover them. */
+.ph-brandmark-host > *:not(.ph-brandmark) { position: relative; z-index: 1; }
+.ph-brandmark-host .ph-media-collage { margin-inline-end: var(--ph-brandmark-lane, 20%); }
+
+.ph-brandmark {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: 50%;
+  inset-inline-end: var(--ph-brandmark-inset, 2%);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ph-brandmark-gap, 0);
+  pointer-events: none;
+  user-select: none;
+  /* The logo is set in a high-contrast transitional serif; a system serif
+     stack matches its proportions closely without a webfont download. */
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: var(--ph-brandmark-size, clamp(74px, 8.8vw, 136px));
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: transparent;
+  -webkit-text-stroke: var(--ph-brandmark-stroke, 1.4px) var(--ph-brandmark-ink, rgba(27, 64, 104, 0.45));
+}
+
+.ph-brandmark__letter { display: block; opacity: 0; will-change: opacity, transform; }
+
+@media (max-width: 767px) {
+  /* The lane is consumed by the collage, so it has to be declared on the
+     shared ancestor rather than on the mark itself. */
+  .ph-brandmark-host { --ph-brandmark-lane: 22%; }
+
+  /* Stacked layout puts the copy where the mark would sit, so drop it down
+     beside the collage rather than letting it cross the text. */
+  .ph-brandmark {
+    --ph-brandmark-size: clamp(54px, 13vw, 84px);
+    --ph-brandmark-ink: rgba(27, 64, 104, 0.38);
+    --ph-brandmark-stroke: 1.1px;
+    inset-block-start: auto;
+    inset-block-end: 9%;
+    transform: none;
+  }
+}
+
+/* No scroll choreography when motion is unwelcome — the mark simply sits
+   there, which is the point of it. */
+@media (prefers-reduced-motion: reduce) {
+  .ph-brandmark__letter { opacity: 1 !important; transform: none !important; }
+}
+
 /* Credibility stat strip (home §9.1): bordered box on dark, 4 equal cells. */
 .ph-stats-box { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: var(--ph-radius-lg); overflow: hidden; }
 .ph-stats-box__cell { padding: 32px 28px; border-inline-end: 1px solid rgba(255, 255, 255, 0.16); }

@@ -477,3 +477,81 @@
 	range.addEventListener( 'input', paint );
 	paint();
 }() );
+
+/**
+ * PRL brand mark: the logo's initials as a fine outline, offset off the
+ * right of the "people at the heart of it" split. Each letter drifts up
+ * into view and back out again as the section crosses the viewport, so
+ * the mark reads as a slow signature rather than a static watermark.
+ *
+ * Injected rather than authored into the page because it is purely
+ * decorative — no JS simply means no ornament, and the Elementor layout
+ * never has to be rebuilt to carry it.
+ */
+( function () {
+	var collage = document.querySelector( '.ph-media-collage' );
+	if ( ! collage ) { return; }
+
+	var host = collage.closest( '.ph-split' );
+	if ( ! host || host.querySelector( '.ph-brandmark' ) ) { return; }
+
+	var mark = document.createElement( 'div' );
+	mark.className = 'ph-brandmark';
+	mark.setAttribute( 'aria-hidden', 'true' );
+
+	var letters = 'PRL'.split( '' ).map( function ( character ) {
+		var span = document.createElement( 'span' );
+		span.className = 'ph-brandmark__letter';
+		span.textContent = character;
+		mark.appendChild( span );
+		return span;
+	} );
+
+	host.classList.add( 'ph-brandmark-host' );
+	host.appendChild( mark );
+
+	if ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
+		return; // The stylesheet parks the letters visible; nothing to drive.
+	}
+
+	var clamp = function ( value ) {
+		return value < 0 ? 0 : ( value > 1 ? 1 : value );
+	};
+	var smooth = function ( t ) {
+		return t * t * ( 3 - 2 * t );
+	};
+
+	var RISE = 38;      // px each letter travels on its way in and out.
+	var SPAN = 0.17;    // Share of the pass a single letter takes to arrive.
+	var STAGGER = 0.07; // Gap between P, R and L.
+
+	var pending = false;
+	var paint = function () {
+		pending = false;
+		var box = host.getBoundingClientRect();
+		var viewport = window.innerHeight || document.documentElement.clientHeight;
+
+		// 0 as the section's top meets the bottom of the viewport, 1 once its
+		// bottom has cleared the top — one full pass, however tall the section.
+		var progress = clamp( ( viewport - box.top ) / ( viewport + box.height ) );
+
+		for ( var i = 0; i < letters.length; i++ ) {
+			var arrive = smooth( clamp( ( progress - ( 0.16 + i * STAGGER ) ) / SPAN ) );
+			var depart = smooth( clamp( ( progress - ( 0.62 + i * STAGGER ) ) / SPAN ) );
+			var shown = arrive * ( 1 - depart );
+
+			letters[ i ].style.opacity = shown.toFixed( 3 );
+			letters[ i ].style.transform = 'translateY(' + ( ( 1 - shown ) * RISE ).toFixed( 1 ) + 'px)';
+		}
+	};
+
+	var schedule = function () {
+		if ( pending ) { return; }
+		pending = true;
+		window.requestAnimationFrame( paint );
+	};
+
+	window.addEventListener( 'scroll', schedule, { passive: true } );
+	window.addEventListener( 'resize', schedule );
+	paint();
+}() );
