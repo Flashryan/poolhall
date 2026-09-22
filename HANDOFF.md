@@ -218,6 +218,9 @@ Current readiness: **11 of 11 live roles qualify.** The schema side is done.
 - Work on `claude/poolhall-giig-job-pull-h9cqpw`; never push to another branch without asking.
 - Secret-scan the staged diff before every commit:
   `git diff --cached | grep -cE 'eyJ0eXAiOiJKV1Q|49b6c46f8fe3998d|Fjd1nplo'` (expect `0`).
+  Note: this file quotes those three patterns, so staging **this file** self-matches and
+  reports `1`. That single hit is the line above, not a leak — confirm with
+  `grep -n` before worrying, and expect `0` for every other change.
 - Never commit live credentials; never put `POOLHALL_GIIG_*` values in the repo.
 - Run `vendor/bin/phpunit` and `composer lint` (needs `COMPOSER_ALLOW_SUPERUSER=1`) before
   deploying plugin changes. `composer install` takes ~3 minutes in a fresh container.
