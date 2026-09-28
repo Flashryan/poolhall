@@ -1,0 +1,60 @@
+/* MNA Feedback — wp-admin screens */
+.mnafb-admin .mnafb-tabs { margin-bottom: 20px; }
+.mnafb-admin .mnafb-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 4px 20px 16px;
+	margin: 0 0 20px;
+	max-width: 1100px;
+}
+.mnafb-admin .mnafb-card h2 { margin-top: 16px; }
+.mnafb-admin .mnafb-danger { border-color: #f0b8b8; }
+.mnafb-admin .mnafb-danger h2 { color: #b32d2e; }
+.mnafb-admin .mnafb-table { max-width: 1100px; margin-bottom: 24px; }
+.mnafb-admin .mnafb-table td { vertical-align: middle; }
+.mnafb-admin .mnafb-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 20px; }
+.mnafb-admin .mnafb-stat {
+	display: flex; flex-direction: column; min-width: 140px;
+	background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 14px 18px;
+}
+.mnafb-admin .mnafb-stat__n { font-size: 28px; line-height: 1.1; font-weight: 600; color: #1d2327; }
+.mnafb-admin .mnafb-stat__l { color: #50575e; margin-top: 4px; }
+.mnafb-admin .mnafb-stat--open { border-top: 3px solid #4f46e5; }
+.mnafb-admin .mnafb-stat--in_progress { border-top: 3px solid #d97706; }
+.mnafb-admin .mnafb-stat--done { border-top: 3px solid #059669; }
+.mnafb-admin .mnafb-steps { margin-left: 1.4em; }
+.mnafb-admin .mnafb-steps li { margin-bottom: 6px; }
+.mnafb-admin .mnafb-status,
+.mnafb-admin .mnafb-pill {
+	display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; line-height: 20px;
+	background: #f0f0f1; color: #1d2327; white-space: nowrap;
+}
+.mnafb-admin .mnafb-status--open { background: #eef2ff; color: #3730a3; }
+.mnafb-admin .mnafb-status--in_progress { background: #fef3c7; color: #92400e; }
+.mnafb-admin .mnafb-status--done { background: #d1fae5; color: #065f46; }
+.mnafb-admin .mnafb-status--link-active { background: #d1fae5; color: #065f46; }
+.mnafb-admin .mnafb-status--link-expired { background: #f0f0f1; color: #50575e; }
+.mnafb-admin .mnafb-status--link-revoked { background: #fde2e2; color: #8a1f1f; }
+.mnafb-admin .mnafb-pill--high { background: #fff1e6; color: #9a3412; }
+.mnafb-admin .mnafb-pill--urgent { background: #fde2e2; color: #8a1f1f; }
+.mnafb-admin .mnafb-form-grid p { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.mnafb-admin .mnafb-form-grid label { width: 120px; font-weight: 600; }
+.mnafb-admin .mnafb-form-grid .description { flex-basis: 100%; margin-left: 128px; }
+.mnafb-admin .mnafb-inline-form { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+.mnafb-admin .mnafb-action-form { display: inline-block; margin: 2px 4px 2px 0; }
+.mnafb-admin .mnafb-actions { white-space: nowrap; }
+.mnafb-admin .mnafb-copy-cell { white-space: nowrap; }
+.mnafb-admin .mnafb-copy-input { width: min(360px, 60vw); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+.mnafb-admin .mnafb-avatar {
+	display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+	border-radius: 50%; color: #fff; font-size: 11px; font-weight: 600; vertical-align: middle;
+}
+.mnafb-admin .mnafb-logo-field { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mnafb-admin .mnafb-logo-preview { max-height: 48px; max-width: 200px; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #fff; }
+.mnafb-admin .button-link-delete { color: #b32d2e; }
+@media (max-width: 782px) {
+	.mnafb-admin .mnafb-form-grid label { width: 100%; }
+	.mnafb-admin .mnafb-form-grid .description { margin-left: 0; }
+	.mnafb-admin .mnafb-copy-cell, .mnafb-admin .mnafb-actions { white-space: normal; }
+}
