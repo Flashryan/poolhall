@@ -52,6 +52,8 @@ Yes. Each site keeps its own tables, links, people and settings.
 = 1.0.1 =
 * Runs on PHP 8.1 as documented (1.0.0 used a return type that needs PHP 8.2).
 * Multisite: network activation now gives every site its own screenshot key, and review cookies, unsent drafts and preferences are kept per site, so reviewing one site never signs you out of another or turns review mode on elsewhere.
+* The review tool retries by itself when the host briefly throttles or drops a request while it starts, and explains in plain words when the site is busy.
+* Live updates: a reply that landed in the same second as an earlier change could be missed until the next reload; changes are now compared by revision. After being offline, updates return to their normal pace as soon as the connection is back.
 
 = 1.0.0 =
 * First release.

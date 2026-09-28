@@ -15,7 +15,7 @@ Pretty permalinks are not required. Multisite is supported: each site keeps sepa
 ## Install
 
 1. In wp-admin go to **Plugins → Add New → Upload Plugin**, choose `mna-feedback-1.0.1.zip`, then **Install Now** and **Activate**.
-   - On a multisite network you can network-activate it or activate it per site; each site gets its own tables either way.
+   - On a multisite network you can network-activate it or activate it per site; each site gets its own tables either way. Sites added later are set up automatically while the plugin is network-active, and people can review several sites of the network in one browser — each site has its own review session.
 2. A **Feedback** menu appears in wp-admin, and a **Feedback** item appears in the toolbar for team members.
 
 Activation creates eight database tables (`{prefix}mnafb_items`, `_replies`, `_activity`, `_reviewers`, `_links`, `_sessions`, `_attachments`, `_reads`), a private folder under `wp-content/uploads/` for screenshots, and gives administrators the manager role.

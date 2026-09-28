@@ -34,8 +34,8 @@ const PAGE = process.env.MNAFB_PAGE || '/';
 const PRODUCT = process.env.MNAFB_PRODUCT || '';
 const FORM_PAGE = process.env.MNAFB_FORM_PAGE || '';
 const SHOTS = process.env.MNAFB_SHOTS || '';
-// Light mode for rate-limited hosts: skip images, media, fonts and third-party
-// requests (the same in every measurement) and pause between page loads.
+// Light mode for rate-limited hosts: skip images, media and fonts (the same in
+// every measurement), warm the browser cache slowly and pause between pages.
 const LIGHT = process.env.MNAFB_LIGHT === '1';
 const PAUSE = LIGHT ? 4000 : 0;
 if ( SHOTS ) {
@@ -62,26 +62,81 @@ async function shot( page, name ) {
 	}
 }
 
-async function lighten( context ) {
+/**
+ * Light mode: block the site's images, video and fonts. Uses DevTools URL
+ * blocking rather than request interception, because interception switches
+ * off the browser cache and every page load would fetch all scripts and
+ * stylesheets again.
+ */
+async function lighten( page ) {
 	if ( ! LIGHT ) {
 		return;
 	}
-	const host = new URL( BASE ).host;
-	await context.route( '**/*', ( route ) => {
-		const request = route.request();
-		const type = request.resourceType();
-		let external = false;
-		try {
-			external = new URL( request.url() ).host !== host;
-		} catch {}
-		if ( external || [ 'image', 'media', 'font' ].includes( type ) ) {
-			return route.abort();
+	const cdp = await page.context().newCDPSession( page );
+	await cdp.send( 'Network.enable' );
+	const types = [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'ico', 'mp4', 'webm', 'mov', 'mp3', 'woff', 'woff2', 'ttf', 'otf', 'eot' ];
+	await cdp.send( 'Network.setBlockedURLs', { urls: types.flatMap( ( t ) => [ `*.${ t }`, `*.${ t }?*` ] ) } );
+}
+
+const warmed = new Set();
+
+/**
+ * Light mode: before visiting a page, fetch its scripts and stylesheets one at
+ * a time into the browser cache, so the visit itself makes only a few requests.
+ * A fresh page load of a large Elementor/WooCommerce site can otherwise make a
+ * hundred requests in two seconds and trip a host's rate limit.
+ */
+async function warm( page, url ) {
+	if ( ! LIGHT ) {
+		return;
+	}
+	const origin = new URL( BASE ).origin;
+	if ( ! page.url().startsWith( origin ) ) {
+		await page.goto( origin + '/robots.txt', { timeout: 60000 } );
+	}
+	// Warm the landing page, not the share link itself (opening it uses the link).
+	const landing = new URL( url );
+	landing.searchParams.delete( 'mna-review' );
+	const assets = await page.evaluate( async ( target ) => {
+		const html = await ( await fetch( target, { credentials: 'include' } ) ).text();
+		const found = new Set();
+		for ( const match of html.matchAll( /(?:src|href)=["']([^"']+?\.(?:js|css)(?:\?[^"']*)?)["']/g ) ) {
+			try {
+				const url = new URL( match[ 1 ].replace( /&#0?38;|&amp;/g, '&' ), target );
+				if ( url.origin === location.origin ) {
+					found.add( url.href );
+				}
+			} catch {}
 		}
-		return route.continue();
-	} );
+		return Array.from( found );
+	}, landing.href );
+	let todo = assets.filter( ( a ) => ! warmed.has( a ) );
+	for ( let round = 0; round < 3 && todo.length; round++ ) {
+		const failed = await page.evaluate( async ( list ) => {
+			const retry = [];
+			for ( const asset of list ) {
+				try {
+					const response = await fetch( asset, { credentials: 'include' } );
+					if ( ! response.ok ) {
+						retry.push( asset );
+					}
+				} catch {
+					retry.push( asset );
+				}
+				await new Promise( ( resolve ) => setTimeout( resolve, 450 ) );
+			}
+			return retry;
+		}, todo );
+		todo.filter( ( a ) => ! failed.includes( a ) ).forEach( ( a ) => warmed.add( a ) );
+		todo = failed;
+		if ( todo.length ) {
+			await page.waitForTimeout( 20000 );
+		}
+	}
 }
 
 async function go( page, url, options = {} ) {
+	await warm( page, url );
 	if ( PAUSE ) {
 		await page.waitForTimeout( PAUSE );
 	}
@@ -136,8 +191,8 @@ async function main() {
 
 	// ------------------------------------------------ Join, then compare layout within one page load
 	const ctx = await browser.newContext( { viewport: { width: 1280, height: 900 } } );
-	await lighten( ctx );
 	const page = await ctx.newPage();
+	await lighten( page );
 	watch( page );
 	await go( page, LINK );
 	await page.waitForSelector( 'input[autocomplete="name"]', { timeout: 30000 } );
@@ -180,29 +235,32 @@ async function main() {
 		let widgetId = null;
 		let itemTitle = 'Integrity: Elementor heading pin';
 		await attempt( 'Pins on Elementor widgets record the Elementor element', async () => {
+			// Mark one heading, then scroll it to the middle instantly (sites often
+			// set smooth scrolling, which would still be moving when we measure).
 			const target = await page.evaluate( () => {
 				const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
 					const r = e.getBoundingClientRect();
-					return r.width > 60 && r.height > 12 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
+					return r.width > 60 && r.height > 12 && r.left + 30 < innerWidth - 420 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
 				} );
 				if ( ! el ) {
 					return null;
 				}
-				el.scrollIntoView( { block: 'center' } );
+				el.setAttribute( 'data-e2e-heading', '1' );
+				const r = el.getBoundingClientRect();
+				window.scrollTo( { top: Math.max( 0, r.top + window.scrollY - innerHeight / 2 ), behavior: 'instant' } );
 				return true;
 			} );
 			if ( ! target ) {
 				throw new Error( 'No Elementor heading widget on this page' );
 			}
-			await page.waitForTimeout( 500 );
+			await page.waitForTimeout( 800 );
 			const point = await page.evaluate( () => {
-				const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
-					const r = e.getBoundingClientRect();
-					return r.width > 60 && r.top > 80 && r.bottom < innerHeight - 60 && r.left + 30 < innerWidth - 420 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
-				} );
-				const r = el.getBoundingClientRect();
-				return { x: r.left + Math.min( 30, r.width / 3 ), y: r.top + r.height / 2 };
+				const r = document.querySelector( '[data-e2e-heading="1"]' ).getBoundingClientRect();
+				return { x: r.left + Math.min( 30, r.width / 3 ), y: r.top + r.height / 2, visible: r.top > 60 && r.bottom < innerHeight - 40 };
 			} );
+			if ( ! point.visible ) {
+				throw new Error( `Heading not in view after scrolling (${ Math.round( point.y ) }px)` );
+			}
 			await page.locator( '.mnafb-mode button:has-text("Comment")' ).click();
 			await page.mouse.click( point.x, point.y );
 			await page.waitForSelector( '.mnafb-composer', { timeout: 8000 } );
@@ -283,6 +341,7 @@ async function main() {
 		if ( ! target ) {
 			throw new Error( 'No header link found' );
 		}
+		await warm( page, target.href );
 		await Promise.all( [ page.waitForURL( ( u ) => u.pathname === new URL( target.href ).pathname, { timeout: 30000 } ), page.mouse.click( target.x, target.y ) ] );
 		await page.waitForSelector( '#mnafb-root', { state: 'attached', timeout: 20000 } );
 		check( 'Site navigation works in review mode', true );
@@ -317,13 +376,24 @@ async function main() {
 			await go( page, BASE + '/cart/', { waitUntil: 'domcontentloaded' } );
 			await page.waitForTimeout( 1500 );
 			for ( let i = 0; i < 5; i++ ) {
-				const remove = page.locator( 'a.remove, .wc-block-cart-item__remove-link' ).first();
-				if ( ! ( await remove.count() ) ) {
-					break;
+				// Classic cart: follow the row's own remove link (a mini-cart in the
+				// header can have hidden remove links of its own). Block cart: click.
+				const href = await page.evaluate( () => document.querySelector( '.woocommerce-cart-form a.remove[href*="remove_item"], a.remove[href*="remove_item"]' )?.href || null );
+				if ( href ) {
+					await page.goto( href, { timeout: 60000, waitUntil: 'domcontentloaded' } ); // Not go(): no warm-up fetch of a link that changes the basket.
+					await page.waitForTimeout( 1500 );
+					continue;
 				}
-				await Promise.all( [ page.waitForLoadState( 'domcontentloaded' ), remove.click() ] );
-				await page.waitForTimeout( 2000 );
+				const block = page.locator( '.wc-block-cart-item__remove-link' ).first();
+				if ( await block.count() ) {
+					await block.click();
+					await page.waitForTimeout( 2500 );
+					continue;
+				}
+				break;
 			}
+			await go( page, BASE + '/cart/', { waitUntil: 'domcontentloaded' } );
+			await page.waitForTimeout( 1500 );
 			const rows = await page.locator( '.woocommerce-cart-form__cart-item, .wc-block-cart-items__row, .cart_item' ).count();
 			check( 'WooCommerce: basket emptied again', rows === 0, `${ rows } rows left` );
 		} );

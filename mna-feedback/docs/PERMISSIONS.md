@@ -62,6 +62,7 @@ Opening a link moves its token into an HttpOnly cookie and redirects to the same
 - **No private data in public pages.** Pages contain only a loader that is identical for everyone. Feedback, names and screenshots are fetched from the API with `Cache-Control: private, no-store`, so neither page caches nor CDNs can store them. The loader only runs in browsers that are in review mode; ordinary visitors never download the interface.
 - **Screenshots** are decoded and re-encoded on upload (which strips hidden metadata such as location), **encrypted on disk** with a random per-site key (libsodium), stored under an unguessable folder name with random file names, and decrypted and served only through the API to people allowed to see the item — so they stay private even on servers such as Nginx that ignore `.htaccess`.
 - **Rate limits:** reviewers are limited to 150 changes per 10 minutes, and one network address can create at most 30 identities per hour through share links.
+- **Multisite:** every site on a network has its own tables, links, reviewers, sessions and screenshot key, and its own cookie names. A link, session token or screenshot from one site grants nothing on another, and reviewing one site never affects a session on another.
 - **Revision checks:** edits carry the values they started from. If someone else changed the same field in the meantime, the server refuses the edit and the interface shows both versions instead of silently overwriting.
 
 ## Trash and deletion

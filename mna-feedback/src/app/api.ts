@@ -37,9 +37,25 @@ export class ApiError extends Error implements ApiErrorShape {
 	get isNetwork(): boolean {
 		return this.status === 0;
 	}
+
+	/** Worth retrying shortly: no connection, the host is throttling, or a gateway hiccup. */
+	get isTransient(): boolean {
+		return this.status === 0 || this.status === 429 || ( this.status >= 502 && this.status <= 504 );
+	}
 }
 
 const NONCE_KEY = storageKey( 'nonce' );
+
+/** Message for errors the site answered without a JSON body (usually the host, not WordPress). */
+function fallbackMessage( status: number ): string {
+	if ( status === 429 ) {
+		return 'The site is busy right now. Wait a minute, then try again — nothing you typed has been lost.';
+	}
+	if ( status >= 500 ) {
+		return `The site had a problem (${ status }). Try again in a moment — nothing you typed has been lost.`;
+	}
+	return `The site returned an error (${ status }). Please try again.`;
+}
 
 export class Api {
 	private root: string;
@@ -163,7 +179,7 @@ export class Api {
 			const shape = ( json && typeof json === 'object' ? json : {} ) as { code?: string; message?: string; data?: Record< string, unknown > };
 			throw new ApiError(
 				shape.code || `http_${ response.status }`,
-				shape.message || `The site returned an error (${ response.status }). Please try again.`,
+				shape.message || fallbackMessage( response.status ),
 				response.status,
 				shape.data && typeof shape.data === 'object' ? shape.data : {}
 			);

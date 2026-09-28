@@ -62,6 +62,8 @@ function applySession( data: SessionData ): void {
  */
 export async function boot(): Promise< void > {
 	let attempts = 0;
+	// Brief waits before giving up when the host throttles or drops a request.
+	const waits = [ 2000, 6000 ];
 	while ( attempts++ < 3 ) {
 		let data: SessionData | SessionGate;
 		try {
@@ -70,6 +72,12 @@ export async function boot(): Promise< void > {
 			const err = error as ApiError;
 			if ( err.code === 'rest_cookie_invalid_nonce' ) {
 				api.setNonce( null );
+				continue;
+			}
+			const wait = err.isTransient ? waits.shift() : undefined;
+			if ( wait ) {
+				await new Promise( ( resolve ) => window.setTimeout( resolve, wait ) );
+				attempts--;
 				continue;
 			}
 			if ( err.status === 401 ) {
@@ -216,11 +224,26 @@ function mergeItems( changed: Item[], removed: number[] ): void {
 		const details = { ...s.details };
 		changed.forEach( ( item ) => {
 			const existing = items[ item.id ];
-			if ( ! existing || existing.updated_at !== item.updated_at || existing.revision !== item.revision || existing.unread !== item.unread ) {
-				items[ item.id ] = item;
-				if ( details[ item.id ] && details[ item.id ].updated_at !== item.updated_at ) {
-					delete details[ item.id ]; // Refetched when next viewed.
+			if ( existing ) {
+				// Timestamps have one-second precision, so two changes in the same
+				// second look identical; the revision counters and counts do not.
+				const older = item.revision < existing.revision || item.activity_rev < existing.activity_rev;
+				const same =
+					item.revision === existing.revision &&
+					item.activity_rev === existing.activity_rev &&
+					item.updated_at === existing.updated_at &&
+					item.unread === existing.unread &&
+					item.trashed === existing.trashed &&
+					item.counts.replies === existing.counts.replies &&
+					item.counts.attachments === existing.counts.attachments;
+				if ( older || same ) {
+					return; // Nothing new (and an optimistic change on screen stays).
 				}
+			}
+			items[ item.id ] = item;
+			const detail = details[ item.id ];
+			if ( detail && ( detail.updated_at !== item.updated_at || detail.revision !== item.revision || detail.activity_rev !== item.activity_rev ) ) {
+				delete details[ item.id ]; // Refetched when next viewed.
 			}
 		} );
 		removed.forEach( ( id ) => {
@@ -251,8 +274,11 @@ export async function syncNow(): Promise< void > {
 		return;
 	}
 	polling = true;
+	// A request that never answers must not stop live updates for good.
+	const controller = new AbortController();
+	const timeout = window.setTimeout( () => controller.abort(), 30000 );
 	try {
-		const result = await api.get< SyncResponse >( 'sync', { since: lastServerTime } );
+		const result = await api.get< SyncResponse >( 'sync', { since: lastServerTime }, controller.signal );
 		lastServerTime = result.server_time;
 		if ( result.reset ) {
 			await loadAll();
@@ -266,7 +292,11 @@ export async function syncNow(): Promise< void > {
 		if ( getState().sync !== 'ok' ) {
 			setState( { sync: 'ok' } );
 		}
-		pollDelay = 0;
+		if ( pollDelay ) {
+			// Back online: return to the normal pace instead of waiting out the back-off.
+			pollDelay = 0;
+			schedule();
+		}
 	} catch ( error ) {
 		if ( handleUnauthorized( error ) ) {
 			return;
@@ -274,6 +304,7 @@ export async function syncNow(): Promise< void > {
 		setState( { sync: 'offline' } );
 		pollDelay = Math.min( 120000, ( pollDelay || 5000 ) * 2 );
 	} finally {
+		window.clearTimeout( timeout );
 		polling = false;
 	}
 }
@@ -303,7 +334,7 @@ export function startPolling(): void {
 				void syncNow().then( schedule );
 			}
 		} );
-		window.addEventListener( 'online', () => void syncNow() );
+		window.addEventListener( 'online', () => void syncNow().then( schedule ) );
 	}
 }
 
