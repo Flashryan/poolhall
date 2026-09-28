@@ -4,7 +4,7 @@ Tags: feedback, review, annotations, client approval, kanban
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,10 @@ Nothing — records are kept and come back when the plugin is activated again. T
 Yes. Each site keeps its own tables, links, people and settings.
 
 == Changelog ==
+
+= 1.0.1 =
+* Runs on PHP 8.1 as documented (1.0.0 used a return type that needs PHP 8.2).
+* Multisite: network activation now gives every site its own screenshot key, and review cookies, unsent drafts and preferences are kept per site, so reviewing one site never signs you out of another or turns review mode on elsewhere.
 
 = 1.0.0 =
 * First release.

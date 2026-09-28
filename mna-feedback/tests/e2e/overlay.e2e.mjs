@@ -60,6 +60,45 @@ async function attempt( name, fn ) {
 	}
 }
 
+/** A small valid PNG, generated so the test needs no fixture files. */
+function pngBuffer( width, height ) {
+	const { deflateSync, crc32 } = require( 'node:zlib' );
+	const crc = typeof crc32 === 'function' ? crc32 : ( buf ) => {
+		let c = 0xffffffff;
+		for ( const byte of buf ) {
+			c ^= byte;
+			for ( let k = 0; k < 8; k++ ) {
+				c = c & 1 ? 0xedb88320 ^ ( c >>> 1 ) : c >>> 1;
+			}
+		}
+		return ( c ^ 0xffffffff ) >>> 0;
+	};
+	const chunk = ( type, data ) => {
+		const head = Buffer.alloc( 4 );
+		head.writeUInt32BE( data.length );
+		const body = Buffer.concat( [ Buffer.from( type ), data ] );
+		const tail = Buffer.alloc( 4 );
+		tail.writeUInt32BE( crc( body ) >>> 0 );
+		return Buffer.concat( [ head, body, tail ] );
+	};
+	const rows = [];
+	for ( let y = 0; y < height; y++ ) {
+		const row = Buffer.alloc( 1 + width * 3 );
+		for ( let x = 0; x < width; x++ ) {
+			row[ 1 + x * 3 ] = ( x * 3 ) & 255;
+			row[ 2 + x * 3 ] = ( y * 2 ) & 255;
+			row[ 3 + x * 3 ] = 200;
+		}
+		rows.push( row );
+	}
+	const header = Buffer.alloc( 13 );
+	header.writeUInt32BE( width, 0 );
+	header.writeUInt32BE( height, 4 );
+	header[ 8 ] = 8;
+	header[ 9 ] = 2;
+	return Buffer.concat( [ Buffer.from( [ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a ] ), chunk( 'IHDR', header ), chunk( 'IDAT', deflateSync( Buffer.concat( rows ) ) ), chunk( 'IEND', Buffer.alloc( 0 ) ) ] );
+}
+
 const created = new Set();
 const errors = [];
 
@@ -380,6 +419,18 @@ async function main() {
 		check( 'Page-level comment', pageItem.pin.type === 'page' );
 	} );
 
+	await attempt( 'Screenshot attached through the interface shows as a private thumbnail', async () => {
+		await guest.locator( '.mnafb-card__open[aria-label*="E2E: general page feedback"]' ).click();
+		await guest.waitForSelector( '.mnafb-detail__title' );
+		const upload = guest.waitForResponse( ( r ) => /\/items\/\d+\/attachments/.test( r.url() ) && r.request().method() === 'POST' );
+		await guest.locator( '.mnafb-section input[type="file"]' ).setInputFiles( { name: 'screenshot.png', mimeType: 'image/png', buffer: pngBuffer( 640, 360 ) } );
+		const response = await upload;
+		await guest.waitForSelector( '.mnafb-shots img[src^="blob:"]', { timeout: 10000 } );
+		await shot( guest, '1280-screenshot' );
+		check( 'Screenshot attached through the interface shows as a private thumbnail', response.status() === 201 );
+		await guest.locator( 'button:has-text("All comments")' ).click();
+	} );
+
 	await attempt( 'Author edits their comment', async () => {
 		await guest.locator( '.mnafb-card__open[aria-label*="E2E: general page feedback"]' ).click();
 		await guest.locator( 'button[aria-label="Comment actions"]' ).click();
@@ -465,6 +516,40 @@ async function main() {
 		await guest.locator( '.mnafb-tabs button:has-text("All")' ).click();
 		const unread = await guest.locator( '.mnafb-card.is-unread .mnafb-card__open[aria-label*="E2E: my competing edit"]' ).count();
 		check( 'Replies reach the other reviewer and show as unread', unread === 1 );
+	} );
+
+	await attempt( 'Open pages pick up other people\'s changes without reloading', async () => {
+		const replies = () =>
+			guest.evaluate( ( title ) => {
+				const root = document.getElementById( 'mnafb-root' ).shadowRoot;
+				const open = Array.from( root.querySelectorAll( '.mnafb-card__open' ) ).find( ( b ) => ( b.getAttribute( 'aria-label' ) || '' ).includes( title ) );
+				const card = open && open.closest( '.mnafb-card' );
+				const count = card && Array.from( card.querySelectorAll( '.mnafb-count' ) ).find( ( c ) => /repl/.test( c.getAttribute( 'title' ) || '' ) );
+				return count ? parseInt( count.textContent || '0', 10 ) : 0;
+			}, 'E2E: my competing edit' );
+		// Polling pauses while a tab is hidden; a reviewer watching the page has it in front.
+		const hiddenBefore = await guest.evaluate( () => document.visibilityState );
+		await guest.bringToFront();
+		console.log( `      (reviewer tab was ${ hiddenBefore }, now ${ await guest.evaluate( () => document.visibilityState ) })` );
+		const before = await replies();
+		const started = Date.now();
+		const posted = await api( admin, 'POST', `items/${ pageItem.id }/replies`, { body: 'E2E: the team replied while the reviewer was watching.' }, nonce );
+		if ( posted.status !== 201 ) {
+			throw new Error( `Team reply failed: ${ posted.status } ${ JSON.stringify( posted.json ).slice( 0, 120 ) } (replies before: ${ before })` );
+		}
+		await guest.waitForFunction(
+			( { title, n } ) => {
+				const root = document.getElementById( 'mnafb-root' ).shadowRoot;
+				const open = Array.from( root.querySelectorAll( '.mnafb-card__open' ) ).find( ( b ) => ( b.getAttribute( 'aria-label' ) || '' ).includes( title ) );
+				const card = open && open.closest( '.mnafb-card' );
+				const count = card && Array.from( card.querySelectorAll( '.mnafb-count' ) ).find( ( c ) => /repl/.test( c.getAttribute( 'title' ) || '' ) );
+				return count && parseInt( count.textContent || '0', 10 ) > n;
+			},
+			{ title: 'E2E: my competing edit', n: before },
+			{ timeout: 40000, polling: 500 }
+		);
+		check( 'Open pages pick up other people\'s changes without reloading', true, `${ Math.round( ( Date.now() - started ) / 1000 ) }s` );
+		console.log( `      (update appeared after ${ Math.round( ( Date.now() - started ) / 1000 ) }s)` );
 	} );
 
 	// ------------------------------------------------ Board: implementer moves, reviewer reopens

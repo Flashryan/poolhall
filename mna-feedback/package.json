@@ -1,6 +1,6 @@
 {
   "name": "mna-feedback",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Front-end review overlay for the MNA Feedback WordPress plugin.",
   "license": "GPL-2.0-or-later",

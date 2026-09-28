@@ -162,11 +162,11 @@ final class Router {
 	 * Permission callbacks
 	 * ------------------------------------------------------------------ */
 
-	public static function can_read(): true|WP_Error {
+	public static function can_read(): bool|WP_Error {
 		return Auth::current() ? true : self::unauthorized();
 	}
 
-	public static function can_write( WP_REST_Request $request ): true|WP_Error {
+	public static function can_write( WP_REST_Request $request ): bool|WP_Error {
 		$actor = Auth::current();
 		if ( ! $actor ) {
 			return self::unauthorized();
@@ -180,7 +180,7 @@ final class Router {
 		return true;
 	}
 
-	public static function can_manage( WP_REST_Request $request ): true|WP_Error {
+	public static function can_manage( WP_REST_Request $request ): bool|WP_Error {
 		$actor = Auth::current();
 		if ( ! $actor ) {
 			return self::unauthorized();
@@ -240,7 +240,7 @@ final class Router {
 	/**
 	 * Converts an ISO 8601 or MySQL timestamp to a UTC MySQL datetime.
 	 */
-	public static function mysql_time( string $value ): ?string {
+	public static function utc_datetime( string $value ): ?string {
 		$value = trim( $value );
 		if ( '' === $value ) {
 			return null;

@@ -8,7 +8,10 @@
  * - mnafb_on Non-secret flag ("1") read by the public bootstrap script to decide
  *            whether to load the review interface. It grants nothing on its own.
  *
- * All are SameSite=Lax and Secure on HTTPS.
+ * All are SameSite=Lax and Secure on HTTPS. On a multisite network the names
+ * carry the site ID (mnafb_s_2), because sites often share a cookie path or
+ * domain: reviewing one site must not sign you out of another or switch review
+ * mode on elsewhere.
  *
  * @package MNA\Feedback
  */
@@ -23,7 +26,15 @@ final class Cookies {
 	public const PENDING = 'mnafb_p';
 	public const FLAG    = 'mnafb_on';
 
-	public static function set( string $name, string $value, int $expires, bool $http_only = true ): void {
+	/**
+	 * The cookie name used on this site.
+	 */
+	public static function name( string $base ): string {
+		return is_multisite() ? $base . '_' . get_current_blog_id() : $base;
+	}
+
+	public static function set( string $base, string $value, int $expires, bool $http_only = true ): void {
+		$name = self::name( $base );
 		if ( ! headers_sent() ) {
 			setcookie(
 				$name,
@@ -41,12 +52,13 @@ final class Cookies {
 		$_COOKIE[ $name ] = $value;
 	}
 
-	public static function clear( string $name, bool $http_only = true ): void {
-		self::set( $name, '', time() - YEAR_IN_SECONDS, $http_only );
-		unset( $_COOKIE[ $name ] );
+	public static function clear( string $base, bool $http_only = true ): void {
+		self::set( $base, '', time() - YEAR_IN_SECONDS, $http_only );
+		unset( $_COOKIE[ self::name( $base ) ] );
 	}
 
-	public static function get( string $name ): ?string {
+	public static function get( string $base ): ?string {
+		$name = self::name( $base );
 		if ( ! isset( $_COOKIE[ $name ] ) || ! is_string( $_COOKIE[ $name ] ) ) {
 			return null;
 		}
@@ -62,7 +74,7 @@ final class Cookies {
 		}
 	}
 
-	private static function path(): string {
+	public static function path(): string {
 		return defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/';
 	}
 }

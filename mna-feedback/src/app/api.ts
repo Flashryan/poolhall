@@ -10,6 +10,7 @@
  */
 
 import type { ApiErrorShape } from './types';
+import { storageKey } from './util/storage';
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 type Params = Record< string, string | number | boolean | null | undefined >;
@@ -38,7 +39,7 @@ export class ApiError extends Error implements ApiErrorShape {
 	}
 }
 
-const NONCE_KEY = 'mnafb_nonce';
+const NONCE_KEY = storageKey( 'nonce' );
 
 export class Api {
 	private root: string;

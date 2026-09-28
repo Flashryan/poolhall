@@ -23,13 +23,28 @@ final class Reviewers {
 
 	private const PALETTE = array( '#4F46E5', '#0891B2', '#059669', '#D97706', '#DC2626', '#7C3AED', '#DB2777', '#2563EB', '#65A30D', '#EA580C', '#0D9488', '#9333EA' );
 
-	/** @var array<int, object> */
+	/** @var array<int, object|null> Rows already loaded for the site in $cache_site. */
 	private static array $cache = array();
+
+	/** Site (blog ID) the cached rows belong to. */
+	private static int $cache_site = 0;
+
+	/**
+	 * Drops cached rows when code has switched to another site on a network.
+	 */
+	private static function check_site(): void {
+		$site = get_current_blog_id();
+		if ( $site !== self::$cache_site ) {
+			self::$cache      = array();
+			self::$cache_site = $site;
+		}
+	}
 
 	public static function get( int $id ): ?object {
 		if ( $id <= 0 ) {
 			return null;
 		}
+		self::check_site();
 		if ( ! array_key_exists( $id, self::$cache ) ) {
 			global $wpdb;
 			$table              = Schema::table( 'reviewers' );
@@ -43,6 +58,7 @@ final class Reviewers {
 	 * @return array<int, object>
 	 */
 	public static function get_many( array $ids ): array {
+		self::check_site();
 		$ids     = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
 		$missing = array_values( array_diff( $ids, array_keys( self::$cache ) ) );
 		if ( $missing ) {
@@ -101,6 +117,7 @@ final class Reviewers {
 	 */
 	public static function for_wp_user( \WP_User $user ): ?object {
 		global $wpdb;
+		self::check_site();
 		$table = Schema::table( 'reviewers' );
 		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE type = 'wp_user' AND wp_user_id = %d", $user->ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$name  = mb_substr( $user->display_name ?: $user->user_login, 0, 80 );

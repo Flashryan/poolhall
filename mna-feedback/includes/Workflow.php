@@ -308,7 +308,7 @@ final class Workflow {
 		return Items::get( $id );
 	}
 
-	public static function purge_item( Actor $actor, int $id ): true|WP_Error {
+	public static function purge_item( Actor $actor, int $id ): bool|WP_Error {
 		if ( ! Policy::can_manage_trash( $actor ) ) {
 			return self::error( 'mnafb_forbidden', __( 'Only managers can delete feedback permanently.', 'mna-feedback' ), 403 );
 		}
@@ -416,7 +416,7 @@ final class Workflow {
 		return Replies::get( $reply_id );
 	}
 
-	public static function purge_reply( Actor $actor, int $reply_id ): true|WP_Error {
+	public static function purge_reply( Actor $actor, int $reply_id ): bool|WP_Error {
 		if ( ! Policy::can_manage_trash( $actor ) ) {
 			return self::error( 'mnafb_forbidden', __( 'Only managers can delete replies permanently.', 'mna-feedback' ), 403 );
 		}
@@ -464,7 +464,7 @@ final class Workflow {
 		return $attachment;
 	}
 
-	public static function delete_attachment( Actor $actor, int $attachment_id ): true|WP_Error {
+	public static function delete_attachment( Actor $actor, int $attachment_id ): bool|WP_Error {
 		$attachment = Attachments::get( $attachment_id );
 		if ( ! $attachment ) {
 			return true;

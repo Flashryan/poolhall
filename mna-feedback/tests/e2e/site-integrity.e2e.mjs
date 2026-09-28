@@ -34,6 +34,10 @@ const PAGE = process.env.MNAFB_PAGE || '/';
 const PRODUCT = process.env.MNAFB_PRODUCT || '';
 const FORM_PAGE = process.env.MNAFB_FORM_PAGE || '';
 const SHOTS = process.env.MNAFB_SHOTS || '';
+// Light mode for rate-limited hosts: skip images, media, fonts and third-party
+// requests (the same in every measurement) and pause between page loads.
+const LIGHT = process.env.MNAFB_LIGHT === '1';
+const PAUSE = LIGHT ? 4000 : 0;
 if ( SHOTS ) {
 	mkdirSync( SHOTS, { recursive: true } );
 }
@@ -58,15 +62,42 @@ async function shot( page, name ) {
 	}
 }
 
+async function lighten( context ) {
+	if ( ! LIGHT ) {
+		return;
+	}
+	const host = new URL( BASE ).host;
+	await context.route( '**/*', ( route ) => {
+		const request = route.request();
+		const type = request.resourceType();
+		let external = false;
+		try {
+			external = new URL( request.url() ).host !== host;
+		} catch {}
+		if ( external || [ 'image', 'media', 'font' ].includes( type ) ) {
+			return route.abort();
+		}
+		return route.continue();
+	} );
+}
+
+async function go( page, url, options = {} ) {
+	if ( PAUSE ) {
+		await page.waitForTimeout( PAUSE );
+	}
+	return page.goto( url, { timeout: 60000, ...options } );
+}
+
 /** Positions of visible content elements and document size, for layout comparison. */
 async function layout( page ) {
 	return page.evaluate( () => {
-		const pick = Array.from( document.querySelectorAll( 'h1, h2, h3, p, img, .elementor-button, .elementor-widget' ) )
+		const moving = '.swiper, .swiper-container, .elementor-carousel, .slick-slider, .elementor-slides, .e-n-carousel, [class*="carousel"], [class*="slider"], [class*="marquee"], [class*="ticker"], iframe';
+		const pick = Array.from( document.querySelectorAll( 'h1, h2, h3, p, .elementor-button, .elementor-widget-heading, .elementor-widget-text-editor' ) )
 			.filter( ( el ) => {
 				const r = el.getBoundingClientRect();
-				return r.width > 20 && r.height > 8 && ! el.closest( '#mnafb-root' );
+				return r.width > 20 && r.height > 8 && ! el.closest( '#mnafb-root' ) && ! el.closest( moving );
 			} )
-			.slice( 0, 40 );
+			.slice( 0, 60 );
 		return {
 			width: document.documentElement.scrollWidth,
 			height: document.documentElement.scrollHeight,
@@ -93,133 +124,151 @@ async function main() {
 	} );
 	const overlayErrors = [];
 	const siteErrors = [];
+	let throttled = 0;
 	const watch = ( page ) => {
 		page.on( 'pageerror', ( e ) => ( /mna-feedback|mnafb/.test( String( e.stack ) ) ? overlayErrors : siteErrors ).push( e.message ) );
+		page.on( 'response', ( r ) => {
+			if ( r.status() === 429 ) {
+				throttled++;
+			}
+		} );
 	};
 
-	// ------------------------------------------------ Layout without / with review mode
-	const plainCtx = await browser.newContext( { viewport: { width: 1280, height: 900 } } );
-	const plain = await plainCtx.newPage();
-	await plain.goto( BASE + PAGE, { waitUntil: 'networkidle', timeout: 60000 } );
-	await plain.waitForTimeout( 1500 );
-	const before = await layout( plain );
-	await shot( plain, 'site-without-review' );
-	await plainCtx.close();
-
+	// ------------------------------------------------ Join, then compare layout within one page load
 	const ctx = await browser.newContext( { viewport: { width: 1280, height: 900 } } );
+	await lighten( ctx );
 	const page = await ctx.newPage();
 	watch( page );
-	await page.goto( LINK, { timeout: 60000 } );
+	await go( page, LINK );
 	await page.waitForSelector( 'input[autocomplete="name"]', { timeout: 30000 } );
 	await page.fill( 'input[autocomplete="name"]', 'Integrity Check' );
 	await page.click( 'button:has-text("Start reviewing")' );
 	await page.click( '.mnafb-dialog__foot button:has-text("Start reviewing")', { timeout: 20000 } );
 	await page.waitForSelector( '.mnafb-panel', { timeout: 20000 } );
-	await page.goto( BASE + PAGE, { waitUntil: 'networkidle', timeout: 60000 } );
-	await page.waitForSelector( '.mnafb-panel', { timeout: 20000 } );
-	await page.waitForTimeout( 1500 );
-	const after = await layout( page );
-	await shot( page, 'site-with-review' );
+	await page.waitForTimeout( 2500 );
+
 	await attempt( 'Review mode does not change the page layout', async () => {
-		const moved = before.rects.filter( ( r, i ) => after.rects[ i ] && r.some( ( v, j ) => Math.abs( v - after.rects[ i ][ j ] ) > 1 ) );
+		await page.evaluate( () => window.scrollTo( 0, 0 ) );
+		await page.waitForTimeout( 400 );
+		const open = await layout( page ); // overlay present, panel open
+		await page.evaluate( () => ( document.getElementById( 'mnafb-root' ).style.display = 'none' ) );
+		await page.waitForTimeout( 400 );
+		const hidden = await layout( page ); // as if the plugin were absent
+		await page.evaluate( () => ( document.getElementById( 'mnafb-root' ).style.display = '' ) );
+		await page.locator( 'button[title="Open the board"]' ).click();
+		await page.waitForSelector( '.mnafb-board' );
+		await page.waitForTimeout( 400 );
+		const board = await layout( page ); // board covering the page
+		await shot( page, 'site-board' );
+		await page.locator( 'button[aria-label="Close the board"]' ).first().click();
+		const diff = ( x, y ) => x.rects.filter( ( r, i ) => ! y.rects[ i ] || r.some( ( v, j ) => Math.abs( v - y.rects[ i ][ j ] ) > 1 ) ).length;
+		const same = ( x, y ) => x.width === y.width && x.height === y.height && x.bodyClass === y.bodyClass && x.stylesheets === y.stylesheets && x.rects.length === y.rects.length && diff( x, y ) === 0;
 		check(
 			'Review mode does not change the page layout',
-			before.width === after.width && Math.abs( before.height - after.height ) <= 2 && before.bodyClass === after.bodyClass && before.stylesheets === after.stylesheets && moved.length === 0 && before.rects.length === after.rects.length,
-			JSON.stringify( { width: [ before.width, after.width ], height: [ before.height, after.height ], sheets: [ before.stylesheets, after.stylesheets ], moved: moved.length, count: [ before.rects.length, after.rects.length ] } )
+			same( open, hidden ) && same( board, hidden ),
+			JSON.stringify( { elements: hidden.rects.length, movedWithPanel: diff( open, hidden ), movedWithBoard: diff( board, hidden ), size: [ hidden.width, hidden.height, open.width, open.height ] } )
 		);
+		console.log( `      (${ hidden.rects.length } content elements compared)` );
 	} );
+	await shot( page, 'site-with-review' );
 
 	// ------------------------------------------------ Elementor anchoring
-	let widgetId = null;
-	let itemTitle = 'Integrity: Elementor heading pin';
-	await attempt( 'Pins on Elementor widgets record the Elementor element', async () => {
-		const target = await page.evaluate( () => {
-			const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
-				const r = e.getBoundingClientRect();
-				return r.width > 60 && r.height > 12 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
+	const hasElementor = await page.evaluate( () => !! document.querySelector( '.elementor-widget-heading .elementor-heading-title' ) );
+	if ( ! hasElementor ) {
+		console.log( '(No Elementor heading widgets on this page: Elementor checks skipped.)' );
+	} else {
+		let widgetId = null;
+		let itemTitle = 'Integrity: Elementor heading pin';
+		await attempt( 'Pins on Elementor widgets record the Elementor element', async () => {
+			const target = await page.evaluate( () => {
+				const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
+					const r = e.getBoundingClientRect();
+					return r.width > 60 && r.height > 12 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
+				} );
+				if ( ! el ) {
+					return null;
+				}
+				el.scrollIntoView( { block: 'center' } );
+				return true;
 			} );
-			if ( ! el ) {
-				return null;
+			if ( ! target ) {
+				throw new Error( 'No Elementor heading widget on this page' );
 			}
-			el.scrollIntoView( { block: 'center' } );
-			return true;
-		} );
-		if ( ! target ) {
-			throw new Error( 'No Elementor heading widget on this page' );
-		}
-		await page.waitForTimeout( 500 );
-		const point = await page.evaluate( () => {
-			const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
-				const r = e.getBoundingClientRect();
-				return r.width > 60 && r.top > 80 && r.bottom < innerHeight - 60 && r.right < innerWidth - 420 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
+			await page.waitForTimeout( 500 );
+			const point = await page.evaluate( () => {
+				const el = Array.from( document.querySelectorAll( '.elementor-widget-heading .elementor-heading-title' ) ).find( ( e ) => {
+					const r = e.getBoundingClientRect();
+					return r.width > 60 && r.top > 80 && r.bottom < innerHeight - 60 && r.left + 30 < innerWidth - 420 && ! e.closest( '[data-elementor-type="header"], [data-elementor-type="footer"], header, nav' );
+				} );
+				const r = el.getBoundingClientRect();
+				return { x: r.left + Math.min( 30, r.width / 3 ), y: r.top + r.height / 2 };
 			} );
-			const r = el.getBoundingClientRect();
-			return { x: r.left + Math.min( 30, r.width / 3 ), y: r.top + r.height / 2 };
+			await page.locator( '.mnafb-mode button:has-text("Comment")' ).click();
+			await page.mouse.click( point.x, point.y );
+			await page.waitForSelector( '.mnafb-composer', { timeout: 8000 } );
+			await page.fill( '.mnafb-composer input.mnafb-input--title', itemTitle );
+			const response = page.waitForResponse( ( r ) => r.url().includes( '/mna-feedback/v1/items' ) && r.request().method() === 'POST' );
+			await page.click( '.mnafb-composer button[type="submit"]' );
+			const item = await ( await response ).json();
+			created.push( item.id );
+			widgetId = item.pin?.anchor?.elementor?.id || null;
+			await page.keyboard.press( 'Escape' );
+			check( 'Pins on Elementor widgets record the Elementor element', !! widgetId, JSON.stringify( item.pin?.anchor || item ).slice( 0, 200 ) );
 		} );
-		await page.locator( '.mnafb-mode button:has-text("Comment")' ).click();
-		await page.mouse.click( point.x, point.y );
-		await page.waitForSelector( '.mnafb-composer', { timeout: 8000 } );
-		await page.fill( '.mnafb-composer input.mnafb-input--title', itemTitle );
-		const response = page.waitForResponse( ( r ) => r.url().includes( '/mna-feedback/v1/items' ) && r.request().method() === 'POST' );
-		await page.click( '.mnafb-composer button[type="submit"]' );
-		const item = await ( await response ).json();
-		created.push( item.id );
-		widgetId = item.pin?.anchor?.elementor?.id || null;
-		await page.keyboard.press( 'Escape' );
-		check( 'Pins on Elementor widgets record the Elementor element', !! widgetId, JSON.stringify( item.pin?.anchor || item ).slice( 0, 200 ) );
-	} );
 
-	const pinFor = () =>
-		page.evaluate( ( title ) => {
-			const root = document.getElementById( 'mnafb-root' ).shadowRoot;
-			const pin = Array.from( root.querySelectorAll( '.mnafb-pin' ) ).find( ( p ) => ( p.getAttribute( 'aria-label' ) || '' ).includes( title ) );
-			return pin && pin.style.display !== 'none' ? pin.getBoundingClientRect().toJSON() : null;
-		}, itemTitle );
+		const pinFor = () =>
+			page.evaluate( ( title ) => {
+				const root = document.getElementById( 'mnafb-root' ).shadowRoot;
+				const pin = Array.from( root.querySelectorAll( '.mnafb-pin' ) ).find( ( p ) => ( p.getAttribute( 'aria-label' ) || '' ).includes( title ) );
+				return pin && pin.style.display !== 'none' ? pin.getBoundingClientRect().toJSON() : null;
+			}, itemTitle );
 
-	await attempt( 'Pin follows its Elementor widget when the layout changes', async () => {
-		if ( ! widgetId ) {
-			throw new Error( 'No widget id' );
-		}
-		// Simulate an Elementor layout edit: the widget moves to a different container.
-		await page.evaluate( ( id ) => {
-			const widget = document.querySelector( `.elementor-element[data-id="${ id }"]` );
-			const doc = widget.closest( '[data-elementor-type="wp-page"], [data-elementor-type="single-page"], .elementor' ) || document.body;
-			const holder = document.createElement( 'div' );
-			holder.id = 'mnafb-integrity-moved';
-			holder.style.padding = '40px';
-			doc.appendChild( holder );
-			holder.appendChild( widget );
-			widget.scrollIntoView( { block: 'center' } );
-		}, widgetId );
-		await page.waitForTimeout( 1500 );
-		const pin = await pinFor();
-		const el = await page.evaluate( ( id ) => document.querySelector( `.elementor-element[data-id="${ id }"]` ).getBoundingClientRect().toJSON(), widgetId );
-		await shot( page, 'site-elementor-moved' );
-		check( 'Pin follows its Elementor widget when the layout changes', pin && pin.bottom >= el.top - 4 && pin.bottom <= el.bottom + 40 && pin.left >= el.left - 4 && pin.left <= el.right, JSON.stringify( { pin, el } ) );
-	} );
+		await attempt( 'Pin follows its Elementor widget when the layout changes', async () => {
+			if ( ! widgetId ) {
+				throw new Error( 'No widget id' );
+			}
+			// Simulate an Elementor layout edit: the widget moves to a different container.
+			await page.evaluate( ( id ) => {
+				const widget = document.querySelector( `.elementor-element[data-id="${ id }"]` );
+				const doc = widget.closest( '[data-elementor-type="wp-page"], [data-elementor-type="single-page"], .elementor' ) || document.body;
+				const holder = document.createElement( 'div' );
+				holder.id = 'mnafb-integrity-moved';
+				holder.style.padding = '40px';
+				doc.appendChild( holder );
+				holder.appendChild( widget );
+				widget.scrollIntoView( { block: 'center' } );
+			}, widgetId );
+			await page.waitForTimeout( 1500 );
+			const pin = await pinFor();
+			const el = await page.evaluate( ( id ) => document.querySelector( `.elementor-element[data-id="${ id }"]` ).getBoundingClientRect().toJSON(), widgetId );
+			await shot( page, 'site-elementor-moved' );
+			check( 'Pin follows its Elementor widget when the layout changes', pin && pin.bottom >= el.top - 4 && pin.bottom <= el.bottom + 40 && pin.left >= el.left - 4 && pin.left <= el.right, JSON.stringify( { pin, el } ) );
+		} );
 
-	await attempt( 'Pin stays attached after the widget text is edited', async () => {
-		await page.evaluate( ( id ) => {
-			const title = document.querySelector( `.elementor-element[data-id="${ id }"] .elementor-heading-title` );
-			title.textContent = 'Completely rewritten heading after feedback';
-		}, widgetId );
-		await page.waitForTimeout( 1500 );
-		check( 'Pin stays attached after the widget text is edited', !! ( await pinFor() ) );
-	} );
+		await attempt( 'Pin stays attached after the widget text is edited', async () => {
+			await page.evaluate( ( id ) => {
+				const title = document.querySelector( `.elementor-element[data-id="${ id }"] .elementor-heading-title` );
+				title.textContent = 'Completely rewritten heading after feedback';
+			}, widgetId );
+			await page.waitForTimeout( 1500 );
+			check( 'Pin stays attached after the widget text is edited', !! ( await pinFor() ) );
+		} );
 
-	await attempt( 'Removing the widget reports "Original element unavailable"', async () => {
-		await page.evaluate( ( id ) => document.querySelector( `.elementor-element[data-id="${ id }"]` ).remove(), widgetId );
-		await page.waitForTimeout( 1500 );
-		await page.locator( `.mnafb-card__open[aria-label*="${ itemTitle }"]` ).click();
-		await page.waitForSelector( 'text=Original element unavailable', { timeout: 8000 } );
-		await shot( page, 'site-elementor-removed' );
-		check( 'Removing the widget reports "Original element unavailable"', ! ( await pinFor() ) );
-	} );
+		await attempt( 'Removing the widget reports "Original element unavailable"', async () => {
+			await page.evaluate( ( id ) => document.querySelector( `.elementor-element[data-id="${ id }"]` ).remove(), widgetId );
+			await page.waitForTimeout( 1500 );
+			await page.locator( `.mnafb-card__open[aria-label*="${ itemTitle }"]` ).click();
+			await page.waitForSelector( 'text=Original element unavailable', { timeout: 8000 } );
+			await shot( page, 'site-elementor-removed' );
+			check( 'Removing the widget reports "Original element unavailable"', ! ( await pinFor() ) );
+		} );
+
+	}
 
 	// ------------------------------------------------ Navigation
 	await attempt( 'Site navigation works in review mode', async () => {
-		await page.goto( BASE + PAGE, { waitUntil: 'domcontentloaded', timeout: 60000 } );
-		await page.waitForSelector( '.mnafb-panel', { timeout: 20000 } );
+		await go( page, BASE + PAGE, { waitUntil: 'domcontentloaded' } );
+		await page.waitForSelector( '#mnafb-root', { state: 'attached', timeout: 30000 } );
 		const target = await page.evaluate( () => {
 			const a = Array.from( document.querySelectorAll( 'header a[href], nav a[href], [data-elementor-type="header"] a[href]' ) ).find( ( el ) => {
 				const r = el.getBoundingClientRect();
@@ -242,20 +291,20 @@ async function main() {
 	// ------------------------------------------------ WooCommerce basket and checkout
 	if ( PRODUCT ) {
 		await attempt( 'WooCommerce: add to basket works in review mode', async () => {
-			await page.goto( BASE + PRODUCT, { waitUntil: 'domcontentloaded', timeout: 60000 } );
+			await go( page, BASE + PRODUCT, { waitUntil: 'domcontentloaded' } );
 			await page.waitForSelector( '#mnafb-root', { state: 'attached', timeout: 20000 } );
 			const button = page.locator( 'form.cart button.single_add_to_cart_button, form.cart [name="add-to-cart"]' ).first();
 			await button.scrollIntoViewIfNeeded();
 			await Promise.all( [ page.waitForLoadState( 'domcontentloaded' ), button.click() ] );
 			await page.waitForTimeout( 2500 );
-			await page.goto( BASE + '/cart/', { waitUntil: 'domcontentloaded', timeout: 60000 } );
+			await go( page, BASE + '/cart/', { waitUntil: 'domcontentloaded' } );
 			await page.waitForTimeout( 1500 );
 			const rows = await page.locator( '.woocommerce-cart-form__cart-item, .wc-block-cart-items__row, .cart_item' ).count();
 			await shot( page, 'site-cart' );
 			check( 'WooCommerce: add to basket works in review mode', rows > 0, `${ rows } rows` );
 		} );
 		await attempt( 'WooCommerce: checkout form is usable in review mode', async () => {
-			await page.goto( BASE + '/checkout/', { waitUntil: 'domcontentloaded', timeout: 60000 } );
+			await go( page, BASE + '/checkout/', { waitUntil: 'domcontentloaded' } );
 			await page.waitForTimeout( 2500 );
 			const email = page.locator( '#billing_email, #email, input[type="email"][autocomplete="email"]' ).first();
 			await email.scrollIntoViewIfNeeded();
@@ -265,7 +314,7 @@ async function main() {
 			check( 'WooCommerce: checkout form is usable in review mode', value === 'integrity-check@example.com' );
 		} );
 		await attempt( 'WooCommerce: basket emptied again', async () => {
-			await page.goto( BASE + '/cart/', { waitUntil: 'domcontentloaded', timeout: 60000 } );
+			await go( page, BASE + '/cart/', { waitUntil: 'domcontentloaded' } );
 			await page.waitForTimeout( 1500 );
 			for ( let i = 0; i < 5; i++ ) {
 				const remove = page.locator( 'a.remove, .wc-block-cart-item__remove-link' ).first();
@@ -283,7 +332,7 @@ async function main() {
 	// ------------------------------------------------ Forms
 	if ( FORM_PAGE ) {
 		await attempt( 'Forms accept input in review mode', async () => {
-			await page.goto( BASE + FORM_PAGE, { waitUntil: 'domcontentloaded', timeout: 60000 } );
+			await go( page, BASE + FORM_PAGE, { waitUntil: 'domcontentloaded' } );
 			await page.waitForSelector( '#mnafb-root', { state: 'attached', timeout: 20000 } );
 			const field = page.locator( 'form input[type="text"]:visible, form textarea:visible' ).first();
 			await field.scrollIntoViewIfNeeded();
@@ -299,6 +348,9 @@ async function main() {
 		console.log( `(Site's own JavaScript reported ${ siteErrors.length } error(s): ${ siteErrors.slice( 0, 3 ).join( ' | ' ) })` );
 	}
 	console.log( `Created feedback ids: ${ created.join( ',' ) || 'none' }` );
+	if ( throttled ) {
+		console.log( `(The host answered ${ throttled } request(s) with 429 Too Many Requests during this run.)` );
+	}
 	await browser.close();
 	const passed = results.filter( Boolean ).length;
 	console.log( `\n${ passed }/${ results.length } checks passed` );

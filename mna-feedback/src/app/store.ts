@@ -4,6 +4,7 @@
 
 import { useSyncExternalStore } from 'react';
 import type { Anchor, Branding, Item, ItemDetail, PageSummary, Person, Priority, SessionData } from './types';
+import { storageKey } from './util/storage';
 
 export type Phase = 'loading' | 'join' | 'invalid' | 'ended' | 'no-access' | 'ready' | 'error' | 'closed';
 export type Mode = 'browse' | 'comment';
@@ -87,7 +88,7 @@ export interface State {
 	dialog: Dialog | null;
 }
 
-const PREFS_KEY = 'mnafb:prefs';
+const PREFS_KEY = storageKey( 'prefs' );
 
 function loadPrefs(): Partial< Pick< State, 'panelOpen' | 'pinsVisible' | 'panelFilter' > > {
 	try {

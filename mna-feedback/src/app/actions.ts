@@ -7,6 +7,7 @@ import { getResolution, refresh as refreshPins } from './anchor/registry';
 import { resolve } from './anchor/resolve';
 import { clearDraft, saveDraft } from './util/drafts';
 import { prepareImage } from './util/images';
+import { clearFlagCookie } from './util/storage';
 import { getState, setState, toast, type ComposerState, type PendingFile } from './store';
 import type { Attachment, Item, ItemDetail, PageSummary, Person, Priority, Reply, SessionData, SessionGate, Status, SyncResponse } from './types';
 
@@ -140,7 +141,7 @@ export async function leave(): Promise< void > {
 		await api.del( 'session' );
 	} catch {
 		// Clear the flag locally so the interface does not come back on the next page.
-		document.cookie = 'mnafb_on=; Max-Age=0; path=/';
+		clearFlagCookie();
 	}
 	api.setNonce( null );
 	setState( { phase: 'closed' } );

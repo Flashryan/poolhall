@@ -49,14 +49,16 @@ final class Crypto {
 
 	private const FILE_MAGIC = "MNAFB1\0";
 
-	private static ?string $file_key = null;
+	/** @var array<int, string> File keys already loaded, by site (blog ID). */
+	private static array $file_keys = array();
 
 	/**
 	 * The per-site file key, created atomically on first use.
 	 */
 	public static function file_key(): string {
-		if ( null !== self::$file_key ) {
-			return self::$file_key;
+		$site = get_current_blog_id();
+		if ( isset( self::$file_keys[ $site ] ) ) {
+			return self::$file_keys[ $site ];
 		}
 		global $wpdb;
 		$read = static fn() => $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", 'mnafb_file_key' ) );
@@ -72,7 +74,7 @@ final class Crypto {
 		if ( false === $key || SODIUM_CRYPTO_SECRETBOX_KEYBYTES !== strlen( $key ) ) {
 			throw new \RuntimeException( 'MNA Feedback file key is unavailable.' );
 		}
-		self::$file_key = $key;
+		self::$file_keys[ $site ] = $key;
 		return $key;
 	}
 
@@ -104,9 +106,9 @@ final class Crypto {
 		return false === $plain ? null : $plain;
 	}
 
-	/** Forgets the cached key (after a purge). */
+	/** Forgets this site's cached key (after a purge). */
 	public static function reset(): void {
-		self::$file_key = null;
+		unset( self::$file_keys[ get_current_blog_id() ] );
 	}
 
 	public static function decrypt( ?string $encoded ): ?string {

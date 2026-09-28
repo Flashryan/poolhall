@@ -213,9 +213,14 @@ final class Frontend {
 
 	public static function config(): array {
 		return array(
-			'rest' => self::relative( rest_url( Rest\Router::NS . '/' ) ),
-			'app'  => MNAFB_URL . 'assets/app.js?ver=' . rawurlencode( MNAFB_VERSION ),
-			'ver'  => MNAFB_VERSION,
+			'rest'       => self::relative( rest_url( Rest\Router::NS . '/' ) ),
+			'app'        => MNAFB_URL . 'assets/app.js?ver=' . rawurlencode( MNAFB_VERSION ),
+			'ver'        => MNAFB_VERSION,
+			// Sites on a network can share an origin, so browser storage and the
+			// review-mode flag are named per site.
+			'site'       => is_multisite() ? get_current_blog_id() : 0,
+			'flag'       => Cookies::name( Cookies::FLAG ),
+			'cookiePath' => Cookies::path(),
 		);
 	}
 
@@ -224,7 +229,7 @@ final class Frontend {
 			return;
 		}
 		$config = wp_json_encode( self::config(), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP );
-		$js     = '(function(){try{if(window.self!==window.top||!/(?:^|;\s*)mnafb_on=1(?:;|$)/.test(document.cookie))return;var c=window.mnafbBoot=' . $config . ';if(document.getElementById("mnafb-app"))return;var s=document.createElement("script");s.id="mnafb-app";s.src=c.app;s.async=true;document.head.appendChild(s);}catch(e){}})();';
+		$js     = '(function(){try{if(window.self!==window.top||!/(?:^|;\s*)' . Cookies::name( Cookies::FLAG ) . '=1(?:;|$)/.test(document.cookie))return;var c=window.mnafbBoot=' . $config . ';if(document.getElementById("mnafb-app"))return;var s=document.createElement("script");s.id="mnafb-app";s.src=c.app;s.async=true;document.head.appendChild(s);}catch(e){}})();';
 		wp_print_inline_script_tag(
 			$js,
 			array(

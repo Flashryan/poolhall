@@ -637,7 +637,7 @@ final class ItemsController {
 	 */
 	public static function sync( WP_REST_Request $request ) {
 		$actor = Router::actor();
-		$since = Router::mysql_time( (string) $request->get_param( 'since' ) );
+		$since = Router::utc_datetime( (string) $request->get_param( 'since' ) );
 		if ( ! $since ) {
 			return Router::error( 'mnafb_bad_since', __( 'Invalid sync time.', 'mna-feedback' ), 400 );
 		}

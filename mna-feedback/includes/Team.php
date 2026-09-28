@@ -102,7 +102,7 @@ final class Team {
 	/**
 	 * Grants a feedback role, or removes it with null.
 	 */
-	public static function set_role( int $user_id, ?string $role, int $acting_user_id ): true|WP_Error {
+	public static function set_role( int $user_id, ?string $role, int $acting_user_id ): bool|WP_Error {
 		$user = get_user_by( 'id', $user_id );
 		if ( ! $user ) {
 			return new WP_Error( 'mnafb_no_user', __( 'That user does not exist.', 'mna-feedback' ), array( 'status' => 404 ) );

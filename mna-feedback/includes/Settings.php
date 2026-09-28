@@ -26,21 +26,23 @@ final class Settings {
 		'purge_on_uninstall' => false,
 	);
 
-	private static ?array $cache = null;
+	/** @var array<int, array> Settings already loaded, by site (blog ID). */
+	private static array $cache = array();
 
 	public static function ensure_defaults(): void {
 		if ( false === get_option( self::OPTION, false ) ) {
 			add_option( self::OPTION, self::DEFAULTS, '', false );
 		}
-		self::$cache = null;
+		unset( self::$cache[ get_current_blog_id() ] );
 	}
 
 	public static function all(): array {
-		if ( null === self::$cache ) {
-			$stored      = get_option( self::OPTION, array() );
-			self::$cache = array_merge( self::DEFAULTS, is_array( $stored ) ? $stored : array() );
+		$site = get_current_blog_id();
+		if ( ! isset( self::$cache[ $site ] ) ) {
+			$stored               = get_option( self::OPTION, array() );
+			self::$cache[ $site ] = array_merge( self::DEFAULTS, is_array( $stored ) ? $stored : array() );
 		}
-		return self::$cache;
+		return self::$cache[ $site ];
 	}
 
 	public static function get( string $key ): mixed {
@@ -60,7 +62,7 @@ final class Settings {
 			$next[ $key ] = self::sanitize( $key, $value, $next[ $key ] );
 		}
 		update_option( self::OPTION, $next, false );
-		self::$cache = null;
+		unset( self::$cache[ get_current_blog_id() ] );
 		return self::all();
 	}
 

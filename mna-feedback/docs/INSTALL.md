@@ -14,7 +14,7 @@ Pretty permalinks are not required. Multisite is supported: each site keeps sepa
 
 ## Install
 
-1. In wp-admin go to **Plugins → Add New → Upload Plugin**, choose `mna-feedback-1.0.0.zip`, then **Install Now** and **Activate**.
+1. In wp-admin go to **Plugins → Add New → Upload Plugin**, choose `mna-feedback-1.0.1.zip`, then **Install Now** and **Activate**.
    - On a multisite network you can network-activate it or activate it per site; each site gets its own tables either way.
 2. A **Feedback** menu appears in wp-admin, and a **Feedback** item appears in the toolbar for team members.
 

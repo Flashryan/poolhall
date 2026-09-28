@@ -3,7 +3,9 @@
  * localStorage until they are sent successfully or discarded.
  */
 
-const PREFIX = 'mnafb:draft:';
+import { storageKey } from './storage';
+
+const PREFIX = storageKey( 'draft:' );
 const MAX_AGE = 14 * 24 * 60 * 60 * 1000;
 
 interface Stored< T > {
