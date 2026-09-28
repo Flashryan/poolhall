@@ -18,6 +18,7 @@ use MNA\Feedback\Data\Reviewers;
 use MNA\Feedback\Formatter;
 use MNA\Feedback\Settings;
 use MNA\Feedback\Url;
+use MNA\Feedback\Workflow;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -113,10 +114,18 @@ final class SessionController {
 		);
 	}
 
+	/**
+	 * Who is asking. Answers 200 either way (so browsers do not log an error on
+	 * every page view); "authenticated" says whether a session exists and, if
+	 * not, what the interface should show instead.
+	 */
 	public static function show( WP_REST_Request $request ) {
 		$actor = Auth::current();
 		if ( ! $actor ) {
-			return self::not_joined();
+			$state = self::not_joined();
+			$data  = (array) $state->get_error_data();
+			unset( $data['status'] );
+			return array( 'authenticated' => false ) + $data;
 		}
 		return self::payload( $actor, (string) $request->get_param( 'url' ) );
 	}
@@ -281,8 +290,9 @@ final class SessionController {
 		$normalized = '' !== $url ? Url::normalize( $url ) : null;
 		if ( $normalized ) {
 			$page = array(
-				'key' => Url::key( $normalized ),
-				'url' => $normalized,
+				'key'   => Url::key( $normalized ),
+				'url'   => $normalized,
+				'title' => Workflow::page_title( $normalized, '' ),
 			);
 		}
 
@@ -300,6 +310,7 @@ final class SessionController {
 		$session = $actor->is_guest() ? Sessions::current() : null;
 
 		return array(
+			'authenticated' => true,
 			'me'          => $me,
 			'csrf'        => $session ? Sessions::csrf_token( $session ) : null,
 			'branding'    => Settings::branding(),
@@ -316,7 +327,7 @@ final class SessionController {
 	 * 401 describing what the interface should show: a join form, a message
 	 * about an unusable link, or that access has ended.
 	 */
-	private static function not_joined() {
+	private static function not_joined(): \WP_Error {
 		$pending = Join::pending();
 		$extra   = array();
 		if ( 'valid' === $pending['state'] ) {

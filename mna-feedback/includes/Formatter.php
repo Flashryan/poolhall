@@ -139,7 +139,7 @@ final class Formatter {
 			'unread'      => $unread,
 			'order'       => (float) $row->board_order,
 			'revision'    => (int) $row->revision,
-			'activity'    => (int) $row->activity_rev,
+			'activity_rev' => (int) $row->activity_rev,
 			'created_at'  => self::time( $row->created_at ),
 			'updated_at'  => self::time( $row->updated_at ),
 			'edited_at'   => self::time( $row->edited_at ),

@@ -184,7 +184,7 @@ final class ItemsController {
 				'callback'            => array( self::class, 'mark_read' ),
 				'permission_callback' => array( Router::class, 'can_read' ),
 				'args'                => $id + array(
-					'activity' => array(
+					'activity_rev' => array(
 						'type'        => 'integer',
 						'minimum'     => 0,
 						'description' => 'The item activity revision the reader has seen. Defaults to the current one.',
@@ -500,7 +500,7 @@ final class ItemsController {
 		if ( ! $item || ! Policy::can_view_item( $actor, $item ) ) {
 			return Router::error( 'mnafb_not_found', __( 'That feedback no longer exists.', 'mna-feedback' ), 404 );
 		}
-		$seen = $request->get_param( 'activity' );
+		$seen = $request->get_param( 'activity_rev' );
 		Workflow::mark_read( $actor, (int) $item->id, null === $seen ? null : (int) $seen );
 		return array( 'ok' => true );
 	}

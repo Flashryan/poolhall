@@ -91,7 +91,7 @@ def main():
     check("Admin can sign in to WordPress", login(admin))
 
     r = admin.get("/session")
-    check("Signed-in admin without nonce gets 401 with wp_login hint", r.status_code == 401 and r.json().get("data", {}).get("wp_login") is True, r.text[:200])
+    check("Signed-in admin without nonce is told to fetch a nonce", r.status_code == 200 and r.json().get("authenticated") is False and r.json().get("wp_login") is True, r.text[:200])
 
     r = admin.get("/session/nonce")
     check("Nonce endpoint requires the client header", r.status_code == 400)
@@ -120,7 +120,7 @@ def main():
 
     r = a.get("/session")
     body = r.json()
-    check("Before joining, /session asks for a name", r.status_code == 401 and body.get("data", {}).get("join", {}).get("state") == "required", r.text[:300])
+    check("Before joining, /session asks for a name", r.status_code == 200 and body.get("authenticated") is False and body.get("join", {}).get("state") == "required", r.text[:300])
 
     r = a.send("POST", "/session", {"name": "Sam"}, headers={"X-MNAFB-Client": ""})
     check("Join without the client header is refused", r.status_code == 400, r.text[:200])
@@ -288,7 +288,7 @@ def main():
     r = c.s.get(return_url, allow_redirects=False)
     check("Return link starts a session on another device", r.status_code == 302 and c.s.cookies.get("mnafb_s"))
     r = c.get("/session")
-    check("Second device resumes the same identity", r.ok and r.json().get("me", {}).get("id") == a_id, r.text[:200])
+    check("Second device resumes the same identity", r.ok and r.json().get("authenticated") is True and r.json().get("me", {}).get("id") == a_id, r.text[:200])
 
     # --- Export ----------------------------------------------------------------
     r = admin.get("/admin/export", params={"format": "csv"})
@@ -300,13 +300,13 @@ def main():
     r = admin.send("POST", f"/admin/links/{link.get('id')}/revoke")
     check("Manager revokes the link", r.ok and r.json().get("status") == "revoked")
     r = a.get("/session")
-    check("Revoked link ends guest A's session", r.status_code == 401 and r.json().get("data", {}).get("ended") is True, r.text[:200])
+    check("Revoked link ends guest A's session", r.json().get("authenticated") is False and r.json().get("ended") is True, r.text[:200])
     r = c.get("/items")
     check("Revoked link ends the second device's session too", r.status_code == 401)
     d = Client("late-guest")
     d.s.get(link_url, allow_redirects=False)
     r = d.get("/session")
-    check("Opening a revoked link explains it has been switched off", r.status_code == 401 and r.json().get("data", {}).get("join", {}).get("reason") == "revoked", r.text[:200])
+    check("Opening a revoked link explains it has been switched off", r.json().get("authenticated") is False and r.json().get("join", {}).get("reason") == "revoked", r.text[:200])
 
     # --- Clean up ----------------------------------------------------------------
     for iid in [item_id, page_item.get("id")]:

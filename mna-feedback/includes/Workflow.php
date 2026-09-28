@@ -82,7 +82,7 @@ final class Workflow {
 				'assignee_id'      => 0,
 				'page_url'         => $page_url,
 				'page_key'         => Url::key( $page_url ),
-				'page_title'       => self::clean_text( (string) ( $in['page_title'] ?? '' ), 255, false ),
+				'page_title'       => self::page_title( $page_url, (string) ( $in['page_title'] ?? '' ) ),
 				'pin_type'         => $pin_type,
 				'pin_x'            => self::fraction( $pin['x'] ?? 0.5 ),
 				'pin_y'            => self::fraction( $pin['y'] ?? 0.5 ),
@@ -514,6 +514,34 @@ final class Workflow {
 			$text = preg_replace( '/\s+/u', ' ', $text );
 		}
 		return mb_substr( trim( (string) $text ), 0, $max );
+	}
+
+	/**
+	 * A readable title for a page: the post title when the address belongs to
+	 * a post, page or product, otherwise the browser title without the
+	 * " – Site name" suffix.
+	 */
+	public static function page_title( string $url, string $given ): string {
+		$post_id = url_to_postid( $url );
+		if ( $post_id ) {
+			$title = trim( html_entity_decode( wp_strip_all_tags( (string) get_the_title( $post_id ) ), ENT_QUOTES, 'UTF-8' ) );
+			if ( '' !== $title ) {
+				return mb_substr( $title, 0, 255 );
+			}
+		}
+		$title = self::clean_text( html_entity_decode( $given, ENT_QUOTES, 'UTF-8' ), 255, false );
+		$site  = trim( html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ) );
+		if ( '' !== $site && $title !== $site ) {
+			foreach ( array( ' – ', ' — ', ' - ', ' | ', ' · ', ' :: ', ' » ' ) as $separator ) {
+				if ( str_ends_with( $title, $separator . $site ) ) {
+					return trim( mb_substr( $title, 0, mb_strlen( $title ) - mb_strlen( $separator . $site ) ) );
+				}
+				if ( str_starts_with( $title, $site . $separator ) ) {
+					return trim( mb_substr( $title, mb_strlen( $site . $separator ) ) );
+				}
+			}
+		}
+		return $title;
 	}
 
 	private static function fraction( mixed $value ): float {
