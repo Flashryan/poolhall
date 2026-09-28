@@ -108,7 +108,7 @@ for ( const entry of entries ) {
 	central.writeUInt16LE( 0, 32 );
 	central.writeUInt16LE( 0, 34 );
 	central.writeUInt16LE( 0, 36 );
-	central.writeUInt32LE( ( ( entry.dir ? 0o40755 : 0o100644 ) << 16 ) | ( entry.dir ? 0x10 : 0 ), 38 );
+	central.writeUInt32LE( ( ( ( entry.dir ? 0o40755 : 0o100644 ) << 16 ) | ( entry.dir ? 0x10 : 0 ) ) >>> 0, 38 );
 	central.writeUInt32LE( offset, 42 );
 	centrals.push( central, name );
 

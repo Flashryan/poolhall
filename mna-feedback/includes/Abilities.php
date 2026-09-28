@@ -119,6 +119,7 @@ final class Abilities {
 						),
 					),
 					'additionalProperties' => false,
+					'default'              => array(),
 				),
 				'output_schema' => array(
 					'type'       => 'object',
@@ -158,6 +159,7 @@ final class Abilities {
 					'type'                 => 'object',
 					'properties'           => new \stdClass(),
 					'additionalProperties' => false,
+					'default'              => array(),
 				),
 				'output_schema' => array(
 					'type'  => 'array',

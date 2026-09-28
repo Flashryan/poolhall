@@ -77,7 +77,7 @@ They use the same permission rules as the interface, never change site content, 
 
 - **Page caching / CDN:** nothing to configure. Public pages only get a tiny loader that is identical for everyone. If an optimisation plugin combines or delays inline scripts, exclude the script with id `mnafb-loader` (it is already marked `data-no-optimize`, `data-no-defer`, `nowprocket` and `data-cfasync="false"`).
 - **Security plugins that restrict the REST API:** allow the `mna-feedback/v1` namespace for logged-out visitors — guest reviewers use it with their session cookie. The plugin authorises every request itself.
-- **Screenshots on Nginx:** screenshots are only ever served through the API, and the storage folder has an unguessable name, `.htaccess` and `web.config` protection. On Nginx you can additionally add `location ~* /wp-content/uploads/mna-feedback- { deny all; }`.
+- **Screenshots on Nginx:** screenshots are encrypted on disk with a per-site key and only ever decrypted by the API, so they stay private even where `.htaccess` is ignored. The storage folder also has an unguessable name and `.htaccess` / `web.config` rules; on Nginx you can additionally add `location ~* /wp-content/uploads/mna-feedback- { deny all; }`.
 - **The overlay does not appear after opening a link:** the browser must allow cookies for the site. Opening the link in a private window works; embedded browsers that block cookies do not.
 - **"Your review access has ended":** the link was revoked, expired or replaced, or the reviewer was removed. Create or share a current link.
 - **Screenshots fail to upload:** the server needs PHP's GD extension with PNG/JPEG/WebP support.

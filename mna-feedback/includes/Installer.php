@@ -38,6 +38,7 @@ final class Installer {
 		Capabilities::grant_defaults();
 		Settings::ensure_defaults();
 		Data\Attachments::ensure_storage();
+		Crypto::file_key();
 		update_option( 'mnafb_db_version', MNAFB_DB_VERSION, false );
 
 		if ( ! wp_next_scheduled( 'mnafb_daily' ) ) {
@@ -83,6 +84,8 @@ final class Installer {
 		Data\Attachments::delete_storage();
 		delete_option( 'mnafb_db_version' );
 		delete_option( 'mnafb_storage_dir' );
+		delete_option( 'mnafb_file_key' );
+		Crypto::reset();
 
 		if ( $keep_plugin_running ) {
 			self::install();

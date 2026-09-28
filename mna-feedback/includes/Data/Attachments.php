@@ -4,10 +4,11 @@
  *
  * Uploads are decoded and re-encoded with GD before being stored, which drops
  * embedded metadata (such as camera location) and anything smuggled inside the
- * file. Files live in an unguessable directory under uploads, blocked from
- * direct access where the server honours .htaccess / web.config, with random
- * file names - and they are only ever served through the authorised REST
- * endpoint, so public visitors cannot retrieve them.
+ * file. The result is encrypted (see Crypto::seal) and written under a random
+ * name in an unguessable directory that is also blocked where the server
+ * honours .htaccess / web.config. Files are only ever decrypted and served by
+ * the authorised REST endpoint, so public visitors cannot retrieve them - even
+ * on servers such as nginx that ignore .htaccess.
  *
  * @package MNA\Feedback
  */
@@ -147,18 +148,20 @@ final class Attachments {
 
 		$mime  = $info['mime'];
 		$uuid  = Crypto::uuid();
-		$ext   = self::MIMES[ $mime ];
-		$name  = $uuid . '.' . $ext;
-		$saved = self::reencode( $tmp, $mime, $dir . '/' . $name );
-		if ( ! $saved ) {
+		$bytes = self::reencode( $tmp, $mime );
+		if ( null === $bytes ) {
 			return new \WP_Error( 'mnafb_upload_decode', __( 'That image could not be read. Try saving it as PNG or JPEG.', 'mna-feedback' ), array( 'status' => 415 ) );
+		}
+		$name = $uuid . '.bin';
+		if ( ! self::put( $dir . '/' . $name, $bytes ) ) {
+			return new \WP_Error( 'mnafb_storage', __( 'The screenshot could not be saved.', 'mna-feedback' ), array( 'status' => 500 ) );
 		}
 
 		$thumb = '';
 		if ( $width > self::THUMB_W ) {
-			$thumb_name = $uuid . '-thumb.' . $ext;
-			if ( self::thumbnail( $dir . '/' . $name, $mime, $dir . '/' . $thumb_name ) ) {
-				$thumb = $thumb_name;
+			$small = self::thumbnail( $bytes, $mime );
+			if ( null !== $small && self::put( $dir . '/' . $uuid . '-thumb.bin', $small ) ) {
+				$thumb = $uuid . '-thumb.bin';
 			}
 		}
 
@@ -173,7 +176,7 @@ final class Attachments {
 				'file'        => $name,
 				'thumb'       => $thumb,
 				'mime'        => $mime,
-				'size'        => (int) filesize( $dir . '/' . $name ),
+				'size'        => strlen( $bytes ),
 				'width'       => $width,
 				'height'      => $height,
 				'created_at'  => gmdate( 'Y-m-d H:i:s' ),
@@ -192,52 +195,93 @@ final class Attachments {
 		};
 	}
 
-	private static function write( \GdImage $image, string $mime, string $dest ): bool {
-		return match ( $mime ) {
-			'image/png'  => imagepng( $image, $dest, 6 ),
-			'image/jpeg' => imagejpeg( $image, $dest, 88 ),
-			'image/webp' => function_exists( 'imagewebp' ) && imagewebp( $image, $dest, 88 ),
+	/** Encodes a GD image in memory. */
+	private static function encode( \GdImage $image, string $mime ): ?string {
+		ob_start();
+		$ok = match ( $mime ) {
+			'image/png'  => imagepng( $image, null, 6 ),
+			'image/jpeg' => imagejpeg( $image, null, 88 ),
+			'image/webp' => function_exists( 'imagewebp' ) && imagewebp( $image, null, 88 ),
 			default      => false,
 		};
+		$bytes = (string) ob_get_clean();
+		return $ok && '' !== $bytes ? $bytes : null;
 	}
 
-	private static function reencode( string $src, string $mime, string $dest ): bool {
+	/** Decodes the upload and re-encodes it, returning the new file contents. */
+	private static function reencode( string $src, string $mime ): ?string {
 		if ( function_exists( 'imagecreatetruecolor' ) ) {
 			$image = self::load( $src, $mime );
 			if ( $image ) {
 				imagealphablending( $image, false );
 				imagesavealpha( $image, true );
-				$ok = self::write( $image, $mime, $dest );
-				return $ok && file_exists( $dest );
+				return self::encode( $image, $mime );
 			}
 		}
 		// Fallback for servers without GD support for this format.
-		$editor = wp_get_image_editor( $src );
-		if ( is_wp_error( $editor ) ) {
-			return false;
-		}
-		$result = $editor->save( $dest, $mime );
-		return ! is_wp_error( $result ) && file_exists( $dest );
+		return self::via_editor( $src, $mime, 0 );
 	}
 
-	private static function thumbnail( string $src, string $mime, string $dest ): bool {
-		if ( function_exists( 'imagescale' ) ) {
-			$image = self::load( $src, $mime );
+	private static function thumbnail( string $bytes, string $mime ): ?string {
+		if ( function_exists( 'imagecreatefromstring' ) && function_exists( 'imagescale' ) ) {
+			$image = @imagecreatefromstring( $bytes ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 			if ( $image ) {
 				$scaled = imagescale( $image, self::THUMB_W, -1, IMG_BILINEAR_FIXED );
 				if ( $scaled ) {
 					imagealphablending( $scaled, false );
 					imagesavealpha( $scaled, true );
-					$ok = self::write( $scaled, $mime, $dest );
-					return $ok;
+					return self::encode( $scaled, $mime );
 				}
 			}
 		}
-		$editor = wp_get_image_editor( $src );
-		if ( is_wp_error( $editor ) || is_wp_error( $editor->resize( self::THUMB_W, null ) ) ) {
-			return false;
+		$tmp = self::temp_file( 'mnafb' );
+		if ( ! $tmp || false === file_put_contents( $tmp, $bytes ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			return null;
 		}
-		return ! is_wp_error( $editor->save( $dest, $mime ) );
+		$result = self::via_editor( $tmp, $mime, self::THUMB_W );
+		wp_delete_file( $tmp );
+		return $result;
+	}
+
+	/** WordPress image editor fallback (Imagick), working through a temporary file. */
+	private static function via_editor( string $src, string $mime, int $width ): ?string {
+		$editor = wp_get_image_editor( $src );
+		if ( is_wp_error( $editor ) || ( $width && is_wp_error( $editor->resize( $width, null ) ) ) ) {
+			return null;
+		}
+		$dest   = self::temp_file( 'mnafb-out' );
+		$result = $editor->save( $dest, $mime );
+		if ( is_wp_error( $result ) || empty( $result['path'] ) || ! is_file( $result['path'] ) ) {
+			return null;
+		}
+		$bytes = (string) file_get_contents( $result['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		wp_delete_file( $result['path'] );
+		if ( $dest !== $result['path'] && is_file( $dest ) ) {
+			wp_delete_file( $dest );
+		}
+		return '' === $bytes ? null : $bytes;
+	}
+
+	private static function temp_file( string $prefix ): string {
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		return (string) wp_tempnam( $prefix );
+	}
+
+	/** Writes sealed (encrypted) contents to the storage directory. */
+	private static function put( string $path, string $bytes ): bool {
+		return false !== file_put_contents( $path, Crypto::seal( $bytes ), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	}
+
+	/** Decrypted contents of a stored file, or null. */
+	public static function contents( object $attachment, string $variant = 'full' ): ?string {
+		$path = self::path( $attachment, $variant );
+		if ( ! $path ) {
+			return null;
+		}
+		$stored = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		return false === $stored ? null : Crypto::unseal( $stored );
 	}
 
 	public static function path( object $attachment, string $variant = 'full' ): ?string {
@@ -268,19 +312,19 @@ final class Attachments {
 	 * Sends the file to an authorised requester and stops.
 	 */
 	public static function stream( object $attachment, string $variant = 'full' ): void {
-		$path = self::path( $attachment, $variant );
-		if ( ! $path ) {
+		$bytes = self::contents( $attachment, $variant );
+		if ( null === $bytes ) {
 			status_header( 404 );
 			exit;
 		}
 		nocache_headers();
 		header( 'Content-Type: ' . $attachment->mime );
-		header( 'Content-Length: ' . filesize( $path ) );
+		header( 'Content-Length: ' . strlen( $bytes ) );
 		header( 'Cache-Control: private, no-store, max-age=0' );
 		header( 'X-Content-Type-Options: nosniff' );
 		header( "Content-Security-Policy: default-src 'none'; img-src 'self'; sandbox" );
 		header( 'Content-Disposition: inline; filename="screenshot-' . (int) $attachment->id . '.' . ( self::MIMES[ $attachment->mime ] ?? 'img' ) . '"' );
-		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+		echo $bytes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Image data served with nosniff and a sandbox CSP.
 		exit;
 	}
 }
