@@ -5,7 +5,9 @@
  *   MNAFB_BASE=http://localhost:8889 MNAFB_ADMIN_USER=admin MNAFB_ADMIN_PASS=... \
  *   MNAFB_PAGE=/review-test/ MNAFB_SHOTS=./shots node tests/e2e/overlay.e2e.mjs
  *
- * MNAFB_PAGE must be a page on the site with at least one <h1>, <h2> and <p>.
+ * MNAFB_PAGE must be a page on the site with a visible heading (MNAFB_TARGET,
+ * default h2) and paragraph in its content. MNAFB_LOGIN_URL can replace the
+ * admin user name and password with a one-time login URL.
  * Everything the test creates is removed at the end (items purged, link revoked).
  */
 
@@ -29,6 +31,9 @@ const BASE = ( process.env.MNAFB_BASE || 'http://localhost:8889' ).replace( /\/$
 const PAGE = process.env.MNAFB_PAGE || '/review-test/';
 const USER = process.env.MNAFB_ADMIN_USER || 'admin';
 const PASS = process.env.MNAFB_ADMIN_PASS || '';
+const LOGIN_URL = process.env.MNAFB_LOGIN_URL || '';
+// Heading used for element pins: the first visible match outside header/nav.
+const TARGET = process.env.MNAFB_TARGET || 'h2';
 const SHOTS = process.env.MNAFB_SHOTS || '';
 const EXECUTABLE = process.env.MNAFB_CHROMIUM || undefined;
 if ( SHOTS ) {
@@ -123,6 +128,27 @@ async function visibleTarget( page, selector ) {
 	}, selector );
 }
 
+/** Marks the first visible content element matching TARGET; returns its selector. */
+async function markTarget( page ) {
+	const ok = await page.evaluate( ( sel ) => {
+		document.querySelectorAll( '[data-e2e-target]' ).forEach( ( el ) => el.removeAttribute( 'data-e2e-target' ) );
+		const el = Array.from( document.querySelectorAll( sel ) ).find( ( e ) => {
+			const r = e.getBoundingClientRect();
+			const style = getComputedStyle( e );
+			return r.width > 60 && r.height > 12 && style.visibility !== 'hidden' && ! e.closest( 'header, nav, footer, #wpadminbar, [data-elementor-type="header"], [data-elementor-type="footer"], .elementor-location-header, .elementor-location-footer' );
+		} );
+		if ( ! el ) {
+			return false;
+		}
+		el.setAttribute( 'data-e2e-target', '1' );
+		return true;
+	}, TARGET );
+	if ( ! ok ) {
+		throw new Error( `No visible ${ TARGET } in the page content` );
+	}
+	return '[data-e2e-target="1"]';
+}
+
 /** A point inside the element that is not covered by an existing pin. */
 async function freePoint( page, selector ) {
 	const box = await page.locator( selector ).first().boundingBox();
@@ -182,21 +208,34 @@ async function createViaUi( page, selector, title, body = '' ) {
 }
 
 async function main() {
-	if ( ! PASS ) {
-		console.log( 'Set MNAFB_ADMIN_PASS' );
+	if ( ! PASS && ! LOGIN_URL ) {
+		console.log( 'Set MNAFB_ADMIN_PASS or MNAFB_LOGIN_URL' );
 		return 2;
 	}
-	const browser = await chromium.launch( EXECUTABLE ? { executablePath: EXECUTABLE } : {} );
+	// Use the environment's HTTPS proxy for remote sites (its CA is trusted via the system/NSS store).
+	const proxyServer = process.env.HTTPS_PROXY || process.env.https_proxy;
+	const remote = ! /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test( BASE );
+	// The full Chromium build (not the headless shell) honours managed trust policies.
+	const channel = process.env.MNAFB_CHANNEL || ( remote ? 'chromium' : undefined );
+	const browser = await chromium.launch( {
+		...( EXECUTABLE ? { executablePath: EXECUTABLE } : {} ),
+		...( channel && ! EXECUTABLE ? { channel } : {} ),
+		...( remote && proxyServer ? { proxy: { server: proxyServer } } : {} ),
+	} );
 
 	// ---------------------------------------------------------------- Setup
 	const adminCtx = await browser.newContext( { viewport: { width: 1280, height: 800 } } );
 	const admin = await adminCtx.newPage();
 	watch( admin, 'admin' );
-	await admin.goto( BASE + '/wp-login.php' );
-	await admin.fill( '#user_login', USER );
-	await admin.fill( '#user_pass', PASS );
-	await admin.click( '#wp-submit' );
-	await admin.waitForURL( /wp-admin/, { timeout: 20000 } );
+	if ( LOGIN_URL ) {
+		await admin.goto( LOGIN_URL );
+	} else {
+		await admin.goto( BASE + '/wp-login.php' );
+		await admin.fill( '#user_login', USER );
+		await admin.fill( '#user_pass', PASS );
+		await admin.click( '#wp-submit' );
+	}
+	await admin.waitForURL( /wp-admin/, { timeout: 30000 } );
 	const nonce = await admin.evaluate( async () => ( await ( await fetch( '/wp-json/mna-feedback/v1/session/nonce', { headers: { 'X-MNAFB-Client': '1' } } ) ).json() ).nonce );
 	check( 'Admin signs in and gets a REST nonce', !! nonce );
 	const linkRes = await api( admin, 'POST', 'admin/links', { label: 'E2E test link', landing_url: BASE + PAGE }, nonce );
@@ -232,9 +271,11 @@ async function main() {
 
 	// --------------------------------------------------- Create by mouse
 	let heading;
+	let target = '[data-e2e-target="1"]';
 	await attempt( 'Guest pins a comment to a heading with the mouse', async () => {
-		heading = await createViaUi( guest, 'h2', 'E2E: tighten the section heading', 'Too much space above it.' );
-		check( 'Guest pins a comment to a heading with the mouse', heading && heading.pin?.type === 'element' && heading.pin.anchor?.tag === 'h2' );
+		target = await markTarget( guest );
+		heading = await createViaUi( guest, target, 'E2E: tighten the section heading', 'Too much space above it.' );
+		check( 'Guest pins a comment to a heading with the mouse', heading && heading.pin?.type === 'element' && heading.pin.anchor?.tag === TARGET.split( /[ .#\[]/ )[ 0 ] );
 	} );
 	await shot( guest, '1280-pinned' );
 	const pin1 = heading && ( await pinBox( guest, 'E2E: tighten the section heading' ) );
@@ -249,37 +290,37 @@ async function main() {
 		check( 'Pins stay on their element after scrolling', before && after && Math.abs( before.top - after.top - 220 ) < 12, JSON.stringify( { before: before?.top, after: after?.top } ) );
 	} );
 	await attempt( 'Pins follow dynamic content changes', async () => {
-		const target = await guest.evaluate( () => document.querySelector( 'h2' ).getBoundingClientRect().top );
+		const top = await guest.evaluate( ( sel ) => document.querySelector( sel ).getBoundingClientRect().top, target );
 		const before = await pinBox( guest, 'E2E: tighten the section heading' );
-		await guest.evaluate( () => {
+		await guest.evaluate( ( sel ) => {
+			const el = document.querySelector( sel );
 			const block = document.createElement( 'div' );
 			block.id = 'e2e-inserted';
 			block.style.height = '150px';
 			block.textContent = 'Inserted by the test';
-			document.querySelector( 'h2' ).parentElement.insertBefore( block, document.querySelector( 'h2' ) );
-		} );
+			el.parentElement.insertBefore( block, el );
+		}, target );
 		await guest.waitForTimeout( 900 );
-		const moved = await guest.evaluate( () => document.querySelector( 'h2' ).getBoundingClientRect().top );
+		const moved = await guest.evaluate( ( sel ) => document.querySelector( sel ).getBoundingClientRect().top, target );
 		const after = await pinBox( guest, 'E2E: tighten the section heading' );
-		check( 'Pins follow dynamic content changes', before && after && Math.abs( ( after.top - before.top ) - ( moved - target ) ) < 12, JSON.stringify( { pinDelta: after && before ? after.top - before.top : null, elDelta: moved - target } ) );
+		check( 'Pins follow dynamic content changes', before && after && Math.abs( ( after.top - before.top ) - ( moved - top ) ) < 12, JSON.stringify( { pinDelta: after && before ? after.top - before.top : null, elDelta: moved - top } ) );
 		await guest.evaluate( () => document.getElementById( 'e2e-inserted' )?.remove() );
 	} );
 	await attempt( 'Pins survive a resize', async () => {
 		await guest.setViewportSize( { width: 1100, height: 800 } );
 		await guest.waitForTimeout( 700 );
 		const box = await pinBox( guest, 'E2E: tighten the section heading' );
-		const el = await guest.evaluate( () => document.querySelector( 'h2' ).getBoundingClientRect().toJSON() );
+		const el = await guest.evaluate( ( sel ) => document.querySelector( sel ).getBoundingClientRect().toJSON(), target );
 		check( 'Pins survive a resize', box && box.bottom >= el.top - 4 && box.bottom <= el.bottom + 4, JSON.stringify( { box, el } ) );
 		await guest.setViewportSize( { width: 1280, height: 800 } );
 	} );
 
 	// An element that disappears is reported, never re-attached elsewhere.
 	await attempt( 'Removed element shows "Original element unavailable"', async () => {
-		await guest.evaluate( () => {
-			const h = document.querySelector( 'h2' );
-			h.setAttribute( 'data-e2e-hidden', '1' );
+		await guest.evaluate( ( sel ) => {
+			const h = document.querySelector( sel );
 			h.replaceWith( Object.assign( document.createElement( 'p' ), { textContent: 'Replaced by the test' } ) );
-		} );
+		}, target );
 		await guest.waitForTimeout( 900 );
 		const visible = await pinBox( guest, 'E2E: tighten the section heading' );
 		await guest.locator( '.mnafb-card__open[aria-label*="E2E: tighten the section heading"]' ).click();

@@ -18,10 +18,22 @@ import sys
 import time
 import zlib
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
+def resilient(session):
+    """Retry only failures to connect (the request never reached the site), never reads or writes."""
+    adapter = HTTPAdapter(max_retries=Retry(total=4, connect=4, read=0, status=0, other=0, backoff_factor=1, allowed_methods=None, raise_on_status=False))
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 BASE = os.environ.get("MNAFB_BASE", "http://localhost:8889").rstrip("/")
 ADMIN_USER = os.environ.get("MNAFB_ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("MNAFB_ADMIN_PASS", "")
+# Alternatively a one-time login URL (for example from Novamira's admin access link).
+LOGIN_URL = os.environ.get("MNAFB_LOGIN_URL", "")
 API = BASE + "/wp-json/mna-feedback/v1"
 CLIENT = {"X-MNAFB-Client": "1"}
 
@@ -48,7 +60,7 @@ def png_bytes(width=64, height=40):
 class Client:
     def __init__(self, label):
         self.label = label
-        self.s = requests.Session()
+        self.s = resilient(requests.Session())
         self.s.headers["User-Agent"] = f"mnafb-smoke/{label}"
         self.nonce = None
         self.csrf = None
@@ -63,7 +75,14 @@ class Client:
 
     def get(self, path, **kw):
         headers = {**self.headers(), **kw.pop("headers", {})}
-        return self.s.get(API + path, headers=headers, allow_redirects=False, **kw)
+        # Reads are safe to repeat: ride out a dropped connection or gateway hiccup.
+        for attempt in range(3):
+            r = self.s.get(API + path, headers=headers, allow_redirects=False, **kw)
+            if r.status_code in (502, 503, 504) or (r.status_code == 200 and not r.content):
+                time.sleep(1 + attempt)
+                continue
+            return r
+        return r
 
     def send(self, method, path, body=None, **kw):
         headers = {**self.headers(True), **kw.pop("headers", {})}
@@ -73,6 +92,9 @@ class Client:
 
 
 def login(client):
+    if LOGIN_URL:
+        r = client.s.get(LOGIN_URL, allow_redirects=True)
+        return r.ok and any(c.name.startswith("wordpress_logged_in") for c in client.s.cookies)
     client.s.get(BASE + "/wp-login.php")
     r = client.s.post(
         BASE + "/wp-login.php",
@@ -83,8 +105,8 @@ def login(client):
 
 
 def main():
-    if not ADMIN_PASS:
-        print("Set MNAFB_ADMIN_PASS")
+    if not ADMIN_PASS and not LOGIN_URL:
+        print("Set MNAFB_ADMIN_PASS or MNAFB_LOGIN_URL")
         return 2
 
     admin = Client("admin")

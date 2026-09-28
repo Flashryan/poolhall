@@ -17,6 +17,8 @@ import os
 import sys
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE = os.environ.get("MNAFB_BASE", "http://localhost:8889").rstrip("/")
 API = BASE + "/wp-json/mna-feedback/v1"
@@ -30,8 +32,18 @@ def check(name, condition, detail=""):
     print(f"[{'PASS' if condition else 'FAIL'}] {name}" + (f" — {detail}" if detail and not condition else ""))
 
 
+LOGIN_URL = os.environ.get("MNAFB_LOGIN_URL", "")
+
+
 def session_for(user, password):
     s = requests.Session()
+    adapter = HTTPAdapter(max_retries=Retry(total=4, connect=4, read=0, status=0, other=0, backoff_factor=1, allowed_methods=None, raise_on_status=False))
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
+    if LOGIN_URL and user is None:
+        s.get(LOGIN_URL, allow_redirects=True)
+        nonce = s.get(BASE + "/wp-admin/admin-ajax.php", params={"action": "rest-nonce"}).text.strip()
+        return (s, nonce) if nonce and nonce != "0" else (None, None)
     s.get(BASE + "/wp-login.php")
     r = s.post(BASE + "/wp-login.php", data={"log": user, "pwd": password, "wp-submit": "Log In", "testcookie": "1"}, allow_redirects=False)
     if r.status_code not in (302, 303):
@@ -56,7 +68,7 @@ def run(s, nonce, name, payload, method):
 
 
 def main():
-    admin, nonce = session_for(os.environ.get("MNAFB_ADMIN_USER", "admin"), os.environ.get("MNAFB_ADMIN_PASS", ""))
+    admin, nonce = session_for(None if LOGIN_URL else os.environ.get("MNAFB_ADMIN_USER", "admin"), os.environ.get("MNAFB_ADMIN_PASS", ""))
     if not admin:
         print("Admin login failed")
         return 2
