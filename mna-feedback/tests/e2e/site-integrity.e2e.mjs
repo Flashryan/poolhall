@@ -233,7 +233,7 @@ async function main() {
 		console.log( '(No Elementor heading widgets on this page: Elementor checks skipped.)' );
 	} else {
 		let widgetId = null;
-		let itemTitle = 'Integrity: Elementor heading pin';
+		let itemTitle = 'Automated check (removed shortly): Elementor heading pin';
 		await attempt( 'Pins on Elementor widgets record the Elementor element', async () => {
 			// Mark one heading, then scroll it to the middle instantly (sites often
 			// set smooth scrolling, which would still be moving when we measure).
@@ -376,9 +376,9 @@ async function main() {
 			await go( page, BASE + '/cart/', { waitUntil: 'domcontentloaded' } );
 			await page.waitForTimeout( 1500 );
 			for ( let i = 0; i < 5; i++ ) {
-				// Classic cart: follow the row's own remove link (a mini-cart in the
-				// header can have hidden remove links of its own). Block cart: click.
-				const href = await page.evaluate( () => document.querySelector( '.woocommerce-cart-form a.remove[href*="remove_item"], a.remove[href*="remove_item"]' )?.href || null );
+				// Classic and custom carts: follow a remove link (hidden mini-cart links
+				// work too, and a click could miss them). Block cart: click.
+				const href = await page.evaluate( () => document.querySelector( '.woocommerce-cart-form a[href*="remove_item="], a.remove[href*="remove_item="], a[href*="remove_item="]' )?.href || null );
 				if ( href ) {
 					await page.goto( href, { timeout: 60000, waitUntil: 'domcontentloaded' } ); // Not go(): no warm-up fetch of a link that changes the basket.
 					await page.waitForTimeout( 1500 );
