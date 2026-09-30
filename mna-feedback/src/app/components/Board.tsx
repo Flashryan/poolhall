@@ -11,8 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { locate, openItem, patchItem } from '../actions';
 import { allNumbers, initialFilters, setState, toast, useStore, type BoardFilters } from '../store';
-import { STATUSES, type Item, type Status } from '../types';
-import { PRIORITY_LABEL, STATUS_LABEL, pagePath } from '../util/format';
+import { DEVICE_TYPES, STATUSES, type Item, type Status } from '../types';
+import { DEVICE_LABEL, PRIORITY_LABEL, STATUS_LABEL, pagePath } from '../util/format';
 import { useLayout } from '../hooks/useMedia';
 import { Card } from './Card';
 import { Detail } from './Detail';
@@ -61,6 +61,9 @@ function matches( item: Item, f: BoardFilters, meId: number ): boolean {
 		return false;
 	}
 	if ( f.author && String( item.author?.id || '' ) !== f.author ) {
+		return false;
+	}
+	if ( f.device && ( f.device === 'unknown' ? item.device : item.device?.type !== f.device ) ) {
 		return false;
 	}
 	if ( f.assignee ) {
@@ -120,7 +123,8 @@ function Filters( { onClose }: { onClose?: () => void } ) {
 		const ids = new Set( Object.values( items ).map( ( i ) => i.author?.id ) );
 		return people.filter( ( p ) => ids.has( p.id ) );
 	}, [ people, items ] );
-	const active = Boolean( filters.search || filters.page || filters.priority || filters.author || filters.assignee || filters.unread );
+	const active = Boolean( filters.search || filters.page || filters.priority || filters.device || filters.author || filters.assignee || filters.unread );
+	const hasUnknownDevice = useMemo( () => Object.values( items ).some( ( i ) => ! i.device ), [ items ] );
 
 	return (
 		<div className="mnafb-filters">
@@ -149,6 +153,18 @@ function Filters( { onClose }: { onClose?: () => void } ) {
 							{ PRIORITY_LABEL[ p ] }
 						</option>
 					) ) }
+				</select>
+			</label>
+			<label className="mnafb-filter">
+				<span className="mnafb-sr">Device</span>
+				<select className="mnafb-select" value={ filters.device } onChange={ ( e ) => set( { device: e.target.value } ) }>
+					<option value="">Any device</option>
+					{ DEVICE_TYPES.map( ( type ) => (
+						<option key={ type } value={ type }>
+							{ DEVICE_LABEL[ type ] }
+						</option>
+					) ) }
+					{ hasUnknownDevice && <option value="unknown">Not recorded</option> }
 				</select>
 			</label>
 			<label className="mnafb-filter">

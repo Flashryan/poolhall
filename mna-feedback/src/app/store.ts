@@ -35,6 +35,8 @@ export interface BoardFilters {
 	search: string;
 	page: string;
 	priority: string;
+	/** A device type, or 'unknown' for comments without device details. */
+	device: string;
 	author: string;
 	assignee: string;
 	unread: boolean;
@@ -101,7 +103,7 @@ function loadPrefs(): Partial< Pick< State, 'panelOpen' | 'pinsVisible' | 'panel
 
 const prefs = loadPrefs();
 
-export const initialFilters: BoardFilters = { search: '', page: '', priority: '', author: '', assignee: '', unread: false };
+export const initialFilters: BoardFilters = { search: '', page: '', priority: '', device: '', author: '', assignee: '', unread: false };
 
 let state: State = {
 	phase: 'loading',

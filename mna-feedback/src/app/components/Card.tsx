@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import type { ResolveState } from '../anchor/resolve';
 import { setState } from '../store';
 import type { Item } from '../types';
-import { STATUS_LABEL, fullDate, pagePath, timeAgo } from '../util/format';
-import { Avatar, PriorityChip, StatusChip } from './ui';
+import { STATUS_LABEL, deviceText, fullDate, pagePath, timeAgo } from '../util/format';
+import { Avatar, DeviceMark, PriorityChip, StatusChip } from './ui';
 import { Icon } from './Icons';
 
 export interface CardProps {
@@ -23,7 +23,7 @@ export interface CardProps {
 
 export function Card( { item, number, variant, onOpen, showPage, anchorState, selected, dragging, actions, onPointerDown }: CardProps ) {
 	const isPage = item.pin.type === 'page';
-	const label = `${ isPage ? 'Page comment' : `Comment ${ number }` }: ${ item.title }. ${ STATUS_LABEL[ item.status ] }${ item.unread ? '. New activity' : '' }`;
+	const label = `${ isPage ? 'Page comment' : `Comment ${ number }` }: ${ item.title }. ${ STATUS_LABEL[ item.status ] }${ item.unread ? '. New activity' : '' }${ item.device ? `. ${ deviceText( item.device ) }` : '' }`;
 	return (
 		<article
 			className={ [
@@ -62,6 +62,7 @@ export function Card( { item, number, variant, onOpen, showPage, anchorState, se
 				<time dateTime={ item.created_at } title={ fullDate( item.created_at ) }>
 					{ timeAgo( item.created_at ) }
 				</time>
+				<DeviceMark device={ item.device } decorative />
 				{ variant === 'panel' && item.status !== 'open' && <StatusChip status={ item.status } /> }
 				<PriorityChip priority={ item.priority } />
 				{ anchorState === 'unavailable' && (

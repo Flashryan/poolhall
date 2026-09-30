@@ -16,8 +16,8 @@ if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 	return;
 }
 
-defined( 'MNAFB_VERSION' ) || define( 'MNAFB_VERSION', '1.0.1' );
-defined( 'MNAFB_DB_VERSION' ) || define( 'MNAFB_DB_VERSION', 1 );
+defined( 'MNAFB_VERSION' ) || define( 'MNAFB_VERSION', '1.1.0' );
+defined( 'MNAFB_DB_VERSION' ) || define( 'MNAFB_DB_VERSION', 2 );
 defined( 'MNAFB_FILE' ) || define( 'MNAFB_FILE', __DIR__ . '/mna-feedback.php' );
 defined( 'MNAFB_DIR' ) || define( 'MNAFB_DIR', __DIR__ . '/' );
 

@@ -70,6 +70,7 @@ final class Export {
 					'height' => (int) $row->viewport_h,
 				),
 				'context'      => $row->context ? json_decode( (string) $row->context, true ) : null,
+				'device'       => Device::for_output( $row->device ?? null ),
 				'reply_count'  => (int) ( $reply_counts[ $id ] ?? 0 ),
 				'created_at'   => Formatter::time( $row->created_at ),
 				'updated_at'   => Formatter::time( $row->updated_at ),
@@ -82,6 +83,7 @@ final class Export {
 						'kind'       => (string) $reply->kind,
 						'body'       => (string) $reply->body,
 						'author'     => self::who( (int) $reply->author_id ),
+						'device'     => Device::for_output( $reply->device ?? null ),
 						'created_at' => Formatter::time( $reply->created_at ),
 						'edited_at'  => Formatter::time( $reply->edited_at ),
 						'in_trash'   => ! empty( $reply->deleted_at ),
@@ -132,7 +134,7 @@ final class Export {
 		fwrite( $handle, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- UTF-8 BOM so spreadsheets detect the encoding.
 		fputcsv(
 			$handle,
-			array( 'ID', 'Title', 'Description', 'Status', 'Priority', 'Page', 'Page URL', 'Author', 'Author email', 'Assignee', 'Pin', 'Replies', 'Screenshots', 'Created (UTC)', 'Updated (UTC)', 'In Trash' ),
+			array( 'ID', 'Title', 'Description', 'Status', 'Priority', 'Page', 'Page URL', 'Author', 'Author email', 'Assignee', 'Pin', 'Device type', 'Device', 'Device details', 'Replies', 'Screenshots', 'Created (UTC)', 'Updated (UTC)', 'In Trash' ),
 			',',
 			'"',
 			''
@@ -154,6 +156,9 @@ final class Export {
 						$item['author']['email'] ?? '',
 						$item['assignee']['name'] ?? '',
 						'element' === $item['pin']['type'] ? 'Element' : 'Page',
+						$item['device'] ? Device::type_label( $item['device']['type'] ) : '',
+						$item['device']['summary'] ?? '',
+						$item['device'] ? trim( $item['device']['details'] . ( $item['device']['estimated'] ? ' · estimated' : '' ), ' ·' ) : '',
 						$item['reply_count'],
 						count( $item['screenshots'] ),
 						$item['created_at'],

@@ -1153,6 +1153,43 @@
 	display: inline-flex;
 }
 
+/* Device a comment or reply was left on */
+.mnafb-device {
+	display: inline-flex;
+	align-items: center;
+	color: var(--muted);
+}
+
+.mnafb-prop.mnafb-prop--device {
+	align-items: start;
+}
+
+.mnafb-prop--device .mnafb-prop__label {
+	padding-top: 1px;
+}
+
+.mnafb-prop--device .mnafb-prop__value {
+	align-items: flex-start;
+}
+
+.mnafb-prop--device .mnafb-icon {
+	flex: none;
+	margin-top: 1px;
+	color: var(--muted);
+}
+
+.mnafb-device-text {
+	display: grid;
+	gap: 2px;
+	min-width: 0;
+}
+
+.mnafb-device-text__more {
+	font-size: 12px;
+	color: var(--muted);
+	overflow-wrap: anywhere;
+}
+
 .mnafb-dot {
 	flex: none;
 	width: 8px;

@@ -45,7 +45,7 @@ final class Items {
 
 	/**
 	 * @param array{
-	 *   status?: string[], priority?: string[], author_id?: int, assignee?: int|string,
+	 *   status?: string[], priority?: string[], device?: string[], author_id?: int, assignee?: int|string,
 	 *   page_key?: string, search?: string, trashed?: bool|string, updated_since?: string,
 	 *   limit?: int, offset?: int, order?: string, ids?: int[]
 	 * } $args
@@ -91,10 +91,14 @@ final class Items {
 		if ( 'any' !== $trashed ) {
 			$clauses[] = $trashed ? 'deleted_at IS NOT NULL' : 'deleted_at IS NULL';
 		}
-		foreach ( array( 'status', 'priority' ) as $field ) {
-			if ( ! empty( $args[ $field ] ) ) {
-				$values    = array_values( (array) $args[ $field ] );
-				$clauses[] = $field . ' IN (' . implode( ',', array_fill( 0, count( $values ), '%s' ) ) . ')';
+		foreach ( array(
+			'status'   => 'status',
+			'priority' => 'priority',
+			'device'   => 'device_type',
+		) as $arg => $column ) {
+			if ( ! empty( $args[ $arg ] ) ) {
+				$values    = array_values( (array) $args[ $arg ] );
+				$clauses[] = $column . ' IN (' . implode( ',', array_fill( 0, count( $values ), '%s' ) ) . ')';
 				$params    = array_merge( $params, $values );
 			}
 		}

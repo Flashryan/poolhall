@@ -90,13 +90,20 @@ def main():
     check("Read abilities are annotated read-only", all(ours.get(n, {}).get("meta", {}).get("annotations", {}).get("readonly") for n in ["mna-feedback/list-items", "mna-feedback/get-item", "mna-feedback/list-team"]))
     check("No ability is marked destructive", not any(a.get("meta", {}).get("annotations", {}).get("destructive") for a in ours.values()))
 
-    item = admin.post(API + "/items", json={"title": "Agent test: update the footer phone number", "body": "The number in the footer is out of date.", "page_url": BASE + "/", "pin": {"type": "page"}}, headers=h).json()
+    phone_ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
+    phone = {"screen": {"w": 393, "h": 852}, "viewport": {"w": 393, "h": 659}, "dpr": 3, "touch": 5}
+    item = admin.post(API + "/items", json={"title": "Agent test: update the footer phone number", "body": "The number in the footer is out of date.", "page_url": BASE + "/", "pin": {"type": "page"}, "device": phone}, headers={**h, "User-Agent": phone_ua}).json()
     item_id = item.get("id")
     check("Test item created", bool(item_id), json.dumps(item)[:200])
 
     r = run(admin, nonce, "mna-feedback/list-items", {"status": ["open"], "search": "Agent test"}, "GET")
     body = r.json() if r.ok else {}
     check("list-items finds the open item", r.ok and any(i.get("id") == item_id for i in body.get("items", [])), r.text[:200])
+    found = next((i for i in body.get("items", []) if i.get("id") == item_id), {})
+    check("list-items says which device it was left on", (found.get("device") or {}).get("summary") == "iPhone · Safari 17" and "ua" not in (found.get("device") or {}), json.dumps(found.get("device"))[:200])
+    r = run(admin, nonce, "mna-feedback/list-items", {"search": "Agent test", "device": ["desktop"]}, "GET")
+    body = r.json() if r.ok else {}
+    check("list-items filters by device", r.ok and not any(i.get("id") == item_id for i in body.get("items", [])), r.text[:200])
 
     r = run(admin, nonce, "mna-feedback/get-item", {"id": item_id}, "GET")
     detail = r.json() if r.ok else {}

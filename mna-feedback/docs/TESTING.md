@@ -1,6 +1,20 @@
 # MNA Feedback — test results
 
-Version 1.0.1, tested 28 September 2026.
+Version 1.1.0 (device logging), tested 30 September 2026, on top of the 1.0.1 results from 28 September below.
+
+## 1.1.0 — device logging
+
+Every comment and reply now records the device it was left on (phone, tablet or desktop; model where known; operating system and browser; screen and window size, pixel ratio, touch).
+
+| Check | Result |
+|---|---|
+| `tests/php/device_test.php` — detection rules against real browser strings: iPhone (Safari 17 and 26, Chrome, Firefox, Edge, Facebook app, in-app web view), iPad (including iPads presenting as Macs), Mac, Windows 10/11 (Client Hints), Android phones and tablets (reduced Chrome strings with and without Client Hints, Samsung Internet, Firefox, Gmail web view, desktop-site mode), Linux, ChromeOS, unknown browsers, hostile input | **32/32** |
+| `tests/api/smoke_test.py` — adds: device recorded from the tool's measurements; estimated from the browser string when they are missing; filter by device; replies record devices (an iPad presenting as a Mac is recognised); hostile values cleaned; CSV device columns | **79/79** on the source and on the 1.1.0 ZIP installed as an update |
+| `tests/api/abilities_test.py` — adds: list-items reports the device (without the raw browser string) and filters by device | **20/20** |
+| `tests/e2e/overlay.e2e.mjs` — adds: a comment tapped on a phone records "Pixel 8 · Chrome 141" and the screen size; the board shows the phone icon, filters to phones only and the comment's Device row shows the details (`docs/screenshots/1280-device.png`) | **42/42** |
+| Database upgrade 1 → 2 | Columns added; comments saved before 1.1 get a device estimated from the browser string they stored (marked *estimated*), without being marked as changed; comments with no stored string stay blank |
+| Update rehearsal | 1.0.1 ZIP installed, comment added, 1.1.0 ZIP installed over it: comment kept and filled in as "iPhone · Safari 17 (estimated)" |
+| PHP 8.1 compatibility (PHPCompatibility) | No new findings |
 
 ## Environments
 

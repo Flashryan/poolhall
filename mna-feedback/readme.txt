@@ -4,7 +4,7 @@ Tags: feedback, review, annotations, client approval, kanban
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,7 @@ MNA Feedback adds a private review layer on top of your live site. It is not par
 * **Pin comments to anything.** Switch to Comment mode, click an element and describe the change. Pins follow their element through scrolling, resizing, dynamic content and Elementor layout edits. If an element disappears, the comment says so instead of pointing at something unrelated.
 * **Side panel and board.** A collapsible panel lists this page's feedback. The board shows everything as Open, In progress and Done, with drag and drop and an accessible "Move to" menu.
 * **Discussion and history.** Replies, implementation notes, screenshots, assignments, unread markers and a full history of edits and status changes.
+* **Device logging.** Every comment and reply records the device it was left on — phone, tablet or desktop, the model where known, operating system, browser and screen size — shown on the card and in the comment, filterable on the board and included in exports.
 * **Share links.** Reviewers join from a link by entering their name — no account needed. Links can expire and can be revoked or replaced at any time.
 * **Roles.** Reviewers comment and reopen finished work, implementers triage and move cards, managers control links, people, settings, exports and Trash.
 * **Safe with caching.** Public pages stay identical for everyone; all private data is loaded through an authorised, uncacheable REST API.
@@ -48,6 +49,11 @@ Nothing — records are kept and come back when the plugin is activated again. T
 Yes. Each site keeps its own tables, links, people and settings.
 
 == Changelog ==
+
+= 1.1.0 =
+* New: each comment and reply records the device it was left on — phone, tablet or desktop, the model where the browser shares it (for example iPhone or Pixel 8), operating system, browser and screen size. Shown as an icon on cards and replies and as a Device row in the comment; the board can be filtered by device; the CSV/JSON exports, WordPress privacy export and AI agent abilities include it.
+* Comments left before this version get an estimate from the browser details they already stored, marked as estimated.
+* Erasing someone's personal data now also removes the full browser strings kept with their comments and sessions.
 
 = 1.0.1 =
 * Runs on PHP 8.1 as documented (1.0.0 used a return type that needs PHP 8.2).

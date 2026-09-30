@@ -1,4 +1,15 @@
-import type { ActivityEntry, Priority, Status } from '../types';
+import type { ActivityEntry, DeviceInfo, DeviceType, Priority, Status } from '../types';
+
+export const DEVICE_LABEL: Record< DeviceType, string > = {
+	phone: 'Phone',
+	tablet: 'Tablet',
+	desktop: 'Desktop',
+};
+
+/** "Left on iPhone · Safari 18", with a note when it was worked out from the browser string alone. */
+export function deviceText( device: DeviceInfo ): string {
+	return `Left on ${ device.summary }${ device.estimated ? ' (estimated)' : '' }`;
+}
 
 export const STATUS_LABEL: Record< Status, string > = {
 	open: 'Open',

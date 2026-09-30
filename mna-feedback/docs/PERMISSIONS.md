@@ -54,6 +54,7 @@ Opening a link moves its token into an HttpOnly cookie and redirects to the same
 - Names are self-reported. Every person who joins gets a **distinct internal identity** tied to their browser session — two people who both type "Sam" are separate and cannot edit or delete each other's comments.
 - After joining, reviewers are shown a **private return link** (also under *⋯ → Continue on another device*). Opening it on another device resumes the same identity. They can replace it at any time, which invalidates the old one.
 - Managers can **remove access** for a reviewer on *People → Reviewers*; their sessions end immediately and their comments stay on the board.
+- **Device details** are stored with each comment and reply so the team can see the problem as the reviewer saw it: phone, tablet or desktop, the model where the browser shares it, operating system, browser, screen and window size, pixel ratio, touch support and the browser's identifier string. Everyone who can see a comment can see its device; the raw browser string is not sent to AI agents. No IP address or location is recorded. Erasing someone's personal data removes the raw browser strings and keeps the rest with the project record, like the comments themselves.
 
 ## How access is enforced
 

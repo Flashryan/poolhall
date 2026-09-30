@@ -25,7 +25,7 @@ import { PRIORITIES, STATUSES, type Attachment, type Item, type Reply } from '..
 import { loadDraft, saveDraft, clearDraft } from '../util/drafts';
 import { imagesFrom } from '../util/images';
 import { PRIORITY_LABEL, STATUS_LABEL, describeActivity, fullDate, pagePath, timeAgo } from '../util/format';
-import { AuthImg, AutoTextarea, Avatar, IconButton, Menu, PriorityChip, Spinner, StatusChip, Text, copyText } from './ui';
+import { AuthImg, AutoTextarea, Avatar, DeviceMark, IconButton, Menu, PriorityChip, Spinner, StatusChip, Text, copyText } from './ui';
 import { Icon } from './Icons';
 
 function openLightbox( src: string, alt: string ): void {
@@ -193,6 +193,7 @@ function ReplyRow( { reply, item }: { reply: Reply; item: Item } ) {
 					<time dateTime={ reply.created_at } title={ fullDate( reply.created_at ) }>
 						{ timeAgo( reply.created_at ) }
 					</time>
+					<DeviceMark device={ reply.device } />
 					{ reply.edited_at && <span className="mnafb-muted" title={ fullDate( reply.edited_at ) }>· edited</span> }
 					{ reply.trashed && <span className="mnafb-badge mnafb-badge--warn">In Trash</span> }
 				</div>
@@ -712,6 +713,22 @@ export function Detail( { id, variant, onBack }: { id: number; variant: 'panel' 
 							</span>
 						) }
 					</div>
+					{ current.device && (
+						<div className="mnafb-prop mnafb-prop--device">
+							<span className="mnafb-prop__label">Device</span>
+							<span className="mnafb-prop__value">
+								<Icon name={ current.device.type } size={ 16 } />
+								<span className="mnafb-device-text">
+									<span>{ current.device.summary }</span>
+									{ ( current.device.details || current.device.estimated ) && (
+										<span className="mnafb-device-text__more" title={ current.device.ua || undefined }>
+											{ [ current.device.details, current.device.estimated ? 'estimated from the browser details' : '' ].filter( Boolean ).join( ' · ' ) }
+										</span>
+									) }
+								</span>
+							</span>
+						</div>
+					) }
 				</div>
 
 				{ canReopen && (

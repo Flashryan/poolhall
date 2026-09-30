@@ -71,6 +71,10 @@ final class Abilities {
 				'author'      => array( 'type' => 'string' ),
 				'assignee'    => array( 'type' => array( 'object', 'null' ) ),
 				'element'     => array( 'type' => array( 'object', 'null' ) ),
+				'device'      => array(
+					'type'        => array( 'object', 'null' ),
+					'description' => 'Device the comment was left on: type (phone, tablet, desktop), a summary such as "iPhone · Safari 18", and details including the operating system and screen size.',
+				),
 				'replies'     => array( 'type' => 'integer' ),
 				'created_at'  => array( 'type' => 'string' ),
 				'updated_at'  => array( 'type' => 'string' ),
@@ -81,7 +85,7 @@ final class Abilities {
 			'list-items',
 			array(
 				'label'         => __( 'List feedback', 'mna-feedback' ),
-				'description'   => __( 'Lists feedback items left by reviewers on this site, newest first on each board column. Filter by status (open, in_progress, done), priority (low, normal, high, urgent), page URL, assignee or a search term. Returns summaries; use get-item for the full discussion and history.', 'mna-feedback' ),
+				'description'   => __( 'Lists feedback items left by reviewers on this site, newest first on each board column. Filter by status (open, in_progress, done), priority (low, normal, high, urgent), device the comment was left on (phone, tablet, desktop), page URL, assignee or a search term. Returns summaries; use get-item for the full discussion and history.', 'mna-feedback' ),
 				'input_schema'  => array(
 					'type'                 => 'object',
 					'properties'           => array(
@@ -97,6 +101,14 @@ final class Abilities {
 							'items' => array(
 								'type' => 'string',
 								'enum' => Policy::PRIORITIES,
+							),
+						),
+						'device'   => array(
+							'type'        => 'array',
+							'description' => 'Only items left on these kinds of device.',
+							'items'       => array(
+								'type' => 'string',
+								'enum' => Device::TYPES,
 							),
 						),
 						'page_url' => array(
@@ -264,6 +276,9 @@ final class Abilities {
 		if ( ! empty( $input['priority'] ) ) {
 			$args['priority'] = array_values( array_intersect( (array) $input['priority'], Policy::PRIORITIES ) ) ?: array( '__none__' );
 		}
+		if ( ! empty( $input['device'] ) ) {
+			$args['device'] = array_values( array_intersect( (array) $input['device'], Device::TYPES ) ) ?: array( '__none__' );
+		}
 		if ( ! empty( $input['page_url'] ) ) {
 			$normalized       = Url::normalize( (string) $input['page_url'] );
 			$args['page_key'] = $normalized ? Url::key( $normalized ) : str_repeat( '0', 64 );
@@ -297,8 +312,11 @@ final class Abilities {
 			unset( $attachment['url'], $attachment['thumb_url'] );
 		}
 		unset( $attachment );
+		$brief            = static fn( $device ) => is_array( $device ) ? array_intersect_key( $device, array_flip( array( 'type', 'summary', 'details', 'estimated' ) ) ) : null;
+		$detail['device'] = $brief( $detail['device'] ?? null );
 		foreach ( $detail['replies'] as &$reply ) {
 			unset( $reply['can'] );
+			$reply['device'] = $brief( $reply['device'] ?? null );
 			foreach ( $reply['attachments'] as &$attachment ) {
 				unset( $attachment['url'], $attachment['thumb_url'] );
 			}
@@ -438,9 +456,27 @@ final class Abilities {
 				'name' => (string) $assignee->display_name,
 			) : null,
 			'element'     => self::element( $row ),
+			'device'      => self::device( $row->device ?? null ),
 			'replies'     => (int) ( Items::reply_counts( array( (int) $row->id ) )[ (int) $row->id ] ?? 0 ),
 			'created_at'  => (string) Formatter::time( $row->created_at ),
 			'updated_at'  => (string) Formatter::time( $row->updated_at ),
+		);
+	}
+
+	/**
+	 * The device summary an agent needs to reproduce the issue (without the
+	 * raw browser string).
+	 */
+	private static function device( ?string $json ): ?array {
+		$device = Device::for_output( $json );
+		if ( ! $device ) {
+			return null;
+		}
+		return array(
+			'type'      => $device['type'],
+			'summary'   => $device['summary'],
+			'details'   => $device['details'],
+			'estimated' => (bool) $device['estimated'],
 		);
 	}
 

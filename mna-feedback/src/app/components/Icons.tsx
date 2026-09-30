@@ -96,6 +96,25 @@ const PATHS: Record< string, ReactElement > = {
 		</g>
 	),
 	offline: <path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.7M10.7 5.1A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.8M16.9 12.2a10 10 0 0 1 2.1.7M12 20h.01" />,
+	// Device types, named to match DeviceInfo.type.
+	phone: (
+		<g>
+			<rect x="6.5" y="2" width="11" height="20" rx="2.2" />
+			<path d="M11 18h2" />
+		</g>
+	),
+	tablet: (
+		<g>
+			<rect x="4" y="2.5" width="16" height="19" rx="2.2" />
+			<path d="M11 18h2" />
+		</g>
+	),
+	desktop: (
+		<g>
+			<rect x="2.5" y="3.5" width="19" height="13" rx="2" />
+			<path d="M8 20.5h8M12 16.5v4" />
+		</g>
+	),
 };
 
 export type IconName = keyof typeof PATHS;

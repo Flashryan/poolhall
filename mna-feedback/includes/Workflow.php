@@ -69,6 +69,7 @@ final class Workflow {
 			$context = null;
 		}
 		$viewport = is_array( $in['viewport'] ?? null ) ? $in['viewport'] : array();
+		$device   = is_array( $in['device'] ?? null ) ? $in['device'] : null;
 		$now      = gmdate( 'Y-m-d H:i:s' );
 
 		$id = Items::insert(
@@ -90,6 +91,8 @@ final class Workflow {
 				'context'          => $context,
 				'viewport_w'       => max( 0, min( 20000, (int) ( $viewport['w'] ?? 0 ) ) ),
 				'viewport_h'       => max( 0, min( 20000, (int) ( $viewport['h'] ?? 0 ) ) ),
+				'device_type'      => (string) ( $device['type'] ?? '' ),
+				'device'           => $device ? wp_json_encode( $device ) : null,
 				'board_order'      => Items::min_order( 'open' ) - 1024,
 				'created_at'       => $now,
 				'updated_at'       => $now,
@@ -328,7 +331,10 @@ final class Workflow {
 	 * Replies and notes
 	 * ------------------------------------------------------------------ */
 
-	public static function add_reply( Actor $actor, int $item_id, string $body, string $kind = 'reply' ): \stdClass|WP_Error {
+	/**
+	 * @param array|null $device From Device::detect(); not recorded for AI agents.
+	 */
+	public static function add_reply( Actor $actor, int $item_id, string $body, string $kind = 'reply', ?array $device = null ): \stdClass|WP_Error {
 		$item = Items::get( $item_id );
 		if ( ! $item || ! Policy::can_view_item( $actor, $item ) ) {
 			return self::error( 'mnafb_not_found', __( 'That feedback no longer exists.', 'mna-feedback' ), 404 );
@@ -343,7 +349,7 @@ final class Workflow {
 		if ( '' === $body ) {
 			return self::error( 'mnafb_empty', __( 'Write something before sending.', 'mna-feedback' ), 400 );
 		}
-		$reply_id = Replies::insert( $item_id, $actor->reviewer_id, $body, $kind );
+		$reply_id = Replies::insert( $item_id, $actor->reviewer_id, $body, $kind, 'agent' === $actor->source ? null : $device );
 		if ( ! $reply_id ) {
 			return self::error( 'mnafb_db', __( 'The reply could not be saved. Please try again.', 'mna-feedback' ), 500 );
 		}

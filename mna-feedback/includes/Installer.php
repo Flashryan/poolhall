@@ -34,7 +34,11 @@ final class Installer {
 	 * Creates or upgrades this site's tables, capabilities and storage.
 	 */
 	public static function install(): void {
+		$from = (int) get_option( 'mnafb_db_version', 0 );
 		Schema::create_tables();
+		if ( $from < 2 ) {
+			self::backfill_devices();
+		}
 		Capabilities::grant_defaults();
 		Settings::ensure_defaults();
 		Data\Attachments::ensure_storage();
@@ -54,6 +58,35 @@ final class Installer {
 		if ( (int) get_option( 'mnafb_db_version', 0 ) < MNAFB_DB_VERSION ) {
 			self::install();
 		}
+	}
+
+	/**
+	 * Schema 2 records the device each comment was left on. Comments saved
+	 * before then kept the browser's user-agent string in their context, so
+	 * they get an estimate from it (marked as such).
+	 */
+	private static function backfill_devices(): void {
+		global $wpdb;
+		$table = Schema::table( 'items' );
+		$last  = 0;
+		do {
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, context, viewport_w, viewport_h FROM {$table} WHERE id > %d AND device IS NULL ORDER BY id ASC LIMIT 500", $last ) ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			foreach ( $rows as $row ) {
+				$last   = (int) $row->id;
+				$device = Device::from_context( $row->context, (int) $row->viewport_w, (int) $row->viewport_h );
+				if ( $device ) {
+					// A direct update: filling in history is not new activity on the item.
+					$wpdb->update(
+						$table,
+						array(
+							'device'      => wp_json_encode( $device ),
+							'device_type' => $device['type'],
+						),
+						array( 'id' => $row->id )
+					);
+				}
+			}
+		} while ( 500 === count( $rows ) );
 	}
 
 	/**

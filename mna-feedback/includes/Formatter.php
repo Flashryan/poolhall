@@ -131,6 +131,7 @@ final class Formatter {
 				'h' => (int) $row->viewport_h,
 			),
 			'context'     => $row->context ? json_decode( (string) $row->context, true ) : null,
+			'device'      => Device::for_output( $row->device ?? null ),
 			'counts'      => array(
 				'replies'     => (int) ( $context['replies'][ $id ] ?? 0 ),
 				'attachments' => count( $attachments ),
@@ -209,6 +210,7 @@ final class Formatter {
 			'kind'       => (string) $row->kind,
 			'body'       => (string) $row->body,
 			'author'     => self::person( Reviewers::get( (int) $row->author_id ) ),
+			'device'     => Device::for_output( $row->device ?? null ),
 			'revision'   => (int) $row->revision,
 			'created_at' => self::time( $row->created_at ),
 			'edited_at'  => self::time( $row->edited_at ),

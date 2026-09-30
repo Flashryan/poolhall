@@ -672,7 +672,8 @@ async function main() {
 
 	// ------------------------------------------------ Touch: create by tapping
 	await attempt( 'Touch: tap an element to comment (390px phone)', async () => {
-		const ctx = await browser.newContext( { viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true } );
+		// A real phone's browser string; headless Chrome would otherwise say desktop Linux.
+		const ctx = await browser.newContext( { viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36' } );
 		const page = await ctx.newPage();
 		await page.goto( returnLink );
 		await page.waitForSelector( '#mnafb-root', { state: 'attached', timeout: 15000 } );
@@ -693,7 +694,31 @@ async function main() {
 		const json = await ( await response ).json();
 		created.add( json.id );
 		check( 'Touch: tap an element to comment (390px phone)', json.pin?.type === 'element' );
+		check( 'The comment records the phone it was left on', json.device?.type === 'phone' && json.device?.summary === 'Pixel 8 · Chrome 141' && json.device?.screen?.w === 390, JSON.stringify( json.device ).slice( 0, 200 ) );
 		await ctx.close();
+	} );
+
+	await attempt( 'The board shows and filters by the device each comment was left on', async () => {
+		await admin.goto( BASE + PAGE + '?mna-review=on' );
+		await admin.waitForSelector( '.mnafb-panel', { timeout: 15000 } );
+		await admin.locator( 'button[title="Open the board"]' ).click();
+		await admin.waitForSelector( '.mnafb-board' );
+		const phoneIcons = await admin.locator( '.mnafb-board [data-card] .mnafb-device--phone' ).count();
+		const deviceFilter = admin.locator( '.mnafb-board select' ).filter( { has: admin.locator( 'option[value="phone"]' ) } );
+		await deviceFilter.selectOption( 'phone' );
+		await admin.waitForTimeout( 300 );
+		const titles = await admin.locator( '.mnafb-board .mnafb-card__title' ).allInnerTexts();
+		const phoneOnly = titles.includes( 'E2E: tapped on a phone' ) && ! titles.includes( 'E2E: keyboard comment' );
+		await admin.locator( '.mnafb-board .mnafb-card__open[aria-label*="E2E: tapped on a phone"]' ).click();
+		const row = admin.locator( '.mnafb-prop--device' ).first();
+		await row.waitFor( { timeout: 5000 } );
+		const text = await row.innerText();
+		await shot( admin, '1280-device' );
+		await deviceFilter.selectOption( '' );
+		check( 'The board shows and filters by the device each comment was left on', phoneIcons >= 1 && phoneOnly && /Pixel 8 · Chrome 141/.test( text ) && /Android/.test( text ) && /screen 390×780/.test( text ), `${ phoneIcons } icons / ${ titles.join( ' | ' ) } / ${ text.replace( /\s+/g, ' ' ) }` );
+		// Escape closes the comment, then the board.
+		await admin.keyboard.press( 'Escape' );
+		await admin.keyboard.press( 'Escape' );
 	} );
 
 	// ------------------------------------------------ Browse mode keeps the site working

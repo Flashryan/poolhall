@@ -36,7 +36,7 @@ final class Replies {
 		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE item_id = %d {$trashed} ORDER BY id ASC", $item_id ) ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
-	public static function insert( int $item_id, int $author_id, string $body, string $kind ): int {
+	public static function insert( int $item_id, int $author_id, string $body, string $kind, ?array $device = null ): int {
 		global $wpdb;
 		$now = gmdate( 'Y-m-d H:i:s' );
 		$wpdb->insert(
@@ -47,6 +47,7 @@ final class Replies {
 				'author_id'  => $author_id,
 				'kind'       => in_array( $kind, self::KINDS, true ) ? $kind : 'reply',
 				'body'       => $body,
+				'device'     => $device ? wp_json_encode( $device ) : null,
 				'created_at' => $now,
 				'updated_at' => $now,
 			)

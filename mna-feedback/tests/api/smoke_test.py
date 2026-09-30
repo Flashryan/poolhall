@@ -11,6 +11,8 @@ exports and link revocation. Everything it creates is cleaned up at the end
 (the share link is revoked and the test items are purged).
 """
 
+import csv
+import io
 import json
 import os
 import struct
@@ -36,6 +38,13 @@ ADMIN_PASS = os.environ.get("MNAFB_ADMIN_PASS", "")
 LOGIN_URL = os.environ.get("MNAFB_LOGIN_URL", "")
 API = BASE + "/wp-json/mna-feedback/v1"
 CLIENT = {"X-MNAFB-Client": "1"}
+
+# Browsers the device checks pretend to be, with what the review tool measures on them.
+IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
+IPHONE_HINTS = {"screen": {"w": 393, "h": 852}, "viewport": {"w": 393, "h": 659}, "dpr": 3, "touch": 5}
+IPAD_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+IPAD_HINTS = {"screen": {"w": 1024, "h": 1366}, "viewport": {"w": 1024, "h": 1292}, "dpr": 2, "touch": 5}
+WINDOWS_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 
 results = []
 
@@ -173,21 +182,39 @@ def main():
         "page_title": "Sample Page",
         "pin": {"type": "element", "x": 0.25, "y": 0.5},
         "anchor": {"v": 1, "css": "main h1", "tag": "h1", "text": "Sample Page"},
-        "viewport": {"w": 390, "h": 844},
+        "viewport": {"w": 393, "h": 659},
+        "device": IPHONE_HINTS,
     }
     r = a.send("POST", "/items", item_body, headers={"X-MNAFB-Token": "wrong"})
     check("Guest write with a wrong CSRF token is refused", r.status_code == 403, r.text[:200])
 
-    r = a.send("POST", "/items", item_body)
+    r = a.send("POST", "/items", item_body, headers={"User-Agent": IPHONE_UA})
     item = r.json() if r.status_code == 201 else {}
     check("Guest A creates an element-pinned item", r.status_code == 201 and item.get("pin", {}).get("type") == "element", r.text[:300])
     item_id = item.get("id")
     check("Author can edit and delete their own item", item.get("can", {}).get("edit") and item.get("can", {}).get("delete"))
     check("Reviewer cannot move an open item", item.get("can", {}).get("statuses") == [])
+    device = item.get("device") or {}
+    check(
+        "The device a comment was left on is recorded (iPhone, Safari, screen size)",
+        device.get("type") == "phone" and device.get("summary") == "iPhone · Safari 17" and "screen 393×852" in device.get("details", "") and device.get("estimated") is False,
+        json.dumps(device)[:300],
+    )
 
-    r = a.send("POST", "/items", {**item_body, "title": "<script>alert(1)</script>Tidy footer", "pin": {"type": "page"}, "anchor": None})
+    r = a.send("POST", "/items", {**item_body, "title": "<script>alert(1)</script>Tidy footer", "pin": {"type": "page"}, "anchor": None, "device": None}, headers={"User-Agent": WINDOWS_UA})
     page_item = r.json() if r.status_code == 201 else {}
     check("Page-level comment is accepted and markup is stripped", r.status_code == 201 and "<script>" not in page_item.get("title", ""), r.text[:300])
+    device = page_item.get("device") or {}
+    check(
+        "Without the tool's measurements the device comes from the browser string, marked estimated",
+        device.get("type") == "desktop" and device.get("summary") == "Windows PC · Chrome 140" and device.get("estimated") is True,
+        json.dumps(device)[:300],
+    )
+    r = admin.get("/items", params={"device": "phone"})
+    phone_ids = [i["id"] for i in r.json().get("items", [])] if r.ok else []
+    r = admin.get("/items", params={"device": "desktop"})
+    desktop_ids = [i["id"] for i in r.json().get("items", [])] if r.ok else []
+    check("Feedback can be filtered by device", item_id in phone_ids and page_item.get("id") not in phone_ids and page_item.get("id") in desktop_ids and item_id not in desktop_ids, f"phone {phone_ids} desktop {desktop_ids}")
 
     r = b.get("/items", params={"url": page_url})
     ids = [i["id"] for i in r.json().get("items", [])] if r.ok else []
@@ -226,9 +253,18 @@ def main():
     check("Reviewer reopens the item", r.ok and r.json().get("status") == "open", r.text[:200])
 
     # --- Replies and unread -----------------------------------------------------
-    r = b.send("POST", f"/items/{item_id}/replies", {"body": "Agreed — also on tablet."})
+    r = b.send("POST", f"/items/{item_id}/replies", {"body": "Agreed — also on tablet.", "device": IPAD_HINTS}, headers={"User-Agent": IPAD_UA})
     reply = r.json().get("reply", {}) if r.status_code == 201 else {}
     check("Guest B replies", r.status_code == 201 and reply.get("body", "").startswith("Agreed"), r.text[:200])
+    device = reply.get("device") or {}
+    check("Replies record their device too (an iPad that presents itself as a Mac)", device.get("type") == "tablet" and device.get("os") == "iPadOS" and device.get("summary") == "iPad · Safari 17", json.dumps(device)[:300])
+    hostile = {"screen": {"w": 999999, "h": -4}, "dpr": 500, "touch": "lots", "model": "<img src=x onerror=alert(1)>", "platformVersion": "1; DROP TABLE"}
+    r = b.send("POST", f"/items/{item_id}/replies", {"body": "Odd device", "device": hostile}, headers={"User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"})
+    device = r.json().get("reply", {}).get("device") or {} if r.status_code == 201 else {}
+    check("Device details from the browser are cleaned", r.status_code == 201 and "<" not in device.get("model", "<") and device.get("screen", {}).get("w") == 20000 and device.get("dpr") == 8, json.dumps(device)[:300])
+    odd_reply_id = r.json().get("reply", {}).get("id") if r.status_code == 201 else None
+    if odd_reply_id:
+        b.send("DELETE", f"/replies/{odd_reply_id}")
     r = a.get("/items", params={"url": page_url})
     a_view = next((i for i in r.json().get("items", []) if i["id"] == item_id), {}) if r.ok else {}
     check("Guest A sees the item as unread after B's reply", a_view.get("unread") is True, json.dumps(a_view)[:200])
@@ -315,6 +351,10 @@ def main():
     # --- Export ----------------------------------------------------------------
     r = admin.get("/admin/export", params={"format": "csv"})
     check("Manager exports CSV", r.ok and r.headers.get("Content-Type", "").startswith("text/csv") and "Make the hero heading bigger" in r.text, r.headers.get("Content-Type", ""))
+    rows = list(csv.reader(io.StringIO(r.text.lstrip("﻿")))) if r.ok else [[]]
+    header = rows[0] if rows else []
+    device_col = header.index("Device") if "Device" in header else -1
+    check("CSV includes the device columns", {"Device type", "Device", "Device details"} <= set(header) and any(len(row) > device_col >= 0 and row[device_col] == "iPhone · Safari 17" for row in rows[1:]), ",".join(header))
     r = admin.get("/admin/export", params={"format": "json"})
     check("Manager exports JSON with replies and history", r.ok and any(i.get("replies") and i.get("history") for i in r.json().get("items", [])))
 

@@ -14,7 +14,7 @@ Pretty permalinks are not required. Multisite is supported: each site keeps sepa
 
 ## Install
 
-1. In wp-admin go to **Plugins → Add New → Upload Plugin**, choose `mna-feedback-1.0.1.zip`, then **Install Now** and **Activate**.
+1. In wp-admin go to **Plugins → Add New → Upload Plugin**, choose `mna-feedback-1.1.0.zip`, then **Install Now** and **Activate**.
    - On a multisite network you can network-activate it or activate it per site; each site gets its own tables either way. Sites added later are set up automatically while the plugin is network-active, and people can review several sites of the network in one browser — each site has its own review session.
 2. A **Feedback** menu appears in wp-admin, and a **Feedback** item appears in the toolbar for team members.
 
@@ -38,10 +38,14 @@ Activation creates eight database tables (`{prefix}mnafb_items`, `_replies`, `_a
 | Attach a screenshot | Button, paste (Ctrl/⌘+V) or drag and drop — PNG, JPEG or WebP; larger images are resized to fit 2 MB | Button |
 | Post | **Post comment** or Ctrl/⌘+Enter | **Post comment** |
 | See everything | **Board** — Open / In progress / Done columns, filters, drag and drop or ⋯ → *Move to* | Board with status tabs |
+| See which device a comment came from | Phone / tablet / desktop icon on the card; the comment's **Device** row gives the model, system, browser and screen size | same |
+| Only phone (or tablet, desktop) feedback | Board → **Any device** filter | Board → **Filter** |
 | Find a comment's pin | *Show on page* in the comment | same |
 | Close the topmost layer | **Esc** | ✕ |
 
 Unsent comments, replies and edits are saved in the browser as you type. If the connection drops or the page reloads, the panel offers to restore them.
+
+**Device details** are recorded automatically with every comment and reply: phone, tablet or desktop; the model where the browser shares it (iPhone, iPad, Pixel 8 …); operating system and browser with versions; screen and window size, pixel ratio and touch support. iPads that present themselves as Macs are recognised by their touch screen. Comments left before version 1.1 show an estimate from the browser details they stored, marked *estimated*.
 
 ## Updating
 
@@ -55,9 +59,9 @@ Upload the new ZIP the same way (WordPress offers to replace the installed versi
 
 ## Exports
 
-*Feedback → Settings → Export* downloads every item (including Trash) as **CSV** (one row per item, spreadsheet-safe) or **JSON** (items with replies, notes, full history and screenshot details). The same data is available to managers at `GET /wp-json/mna-feedback/v1/admin/export?format=csv|json`.
+*Feedback → Settings → Export* downloads every item (including Trash) as **CSV** (one row per item, spreadsheet-safe, with *Device type*, *Device* and *Device details* columns) or **JSON** (items with replies, notes, devices, full history and screenshot details). The same data is available to managers at `GET /wp-json/mna-feedback/v1/admin/export?format=csv|json`.
 
-Personal data requests are handled by WordPress's own tools (*Tools → Export / Erase Personal Data*): a reviewer's identity, comments and replies are exported by email address, and erasure anonymises their name and email.
+Personal data requests are handled by WordPress's own tools (*Tools → Export / Erase Personal Data*): a reviewer's identity, comments and replies (with the device each was left on) are exported by email address, and erasure anonymises their name and email and removes the full browser strings kept with their comments and sessions.
 
 ## AI agents (Novamira) — optional
 
@@ -65,8 +69,8 @@ On WordPress 6.9 or newer (which includes the Abilities API), a manager can swit
 
 | Ability | What it does | Needs |
 |---|---|---|
-| `mna-feedback/list-items` | List feedback with status, priority, page, assignee and search filters | Reviewer or above |
-| `mna-feedback/get-item` | One item with description, element details, replies, notes, screenshots metadata and full history | Reviewer or above |
+| `mna-feedback/list-items` | List feedback with status, priority, device (phone, tablet, desktop), page, assignee and search filters; each item says which device it was left on | Reviewer or above |
+| `mna-feedback/get-item` | One item with description, element details, device, replies, notes, screenshots metadata and full history | Reviewer or above |
 | `mna-feedback/list-team` | Team members who can be assigned work | Reviewer or above |
 | `mna-feedback/add-note` | Add an implementation note | Implementer or above |
 | `mna-feedback/update-item` | Change status, priority or assignee | Implementer or above |

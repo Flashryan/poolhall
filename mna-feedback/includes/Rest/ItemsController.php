@@ -13,6 +13,7 @@ use MNA\Feedback\Data\Attachments;
 use MNA\Feedback\Data\Items;
 use MNA\Feedback\Data\Replies;
 use MNA\Feedback\Data\Reviewers;
+use MNA\Feedback\Device;
 use MNA\Feedback\Formatter;
 use MNA\Feedback\Policy;
 use MNA\Feedback\Url;
@@ -52,6 +53,7 @@ final class ItemsController {
 						),
 						'status'   => array( 'type' => 'string' ),
 						'priority' => array( 'type' => 'string' ),
+						'device'   => array( 'type' => 'string' ),
 						'author'   => array( 'type' => 'string' ),
 						'assignee' => array( 'type' => 'string' ),
 						'search'   => array(
@@ -107,6 +109,7 @@ final class ItemsController {
 						'anchor'     => array( 'type' => array( 'object', 'null' ) ),
 						'context'    => array( 'type' => array( 'object', 'null' ) ),
 						'viewport'   => array( 'type' => array( 'object', 'null' ) ),
+						'device'     => array( 'type' => array( 'object', 'null' ) ),
 					),
 				),
 			)
@@ -217,11 +220,12 @@ final class ItemsController {
 						'required'  => true,
 						'maxLength' => 50000,
 					),
-					'kind' => array(
+					'kind'   => array(
 						'type'    => 'string',
 						'enum'    => Replies::KINDS,
 						'default' => 'reply',
 					),
+					'device' => array( 'type' => array( 'object', 'null' ) ),
 				),
 			)
 		);
@@ -371,6 +375,7 @@ final class ItemsController {
 		foreach ( array(
 			'status'   => Policy::STATUSES,
 			'priority' => Policy::PRIORITIES,
+			'device'   => Device::TYPES,
 		) as $field => $allowed ) {
 			$values = self::csv( (string) $request->get_param( $field ) );
 			if ( $values ) {
@@ -428,6 +433,7 @@ final class ItemsController {
 				'anchor'     => $request->get_param( 'anchor' ),
 				'context'    => $request->get_param( 'context' ),
 				'viewport'   => $request->get_param( 'viewport' ),
+				'device'     => Device::detect( (string) $request->get_header( 'user_agent' ), $request->get_param( 'device' ), (array) ( $request->get_param( 'viewport' ) ?? array() ) ),
 			)
 		);
 		if ( is_wp_error( $item ) ) {
@@ -527,7 +533,8 @@ final class ItemsController {
 	public static function create_reply( WP_REST_Request $request ) {
 		$actor = Router::actor();
 		$id    = (int) $request->get_param( 'id' );
-		$reply = Workflow::add_reply( $actor, $id, (string) $request->get_param( 'body' ), (string) $request->get_param( 'kind' ) );
+		$device = Device::detect( (string) $request->get_header( 'user_agent' ), $request->get_param( 'device' ) );
+		$reply  = Workflow::add_reply( $actor, $id, (string) $request->get_param( 'body' ), (string) $request->get_param( 'kind' ), $device );
 		if ( is_wp_error( $reply ) ) {
 			return $reply;
 		}

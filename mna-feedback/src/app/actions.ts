@@ -5,6 +5,7 @@
 import { Api, ApiError } from './api';
 import { getResolution, refresh as refreshPins } from './anchor/registry';
 import { resolve } from './anchor/resolve';
+import { deviceHints, prepareDeviceHints } from './util/device';
 import { clearDraft, saveDraft } from './util/drafts';
 import { prepareImage } from './util/images';
 import { clearFlagCookie } from './util/storage';
@@ -46,6 +47,7 @@ async function getNonce(): Promise< boolean > {
 
 function applySession( data: SessionData ): void {
 	api.csrf = data.csrf;
+	prepareDeviceHints();
 	setState( {
 		session: data,
 		branding: data.branding,
@@ -399,6 +401,7 @@ export async function createItem( composer: ComposerState ): Promise< boolean > 
 				ua: navigator.userAgent.slice( 0, 200 ),
 				doc: { w: doc.scrollWidth, h: doc.scrollHeight },
 			},
+			device: deviceHints(),
 		} );
 		clearDraft( composer.draftKey );
 		if ( ! s.pageKey || item.page.key !== s.pageKey ) {
@@ -647,7 +650,7 @@ function handleHash(): void {
 
 export async function addReply( itemId: number, body: string, kind: 'reply' | 'note', files: File[] ): Promise< string | null > {
 	try {
-		const result = await api.post< { reply: Reply; item: Item | null } >( `items/${ itemId }/replies`, { body, kind } );
+		const result = await api.post< { reply: Reply; item: Item | null } >( `items/${ itemId }/replies`, { body, kind, device: deviceHints() } );
 		if ( result.item ) {
 			putItem( result.item );
 		}

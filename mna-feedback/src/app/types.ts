@@ -79,6 +79,31 @@ export interface ItemContext {
 	dpr?: number;
 }
 
+export type DeviceType = 'phone' | 'tablet' | 'desktop';
+
+export const DEVICE_TYPES: DeviceType[] = [ 'phone', 'tablet', 'desktop' ];
+
+/** The device a comment or reply was left on, as worked out by the server. */
+export interface DeviceInfo {
+	type: DeviceType;
+	/** e.g. "iPhone · Safari 18" */
+	summary: string;
+	/** e.g. "iOS 18.1 · screen 393×852 · window 393×659 · 3× · touch" */
+	details: string;
+	os: string;
+	os_version: string;
+	browser: string;
+	browser_version: string;
+	model: string;
+	screen: { w: number; h: number };
+	viewport: { w: number; h: number };
+	dpr: number;
+	touch: boolean;
+	/** Worked out from the browser's identifier alone (older comments). */
+	estimated: boolean;
+	ua: string;
+}
+
 export interface ItemCan {
 	edit: boolean;
 	delete: boolean;
@@ -106,6 +131,7 @@ export interface Item {
 	pin: { type: 'element' | 'page'; x: number; y: number; anchor: Anchor | null };
 	viewport: { w: number; h: number };
 	context: ItemContext | null;
+	device: DeviceInfo | null;
 	counts: { replies: number; attachments: number };
 	attachments: Attachment[];
 	unread: boolean;
@@ -126,6 +152,7 @@ export interface Reply {
 	kind: 'reply' | 'note';
 	body: string;
 	author: Person | null;
+	device: DeviceInfo | null;
 	revision: number;
 	created_at: string;
 	edited_at: string | null;

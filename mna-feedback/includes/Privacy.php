@@ -122,6 +122,10 @@ final class Privacy {
 							'value' => (string) $item->page_url,
 						),
 						array(
+							'name'  => __( 'Device', 'mna-feedback' ),
+							'value' => self::device_text( $item->device ?? null ),
+						),
+						array(
 							'name'  => __( 'Created', 'mna-feedback' ),
 							'value' => (string) $item->created_at . ' UTC',
 						),
@@ -141,6 +145,10 @@ final class Privacy {
 						array(
 							'name'  => __( 'Reply', 'mna-feedback' ),
 							'value' => (string) $reply->body,
+						),
+						array(
+							'name'  => __( 'Device', 'mna-feedback' ),
+							'value' => self::device_text( $reply->device ?? null ),
 						),
 						array(
 							'name'  => __( 'Created', 'mna-feedback' ),
@@ -177,13 +185,14 @@ final class Privacy {
 				array( 'id' => $id )
 			);
 			Sessions::revoke_for_reviewer( $id );
+			self::strip_browser_strings( $id );
 			$removed = true;
 
 			if ( $erase_content ) {
 				$items_table   = Items::table();
 				$replies_table = Replies::table();
-				$wpdb->query( $wpdb->prepare( "UPDATE {$items_table} SET title = %s, body = '', context = NULL WHERE author_id = %d", __( '[Removed]', 'mna-feedback' ), $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->query( $wpdb->prepare( "UPDATE {$replies_table} SET body = %s WHERE author_id = %d", __( '[Removed]', 'mna-feedback' ), $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( $wpdb->prepare( "UPDATE {$items_table} SET title = %s, body = '', context = NULL, device = NULL, device_type = '' WHERE author_id = %d", __( '[Removed]', 'mna-feedback' ), $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( $wpdb->prepare( "UPDATE {$replies_table} SET body = %s, device = NULL WHERE author_id = %d", __( '[Removed]', 'mna-feedback' ), $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$attachments_table = Attachments::table();
 				foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$attachments_table} WHERE uploader_id = %d", $id ) ) ?: array() as $attachment ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					Attachments::delete( $attachment );
@@ -202,11 +211,47 @@ final class Privacy {
 		);
 	}
 
+	private static function device_text( ?string $json ): string {
+		$device = Device::for_output( $json );
+		if ( ! $device ) {
+			return '';
+		}
+		return trim( $device['summary'] . ' · ' . $device['details'], ' ·' );
+	}
+
+	/**
+	 * Removes the full browser strings kept with someone's comments, replies and
+	 * sessions. The device type, system, browser and screen size stay with the
+	 * project records, like the comments themselves.
+	 */
+	private static function strip_browser_strings( int $reviewer_id ): void {
+		global $wpdb;
+		foreach ( array( Items::table(), Replies::table() ) as $table ) {
+			$is_items = Items::table() === $table;
+			$columns  = $is_items ? 'id, device, context' : 'id, device';
+			$rows     = $wpdb->get_results( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE author_id = %d", $reviewer_id ) ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			foreach ( $rows as $row ) {
+				$set = array();
+				foreach ( $is_items ? array( 'device', 'context' ) : array( 'device' ) as $column ) {
+					$data = $row->$column ? json_decode( (string) $row->$column, true ) : null;
+					if ( is_array( $data ) && isset( $data['ua'] ) ) {
+						unset( $data['ua'] );
+						$set[ $column ] = wp_json_encode( $data );
+					}
+				}
+				if ( $set ) {
+					$wpdb->update( $table, $set, array( 'id' => $row->id ) );
+				}
+			}
+		}
+		$wpdb->update( Schema::table( 'sessions' ), array( 'user_agent' => '' ), array( 'reviewer_id' => $reviewer_id ) );
+	}
+
 	public static function policy_text(): void {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$text = '<p>' . esc_html__( 'When you review this site through a shared review link, we store the name (and optional email address) you enter, the feedback, replies and screenshots you add, and when you last used the review tool. A cookie keeps you signed in to the review tool on your device. This information is stored on this website only and is used to manage changes to the site.', 'mna-feedback' ) . '</p>';
+		$text = '<p>' . esc_html__( 'When you review this site through a shared review link, we store the name (and optional email address) you enter, the feedback, replies and screenshots you add, the kind of device, operating system, browser and screen size you used for each (so the team can see the problem as you saw it), and when you last used the review tool. A cookie keeps you signed in to the review tool on your device. This information is stored on this website only and is used to manage changes to the site.', 'mna-feedback' ) . '</p>';
 		wp_add_privacy_policy_content( 'MNA Feedback', wp_kses_post( wpautop( $text, false ) ) );
 	}
 }

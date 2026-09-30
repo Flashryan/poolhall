@@ -3,7 +3,7 @@
  * Plugin Name:       MNA Feedback
  * Plugin URI:        https://mnadigital.co.uk/
  * Description:       A review overlay for stakeholders: pin comments to any part of a page, discuss them, and track the work on a Trello-style board. Records stay in this site's database.
- * Version:           1.0.1
+ * Version:           1.1.0
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Author:            MNA Digital
@@ -16,8 +16,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MNAFB_VERSION', '1.0.1' );
-define( 'MNAFB_DB_VERSION', 1 );
+define( 'MNAFB_VERSION', '1.1.0' );
+define( 'MNAFB_DB_VERSION', 2 );
 define( 'MNAFB_FILE', __FILE__ );
 define( 'MNAFB_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MNAFB_URL', plugin_dir_url( __FILE__ ) );

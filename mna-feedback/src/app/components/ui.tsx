@@ -2,9 +2,23 @@
 
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { api } from '../actions';
-import type { Person, Priority, Status } from '../types';
-import { PRIORITY_LABEL, STATUS_LABEL } from '../util/format';
+import type { DeviceInfo, Person, Priority, Status } from '../types';
+import { PRIORITY_LABEL, STATUS_LABEL, deviceText } from '../util/format';
 import { Icon, type IconName } from './Icons';
+
+/** Phone, tablet or desktop icon; the full summary is its tooltip and screen-reader text. */
+export function DeviceMark( { device, decorative = false }: { device: DeviceInfo | null; decorative?: boolean } ) {
+	if ( ! device ) {
+		return null;
+	}
+	const text = deviceText( device );
+	return (
+		<span className={ `mnafb-device mnafb-device--${ device.type }` } title={ text } aria-hidden={ decorative || undefined }>
+			<Icon name={ device.type } size={ 13 } />
+			{ ! decorative && <span className="mnafb-sr">{ text }</span> }
+		</span>
+	);
+}
 
 export function Avatar( { person, size = 24 }: { person: Person | null; size?: number } ) {
 	if ( ! person ) {
