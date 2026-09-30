@@ -14,6 +14,7 @@ Every comment and reply now records the device it was left on (phone, tablet or 
 | `tests/e2e/overlay.e2e.mjs` — adds: a comment tapped on a phone records "Pixel 8 · Chrome 141" and the screen size; the board shows the phone icon, filters to phones only and the comment's Device row shows the details (`docs/screenshots/1280-device.png`) | **42/42** |
 | Database upgrade 1 → 2 | Columns added; comments saved before 1.1 get a device estimated from the browser string they stored (marked *estimated*), without being marked as changed; comments with no stored string stay blank |
 | Update rehearsal | 1.0.1 ZIP installed, comment added, 1.1.0 ZIP installed over it: comment kept and filled in as "iPhone · Safari 17 (estimated)" |
+| sstest update 1.0.1 → 1.1.0 (ZIP, SHA-256 checked) | Database upgraded to version 2; every table's row count identical before and after (11 items, 7 replies, 55 history entries, 18 identities, 9 links, 12 sessions, 1 screenshot, 20 read markers); same file key; the screenshot still decrypts; AI-agent setting kept. The team's existing comments now show estimated devices (the phone comment as "iPhone · Chrome 154, iOS 26.6", the rest as "Windows PC · Chrome"). Cached pages switch to the new interface within the host's 5-minute page cache |
 | PHP 8.1 compatibility (PHPCompatibility) | No new findings |
 
 ## Environments
