@@ -1,0 +1,17 @@
+.phseo-preview{max-width:600px;padding:12px 14px;border:1px solid #dcdcde;border-radius:6px;background:#fff;font-family:arial,sans-serif;line-height:1.4}
+.phseo-preview span{display:block}
+.phseo-preview__url{color:#202124;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phseo-preview__title{color:#1a0dab;font-size:19px;margin:3px 0}
+.phseo-preview__desc{color:#4d5156;font-size:13px}
+.phseo-count{font-weight:400;color:#646970;margin-left:6px}
+.phseo-count.is-over{color:#b32d2e;font-weight:600}
+.phseo-image-preview img{vertical-align:middle;margin-left:8px;border-radius:3px}
+.phseo-table td{vertical-align:top}
+.phseo-muted{color:#646970}
+.phseo-auto{display:inline-block;font-size:11px;padding:0 6px;border-radius:9px;background:#f0f0f1;color:#50575e}
+.phseo-flag{display:inline-block;min-width:26px;text-align:center;font-size:11px;font-weight:600;padding:1px 6px;border-radius:9px;margin-right:4px}
+.phseo-flag--ok{background:#e7f6ec;color:#1e6b34}
+.phseo-flag--warn{background:#fcf3e1;color:#8a5a00}
+.phseo-flag--bad{background:#fbe9e9;color:#a01d1d}
+.phseo-inline-form label{margin-right:10px}
+.phseo-delete{color:#b32d2e}
