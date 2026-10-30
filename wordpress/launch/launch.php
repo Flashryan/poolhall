@@ -20,6 +20,7 @@ require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 const PHL_OLD_HOST = 'lightslategrey-hare-335761.hostingersite.com';
 const PHL_NEW_HOST = 'www.poolhallrecruitment.co.uk';
+const PHL_ROOT     = 'poolhallrecruitment.co.uk';
 const PHL_OLD_DIR  = '/home/u232776807/domains/lightslategrey-hare-335761.hostingersite.com';
 
 $phl_apply = ! empty( $phl_apply ) || ( defined( 'WP_CLI' ) && in_array( 'apply', (array) ( $args ?? array() ), true ) );
@@ -61,8 +62,17 @@ if ( PHL_OLD_DIR !== $new_dir ) {
 	$pairs[ PHL_OLD_DIR ]                         = $new_dir;
 	$pairs[ str_replace( '/', '\/', PHL_OLD_DIR ) ] = str_replace( '/', '\/', $new_dir );
 }
-foreach ( array( '//', '\/\/', '%2F%2F', '%2f%2f' ) as $lead ) {
-	$pairs[ $lead . PHL_OLD_HOST ] = $lead . PHL_NEW_HOST;
+// Hostinger's own domain change may already have swapped the temporary host
+// for http://poolhallrecruitment.co.uk, so every form ends on https://www.
+$new_url = 'https://' . PHL_NEW_HOST;
+foreach ( array( PHL_OLD_HOST, PHL_ROOT, PHL_NEW_HOST ) as $host ) {
+	foreach ( array( 'http://', 'https://' ) as $scheme ) {
+		$pairs[ $scheme . $host ]                         = $new_url;
+		$pairs[ str_replace( '/', '\/', $scheme . $host ) ] = str_replace( '/', '\/', $new_url );
+	}
+	foreach ( array( '//', '\/\/', '%2F%2F', '%2f%2f' ) as $lead ) {
+		$pairs[ $lead . $host ] = $lead . PHL_NEW_HOST;
+	}
 }
 $report['paths'] = PHL_OLD_DIR === $new_dir ? 'folder unchanged, paths left alone' : PHL_OLD_DIR . ' -> ' . $new_dir;
 
@@ -83,14 +93,15 @@ $targets = array(
 	array( $wpdb->prefix . 'gf_entry_meta', 'id', 'meta_value', '' ),
 );
 
-$undo    = array();
-$like    = '%' . $wpdb->esc_like( PHL_OLD_HOST ) . '%';
+$undo     = array();
+$like     = '%' . $wpdb->esc_like( PHL_OLD_HOST ) . '%';
+$like_new = '%' . $wpdb->esc_like( PHL_ROOT ) . '%';
 foreach ( $targets as list( $table, $pk, $col, $where ) ) {
 	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 		continue;
 	}
-	$sql  = "SELECT `$pk` AS pk, `$col` AS val FROM `$table` WHERE `$col` LIKE %s" . ( $where ? " AND $where" : '' );
-	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $like ) ); // phpcs:ignore
+	$sql  = "SELECT `$pk` AS pk, `$col` AS val FROM `$table` WHERE (`$col` LIKE %s OR `$col` LIKE %s)" . ( $where ? " AND $where" : '' );
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $like, $like_new ) ); // phpcs:ignore
 	$changed = 0;
 	$skipped_rows = 0;
 	foreach ( $rows as $row ) {
@@ -116,10 +127,12 @@ $settings = array(
 	'home'                                 => 'https://' . PHL_NEW_HOST,
 	'siteurl'                              => 'https://' . PHL_NEW_HOST,
 	'blog_public'                          => '1',
-	// Google for Jobs: lifts the staging noindex on vacancies and turns on JobPosting markup.
+	// Google for Jobs: lifts the staging noindex on vacancies. Its own JobPosting
+	// markup stays off: in "confidential" mode it names the employer
+	// "confidential" and duplicates Poolhall Integration's complete markup.
 	'poolhall_google_jobs_environment'     => 'production',
 	'poolhall_google_jobs_production_host' => PHL_NEW_HOST,
-	'poolhall_google_jobs_schema_enabled'  => '1',
+	'poolhall_google_jobs_schema_enabled'  => '0',
 );
 foreach ( $settings as $name => $value ) {
 	$report['settings'][ $name ] = get_option( $name ) . ' -> ' . $value;
@@ -163,12 +176,14 @@ foreach ( $targets as list( $table, $pk, $col, $where ) ) {
 	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 		continue;
 	}
-	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `$table` WHERE `$col` LIKE %s" . ( $where ? " AND $where" : '' ), $like ) ); // phpcs:ignore
-	if ( $n ) {
-		$left[ "$table.$col" ] = $n;
+	foreach ( array( PHL_OLD_HOST, '//' . PHL_ROOT, '\/\/' . PHL_ROOT, 'http://www.' . PHL_ROOT, 'http:\/\/www.' . PHL_ROOT ) as $needle ) {
+		$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `$table` WHERE `$col` LIKE %s" . ( $where ? " AND $where" : '' ), '%' . $wpdb->esc_like( $needle ) . '%' ) ); // phpcs:ignore
+		if ( $n ) {
+			$left[ "$table.$col" ][ $needle ] = $n;
+		}
 	}
 }
-$report['old_host_left'] = $left ?: 'none';
+$report['old_urls_left'] = $left ?: 'none';
 if ( class_exists( 'Poolhall\GoogleJobs\Config' ) ) {
 	$report['jobs_hidden_from_google'] = ( new \Poolhall\GoogleJobs\Config() )->staging_protection_active();
 }
