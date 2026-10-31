@@ -9,7 +9,7 @@ add_filter( 'do_shortcode_tag', static function ( $html, $tag ) {
 	}
 	$pools = array( // Media Library attachment IDs.
 		'construction'  => array( 84, 199, 201 ),
-		'manufacturing' => array( 85, 702, 344 ),
+		'manufacturing' => array( 85, 702, 1210 ),
 		'digital'       => array( 86, 704, 984 ),
 	);
 	$post_id = (int) get_the_ID();
