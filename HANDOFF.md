@@ -1,41 +1,56 @@
 # Poolhall — session handoff
 
-**Written:** 2026-09-22 · **Branch:** `claude/poolhall-giig-job-pull-h9cqpw` (clean, pushed, HEAD `1546fb6`)
-**Site:** https://lightslategrey-hare-335761.hostingersite.com (staging, now publicly reachable)
+**Updated:** 2026-11-27 · **Branch:** `claude/poolhall-giig-job-pull-h9cqpw` (clean, pushed, HEAD `15c9eaa`)
+**Site:** https://www.poolhallrecruitment.co.uk — **live**, on Hostinger, serving real candidates.
+The old `lightslategrey-hare-335761.hostingersite.com` staging URL is the same box.
 
 ---
 
 ## 1. Read this before you touch anything
 
-**The live site is ahead of this repository, and the difference is not in git.**
+**The repo now matches live. It did not before 2026-11-27 — do not let it drift again.**
 
-The owner has been developing the site with Codex in parallel. That work exists **only on the
-server** — no branch, no commit, no backup. In this session the live theme was `0.25.13` while
-this branch said `0.19.0`:
+The owner develops the site with Codex in parallel, and that work lands **straight on the
+server**. Until commit `21f46e2` none of it was in git: 160 files existed only on production and
+35 more differed. That commit captured the whole live child theme and plugin, so
+`wordpress/themes/hello-elementor-child` and `wordpress/plugins/poolhall-integration` are now a
+faithful copy of what is running. Everything below assumes you re-verify that before trusting it.
 
-| File | Live | This repo (July baseline) |
-|---|---|---|
-| `shared.css` | ~175 KB | ~108 KB |
-| `ui.js` | ~29 KB | ~22 KB |
-| `functions.php` | 4,899 B (v3 design pilot, Manrope, `design-system-v3.css`) | 1,980 B |
-| `Plugin.php` | 15,012 B (`WorkflowMigration`, `ReminderService`, `DraftManager`, `WorkflowState`, `InviteMailer`, `EmployersVisuals`, `SectorJobs`, `DB_VERSION = 5`) | 13,039 B (`DB_VERSION = 2`) |
-
-> **Never upload a repo file wholesale over a live file.** Doing so in this session would have
-> deleted ~67 KB of CSS, unregistered the whole candidate onboarding workflow, and rolled
-> `DB_VERSION` backwards — unrecoverably, since none of it is committed.
-
-**The rule: read the live file first, merge your change into it, upload the merged result.**
-Live `SchemaOutput.php` also carried a `wp_footer` fallback (some Elementor Theme Builder
-templates resolve singular context after `wp_head`) plus a duplicate-print guard. Overwriting it
-would have removed JobPosting markup from the very pages we were trying to get into Google.
-
-Before editing any live file, diff it against the matching commit here:
+**Re-check drift before your first write of any session.** Codex may have shipped again since:
 
 ```bash
-git show 302842b:wordpress/plugins/poolhall-integration/src/Schema/JobPostingSchema.php
+# Pull live code and diff it against this repo before editing anything.
+# (Recipe: §3 — zip the two directories server-side, download, diff -rq.)
 ```
 
-If live matches a known baseline, your diff applies cleanly. If not, port your change by hand.
+> **Never upload a repo file wholesale over a live file without diffing first.** Before the
+> capture this would have deleted ~67 KB of CSS, unregistered the whole candidate onboarding
+> workflow and rolled `DB_VERSION` backwards. The risk is lower now, but it returns the moment
+> Codex touches the server again.
+
+**The rule stands: read the live file first, merge your change into it, upload the merged result.**
+Live `SchemaOutput.php` carries a `wp_footer` fallback (some Elementor Theme Builder templates
+resolve singular context after `wp_head`) plus a duplicate-print guard. Overwriting it would
+remove JobPosting markup from the very pages we are trying to get into Google.
+
+### Two traps that have already cost time
+
+**Elementor CSS beats theme CSS, and it lives in the database.** The PRL brand mark looked
+broken for a whole round of debugging — the script was missing, but even after restoring it the
+mark stayed invisible. The real cause was custom CSS saved on the homepage section itself:
+
+```
+/* Cached pre-update theme scripts must not restore the retired PRL letters. */
+selector .ph-brandmark { display: none !important; }
+```
+
+Codex **retired** the mark and guarded against its return. The owner was asked on 2026-11-27 and
+chose to **leave it exactly as-is**: the guard stays, the dormant CSS and JS stay in the theme.
+Do not "fix" it. Symptom to remember: computed styles look right but `boundingBox()` is null —
+use CDP `CSS.getMatchedStylesForNode`, because `document.styleSheets` enumeration missed it.
+
+**The asset cache key is `POOLHALL_CHILD_VERSION`** in `functions.php`. Change any theme CSS or JS
+without bumping it and returning visitors keep the cached file. See §3.
 
 ---
 
@@ -190,10 +205,48 @@ screenshot a half-faded section and misread it.
 
 Current readiness: **11 of 11 live roles qualify.** The schema side is done.
 
+### Host migration to SiteGround — in progress, blocked on the owner
+
+SiteGround exists and SG Migrator **already ran once, on 16 Nov** (`"Wordpress was migrated"`;
+uploads confirmed present). It is now stale by data only:
+
+| Drifted since 16 Nov | |
+|---|---|
+| #1224 Harryram Babulall — CV registration (23 Nov) | **a real candidate — must not be lost** |
+| #1223 | spam enquiry |
+| 1 job | modified |
+| **Code** | **none** — `theme_changed: []`, `plugin_changed: []` as of 27 Nov 10:43 UTC |
+
+Note the ui.js/`functions.php` deploy of 27 Nov **post-dates** that check, so the SiteGround copy
+is now one theme version behind as well (`0.25.30` vs live `0.25.31`).
+
+**Needed from the owner — neither can be done from a cloud session:**
+1. A **fresh SG Migrator transfer token** (Site Tools → WordPress → Migrator). Tokens are
+   single-use and the 16 Nov one is spent.
+2. The **SiteGround temporary domain or IP** (Site Tools → Site → Site Information), so the
+   fresh copy can be verified over HTTPS before any DNS change.
+
+**Cutover rule — this one matters.** DNS is at **Wix** (`ns10/ns11.wixdns.net`) and carries all
+of the client's Microsoft 365 records: MX → `poolhallrecruitment-co-uk.mail.protection.outlook.com`,
+SPF `v=spf1 include:spf.protection.outlook.com -all`, `MS=ms82451161`, a Google verification TXT,
+the `autodiscover` CNAME and `selector1._domainkey` DKIM.
+
+> **Change only the A record at Wix. Never move nameservers to SiteGround** — that drops every
+> record above and stops the client's email.
+
+Re-run the delta check after the migration to catch anything that lands mid-transfer.
+
+### Email — still sending as the owner's personal Gmail
+FluentSMTP is sending **everything** as `rldavies23@gmail.com` with force-from ON (9 sent, 0
+failed). That is why mail works despite the `-all` SPF. The client's IT company refused an Entra
+app and agreed on **Brevo free tier** (300/day). FluentSMTP is free and supports Brevo, so no WP
+Mail SMTP Pro licence is needed. When sending Brevo's DNS records to the IT company: **merge into
+the single existing SPF record — never add a second `v=spf1`.**
+
+Also ruled out, with sources: M365 Direct Send cannot reach external recipients at all, and Graph
+`sendMail` caps simple attachments near 3 MB while the site accepts 25 MB CVs.
+
 ### Engineering
-- **Back up the live code.** Still the highest-value task: pull `wp-content` into a branch so
-  two months of Codex's work has a restore point and the stale-branch trap stops recurring.
-  Offered twice, not yet taken up.
 - `password_protected_status` is a stale `1` in the options table with no plugin active. The
   readiness check now ignores it unless `Password_Protected` is loaded, but the row could be
   deleted.
@@ -209,7 +262,9 @@ Current readiness: **11 of 11 live roles qualify.** The schema side is done.
 - Candidate-list IDs for Giig (`poolhall_giig_candidate_list`) never supplied; the wiring is in
   place and inactive.
 - Final Candidate Terms legal wording is still placeholder text flagged for review.
-- SMTP plugin (WP Mail SMTP) recommended before launch so form mail is reliable.
+- ~~SMTP plugin (WP Mail SMTP) recommended before launch~~ — superseded: FluentSMTP is installed
+  and sending. The open item is switching it off the owner's personal Gmail and onto Brevo
+  (see "Email" above).
 
 ---
 
