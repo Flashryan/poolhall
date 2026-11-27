@@ -298,20 +298,81 @@
 }() );
 
 /**
- * v2 carousel arrows: scroll the snap track by one card.
+ * v2 carousels: arrows scroll one snap card. Individual carousels may opt
+ * into autoplay with data-ph-carousel-autoplay="milliseconds". Autoplay
+ * wraps, pauses for interaction/background tabs and honours reduced motion.
  */
 ( function () {
 	document.querySelectorAll( '[data-ph-carousel]' ).forEach( function ( c ) {
 		var track = c.querySelector( '.carousel-track' );
 		if ( ! track ) { return; }
+		var delay   = parseInt( c.getAttribute( 'data-ph-carousel-autoplay' ) || '0', 10 );
+		var media   = window.matchMedia ? window.matchMedia( '(prefers-reduced-motion: reduce)' ) : null;
+		var timer   = null;
+		var hovered = false;
+		var focused = false;
+		var pressed = false;
 		var step = function () {
-			var card = track.firstElementChild;
-			return card ? card.getBoundingClientRect().width + 22 : 380;
+			var card  = track.firstElementChild;
+			var style = window.getComputedStyle ? window.getComputedStyle( track ) : null;
+			var gap   = style ? parseFloat( style.columnGap || style.gap || '0' ) : 0;
+			return card ? card.getBoundingClientRect().width + ( isNaN( gap ) ? 0 : gap ) : 380;
+		};
+		var stop = function () {
+			if ( timer ) { window.clearTimeout( timer ); }
+			timer = null;
+		};
+		var canPlay = function () {
+			return delay >= 1000
+				&& track.children.length > 1
+				&& ! hovered
+				&& ! focused
+				&& ! pressed
+				&& ! document.hidden
+				&& ! ( media && media.matches );
+		};
+		var move = function ( direction ) {
+			var amount = step();
+			var current = Math.round( track.scrollLeft / amount );
+			var last = track.children.length - 1;
+			var target = current + direction;
+			if ( target > last ) { target = 0; }
+			if ( target < 0 ) { target = last; }
+			track.scrollTo( { left: target * amount, behavior: 'smooth' } );
+		};
+		var schedule = function () {
+			stop();
+			if ( ! canPlay() ) { return; }
+			timer = window.setTimeout( function () {
+				move( 1 );
+				schedule();
+			}, delay );
+		};
+		var interact = function ( direction ) {
+			move( direction );
+			schedule();
 		};
 		var prev = c.querySelector( '[data-ph-carousel-prev]' );
 		var next = c.querySelector( '[data-ph-carousel-next]' );
-		if ( prev ) { prev.addEventListener( 'click', function () { track.scrollBy( { left: -step(), behavior: 'smooth' } ); } ); }
-		if ( next ) { next.addEventListener( 'click', function () { track.scrollBy( { left: step(), behavior: 'smooth' } ); } ); }
+		if ( prev ) { prev.addEventListener( 'click', function () { interact( -1 ); } ); }
+		if ( next ) { next.addEventListener( 'click', function () { interact( 1 ); } ); }
+
+		if ( delay >= 1000 ) {
+			c.addEventListener( 'pointerenter', function () { hovered = true; stop(); } );
+			c.addEventListener( 'pointerleave', function () { hovered = false; schedule(); } );
+			c.addEventListener( 'focusin', function () { focused = true; stop(); } );
+			c.addEventListener( 'focusout', function () {
+				window.setTimeout( function () {
+					focused = c.contains( document.activeElement );
+					schedule();
+				}, 0 );
+			} );
+			track.addEventListener( 'pointerdown', function () { pressed = true; stop(); } );
+			window.addEventListener( 'pointerup', function () { pressed = false; schedule(); } );
+			document.addEventListener( 'visibilitychange', schedule );
+			if ( media && media.addEventListener ) { media.addEventListener( 'change', schedule ); }
+			schedule();
+		}
 	} );
 }() );
 
@@ -349,22 +410,40 @@
 }() );
 
 /**
- * Essential-cookies notice: informational (no consent gating needed, the
- * site sets no analytics cookies); dismissal persists locally.
+ * Essential-storage notice. There are no non-essential scripts to gate; the
+ * versioned dismissal persists locally and page spacing prevents overlays.
  */
 ( function () {
 	var box = document.querySelector( '[data-ph-cookies]' );
 	if ( ! box ) { return; }
-	var KEY = 'ph-cookies-ok';
-	try { if ( window.localStorage.getItem( KEY ) ) { return; } } catch ( e ) { return; }
+	var KEY = 'ph-cookie-notice-v2';
+	var root = document.documentElement;
+	var body = document.body;
+	var dismissed = false;
+	try { dismissed = '1' === window.localStorage.getItem( KEY ); } catch ( e ) { dismissed = false; }
+	if ( dismissed ) { return; }
+
+	var syncOffset = function () {
+		root.style.setProperty( '--ph-cookie-notice-height', Math.ceil( box.getBoundingClientRect().height ) + 'px' );
+	};
+	var close = function () {
+		box.hidden = true;
+		body.classList.remove( 'ph-cookie-notice-open' );
+		root.style.removeProperty( '--ph-cookie-notice-height' );
+		try { window.localStorage.setItem( KEY, '1' ); } catch ( e ) { /* private mode */ }
+	};
+
 	box.hidden = false;
+	body.classList.add( 'ph-cookie-notice-open' );
+	syncOffset();
+	window.addEventListener( 'resize', syncOffset, { passive: true } );
 	var ok = box.querySelector( '[data-ph-cookies-ok]' );
 	if ( ok ) {
-		ok.addEventListener( 'click', function () {
-			box.hidden = true;
-			try { window.localStorage.setItem( KEY, '1' ); } catch ( e ) { /* private mode */ }
-		} );
+		ok.addEventListener( 'click', close );
 	}
+	document.addEventListener( 'keydown', function ( event ) {
+		if ( 'Escape' === event.key && ! box.hidden ) { close(); }
+	} );
 }() );
 
 /**
@@ -477,6 +556,176 @@
 	range.addEventListener( 'input', paint );
 	paint();
 }() );
+
+/**
+ * Site motion system.
+ *
+ * Adds restrained, one-time entrance reveals to shared page components and a
+ * low-amplitude desktop parallax treatment to photographic bands. Everything
+ * is progressive enhancement: content stays visible without JavaScript, and
+ * motion is disabled when the visitor asks for reduced motion.
+ */
+( function () {
+	var reduceMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' );
+	if ( reduceMotion.matches || ! ( 'IntersectionObserver' in window ) ) { return; }
+
+	var revealItems = [];
+	var mark = function ( element, direction, delay ) {
+		if ( ! element || element.hasAttribute( 'data-ph-reveal' ) ) { return; }
+		if ( element.closest( '[data-ph-reveal]' ) || element.querySelector( '[data-ph-reveal]' ) ) { return; }
+		element.setAttribute( 'data-ph-reveal', direction || 'up' );
+		element.style.setProperty( '--ph-reveal-delay', Math.min( delay || 0, 280 ) + 'ms' );
+		revealItems.push( element );
+	};
+
+	// The main hero reads as one deliberate sequence rather than several
+	// unrelated animations.
+	document.querySelectorAll( '.ph-v2-hero .hero-inner' ).forEach( function ( hero ) {
+		Array.prototype.forEach.call( hero.children, function ( child, index ) {
+			mark( child, 'up', index * 85 );
+		} );
+	} );
+
+	// Page titles retain a subtle hierarchy: breadcrumb, label, title, copy,
+	// then actions. This covers all shared inner-page templates.
+	document.querySelectorAll( '.ph-v2page .pagehead .container' ).forEach( function ( heading ) {
+		Array.prototype.forEach.call( heading.children, function ( child, index ) {
+			mark( child, 'up', index * 65 );
+		} );
+	} );
+
+	// Shared section headings and the homepage reviews heading.
+	document.querySelectorAll( '.ph-v2page .section-head, .ph-reviews__head' ).forEach( function ( heading ) {
+		Array.prototype.forEach.call( heading.children, function ( child, index ) {
+			mark( child, 0 === index ? 'up' : 'right', index * 70 );
+		} );
+	} );
+
+	// Some marketing pages remain intentionally editable in Elementor. Apply
+	// the same title treatment to their content headings while explicitly
+	// excluding global header and footer templates.
+	document.querySelectorAll( '.elementor-widget-heading h1, .elementor-widget-heading h2' ).forEach( function ( title, index ) {
+		var widget = title.closest( '.elementor-widget-heading' );
+		if ( widget && ! widget.closest( 'header, footer, .ph-v2-header, .ph-v2-footer' ) ) {
+			mark( widget, 'up', Math.min( index, 2 ) * 45 );
+		}
+	} );
+
+	// Coordinate copy and imagery so paired layouts enter together from a
+	// shallow opposing direction. Existing hover transforms remain untouched.
+	[
+		'.ph-v2page .split',
+		'.ph-v2page .sector-showcase__grid',
+		'.ph-v2page .hr-split',
+		'.ph-v2page .bja-intro',
+		'.ph-v2page .contact-grid',
+		'.ph-v2page .hr-onboarding__panel'
+	].forEach( function ( selector ) {
+		document.querySelectorAll( selector ).forEach( function ( pair ) {
+			Array.prototype.forEach.call( pair.children, function ( child, index ) {
+				mark( child, 0 === index ? 'left' : 'right', index * 60 );
+			} );
+		} );
+	} );
+	document.querySelectorAll( '.ph-split' ).forEach( function ( pair ) {
+		Array.prototype.forEach.call( pair.children, function ( child, index ) {
+			mark( child, 0 === index ? 'left' : 'right', index * 60 );
+		} );
+	} );
+
+	document.querySelectorAll( '.ph-v2page .photoband .pb-inner, .ph-v2page .guide-action__panel' ).forEach( function ( panel ) {
+		mark( panel, 'left', 0 );
+	} );
+	document.querySelectorAll( '.ph-v2page .cookie-policy__intro, .ph-v2page .cookie-policy__main > .h2' ).forEach( function ( item, index ) {
+		mark( item, 'up', Math.min( index, 2 ) * 60 );
+	} );
+	document.querySelectorAll( '.ph-v2page .cookie-policy__aside, .ph-v2page .job-layout > aside' ).forEach( function ( aside ) {
+		mark( aside, 'right', 70 );
+	} );
+
+	// Repeated content receives a small, capped stagger. The cap keeps large
+	// job archives and carousels feeling responsive rather than choreographed.
+	[
+		'.ph-v2-strip .grid',
+		'.ph-v2page .points',
+		'.ph-v2page .svc-grid',
+		'.ph-v2page .secjobs',
+		'.ph-v2page .guide-card-grid',
+		'.ph-v2page .team-grid',
+		'.ph-v2page .blog-grid',
+		'.ph-v2page .bja-support-grid',
+		'.ph-v2page .hr-service-grid__cards',
+		'.ph-v2page .cookie-policy__list',
+		'.ph-v2page .stats',
+		'.sector-grid',
+		'.ph-grid-2',
+		'.ph-grid-3',
+		'.ph-stats-box',
+		'.ph-reviews .ph-grid',
+		'.ph-v2-ctas'
+	].forEach( function ( selector ) {
+		document.querySelectorAll( selector ).forEach( function ( group ) {
+			Array.prototype.forEach.call( group.children, function ( child, index ) {
+				mark( child, 'up', Math.min( index, 4 ) * 65 );
+			} );
+		} );
+	} );
+	document.querySelectorAll( 'body.home [data-ph-carousel]' ).forEach( function ( carousel ) {
+		mark( carousel, 'up', 80 );
+	} );
+
+	// A handful of standalone cards live outside a predictable grid wrapper.
+	document.querySelectorAll( '.ph-reviews .ph-card--review, .ph-v2page .bja-case-card, .ph-v2page .sector-topic' ).forEach( function ( card, index ) {
+		mark( card, 'up', Math.min( index, 4 ) * 65 );
+	} );
+
+	if ( revealItems.length ) {
+		document.documentElement.classList.add( 'ph-motion-ready' );
+		var revealObserver = new IntersectionObserver( function ( entries ) {
+			entries.forEach( function ( entry ) {
+				if ( ! entry.isIntersecting ) { return; }
+				entry.target.classList.add( 'is-revealed' );
+				revealObserver.unobserve( entry.target );
+			} );
+		}, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 } );
+		revealItems.forEach( function ( item ) { revealObserver.observe( item ); } );
+	}
+
+	// Parallax is deliberately limited to wide-screen decorative photography.
+	// The homepage hero already owns a slow zoom effect and is excluded here.
+	var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+	if ( ( connection && connection.saveData ) || ! window.matchMedia( '(min-width: 821px)' ).matches ) { return; }
+
+	var parallaxItems = Array.prototype.slice.call( document.querySelectorAll(
+		'.ph-v2page .pagehead.photo > img, .ph-v2page .photoband > img'
+	) );
+	if ( ! parallaxItems.length ) { return; }
+
+	parallaxItems.forEach( function ( image ) { image.setAttribute( 'data-ph-parallax', '' ); } );
+	var ticking = false;
+	var updateParallax = function () {
+		var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+		parallaxItems.forEach( function ( image ) {
+			var host = image.parentElement;
+			var rect = host.getBoundingClientRect();
+			if ( rect.bottom < -80 || rect.top > viewportHeight + 80 ) { return; }
+			var distance = ( viewportHeight / 2 ) - ( rect.top + rect.height / 2 );
+			var limit = host.classList.contains( 'pagehead' ) ? 16 : 12;
+			var offset = Math.max( -limit, Math.min( limit, distance / viewportHeight * limit * 2 ) );
+			image.style.setProperty( '--ph-parallax-y', offset.toFixed( 2 ) + 'px' );
+		} );
+		ticking = false;
+	};
+	var requestParallax = function () {
+		if ( ticking ) { return; }
+		ticking = true;
+		window.requestAnimationFrame( updateParallax );
+	};
+	window.addEventListener( 'scroll', requestParallax, { passive: true } );
+	window.addEventListener( 'resize', requestParallax, { passive: true } );
+	requestParallax();
+}() );
+
 
 /**
  * PRL brand mark: the logo's initials as a fine outline resting on the

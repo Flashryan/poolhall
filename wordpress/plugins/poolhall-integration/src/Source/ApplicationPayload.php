@@ -29,5 +29,6 @@ final class ApplicationPayload {
 		public readonly ?string $source_company_id = null,
 		public readonly ?string $role_title = null,
 		public readonly ?float $salary_from = null,
+		public readonly ?string $existing_candidate_id = null,
 	) {}
 }

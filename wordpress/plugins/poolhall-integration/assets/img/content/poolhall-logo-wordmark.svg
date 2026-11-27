@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 92" role="img" aria-labelledby="poolhall-logo-title">
+  <title id="poolhall-logo-title">Poolhall Recruitment Limited</title>
+  <g fill="#0B2846" font-family="Georgia, 'Times New Roman', serif">
+    <text x="8" y="59" font-size="43" letter-spacing="-1.2">PRL</text>
+    <text x="151" y="27" font-size="24">Poolhall</text>
+    <text x="151" y="52" font-size="24">Recruitment</text>
+    <text x="151" y="77" font-size="24">Limited</text>
+  </g>
+  <rect x="130" y="13" width="4" height="66" fill="#D9962E"/>
+</svg>

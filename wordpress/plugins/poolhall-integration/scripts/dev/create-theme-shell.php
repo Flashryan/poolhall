@@ -18,6 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	echo "Run via: wp eval-file scripts/dev/create-theme-shell.php\n";
 	exit( 1 );
 }
+
+// Refuse to clobber Elementor documents edited since the builder last ran.
+require_once __DIR__ . '/_builder-guard.php';
 if ( ! did_action( 'elementor/loaded' ) || ! defined( 'ELEMENTOR_PRO_VERSION' ) ) {
 	echo "FAIL: Elementor + Elementor Pro must be active.\n";
 	exit( 1 );
@@ -287,7 +290,10 @@ $ensure_template = static function ( string $title, string $type, array $data ):
 	update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
 	update_post_meta( $post_id, '_elementor_template_type', $type );
 	update_post_meta( $post_id, '_wp_page_template', 'elementor_header_footer' );
-	update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+	if ( poolhall_builder_may_write( (int) $post_id ) ) {
+		update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+		poolhall_builder_stamp( (int) $post_id );
+	}
 	update_post_meta( $post_id, '_elementor_conditions', array( 'include/general' ) );
 	wp_set_object_terms( $post_id, $type, 'elementor_library_type' );
 

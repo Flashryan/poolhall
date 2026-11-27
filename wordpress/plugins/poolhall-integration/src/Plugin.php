@@ -51,7 +51,7 @@ use Poolhall\Integration\Support\Options;
 final class Plugin {
 
 	private const DB_VERSION_OPTION = 'poolhall_db_version';
-	private const DB_VERSION        = 2;
+	private const DB_VERSION        = 5;
 
 	private static ?self $instance = null;
 
@@ -73,14 +73,21 @@ final class Plugin {
 		Logger::install();
 		SavedJobsRepository::install();
 		CandidateRole::install();
-		update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
+		try {
+			\Poolhall\Integration\Onboarding\WorkflowMigration::run();
+			update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
+		} catch ( \Throwable $throwable ) {
+			( new Logger() )->log( 'candidate_workflow_migration_failed', array( 'error' => sanitize_key( $throwable->getMessage() ) ) );
+		}
 		( new JobPostType() )->register();
 		Scheduler::activate();
+		\Poolhall\Integration\Onboarding\ReminderService::activate();
 		flush_rewrite_rules();
 	}
 
 	public static function deactivate(): void {
 		Scheduler::deactivate();
+		\Poolhall\Integration\Onboarding\ReminderService::deactivate();
 		flush_rewrite_rules();
 	}
 
@@ -96,7 +103,12 @@ final class Plugin {
 					Logger::install();
 					SavedJobsRepository::install();
 					CandidateRole::install();
-					update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
+					try {
+						\Poolhall\Integration\Onboarding\WorkflowMigration::run();
+						update_option( self::DB_VERSION_OPTION, self::DB_VERSION, true );
+					} catch ( \Throwable $throwable ) {
+						( new Logger() )->log( 'candidate_workflow_migration_failed', array( 'error' => sanitize_key( $throwable->getMessage() ) ) );
+					}
 				}
 			},
 			5
@@ -106,6 +118,8 @@ final class Plugin {
 		$this->wire_accounts();
 		( new \Poolhall\Integration\DesignSystem\StyleGuide() )->register();
 		( new \Poolhall\Integration\DesignSystem\HeaderControls() )->register();
+		( new \Poolhall\Integration\DesignSystem\EmployersVisuals() )->register();
+		( new \Poolhall\Integration\DesignSystem\SectorJobs() )->register();
 		( new \Poolhall\Integration\Jobs\ArchiveQuery() )->register();
 		$featured_query = new \Poolhall\Integration\Jobs\FeaturedQuery();
 		$featured_query->register();
@@ -138,13 +152,38 @@ final class Plugin {
 		$scheduler->register();
 		add_action( Scheduler::HOOK, array( $this, 'run_scheduled_sync' ) );
 
+		// One shared candidate-workflow graph: separate stage access, one secure
+		// task hub, encrypted Gravity Forms draft pointers and tracked mail hand-off.
+		$workflow_state = new \Poolhall\Integration\Onboarding\WorkflowState();
+		$invites        = new \Poolhall\Integration\Onboarding\InviteManager( $workflow_state );
+		$invite_mailer  = new \Poolhall\Integration\Onboarding\InviteMailer(
+			$invites,
+			$workflow_state,
+			$this->candidate_sink()
+		);
+		$drafts         = new \Poolhall\Integration\Onboarding\DraftManager(
+			$invites,
+			$workflow_state,
+			static function ( int $record_id, string $url, int $expires ) use ( $invite_mailer ): void {
+				// DraftManager already issued this exact one-time hub link; the mailer
+				// reconstructs it from server state and records acceptance/failure.
+				unset( $url, $expires );
+				$invite_mailer->send_stage( $record_id, 'profile' );
+			}
+		);
+		$drafts->register();
+		( new \Poolhall\Integration\Onboarding\CandidateHub( $invites, $workflow_state, $drafts ) )->register();
+		( new \Poolhall\Integration\Onboarding\ReminderService( $invite_mailer, $workflow_state ) )->register();
+
 		$options = new Options();
 		( new SchemaOutput( $options ) )->register();
 		( new \Poolhall\Integration\Reviews\ReviewsCarousel( $this->reviews_service() ) )->register();
 		( new \Poolhall\Integration\Jobs\JobRedirects() )->register();
 		$this->cv_registration()->register();
-		$this->document_workflow()->register();
-		( new \Poolhall\Integration\Onboarding\ReviewScreen( new \Poolhall\Integration\Onboarding\InviteManager() ) )->register();
+		( new \Poolhall\Integration\Documents\DocumentWorkflow( new Logger(), $invites, $workflow_state ) )->register();
+		$this->candidate_giig_sync()->register();
+		( new \Poolhall\Integration\Onboarding\ReviewScreen( $invites, $workflow_state, $invite_mailer ) )->register();
+		( new \Poolhall\Integration\Onboarding\TermsSettings() )->register();
 
 		if ( is_admin() ) {
 			( new HealthPage( $this->sync_service(), new Logger() ) )->register();
@@ -195,7 +234,7 @@ final class Plugin {
 		}
 		try {
 			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
-			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment(), $company, self::giig_candidate_list() );
+			return new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment( 6 ), $company, self::giig_candidate_list() );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			return new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
 		}
@@ -234,10 +273,10 @@ final class Plugin {
 		$sink = null;
 		try {
 			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
-			// Short per-call timeout: the two-step push runs inside the
+			// Short per-call timeout: lookup/create/submit/note run inside the
 			// candidate's own request, which must never outlive PHP's 30s
 			// budget (a timeout mid-request would break the modal's JSON).
-			$sink = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment( 8 ), $company, self::giig_candidate_list() );
+			$sink = new \Poolhall\Integration\Source\Giig\GiigApplicationSink( GiigClient::from_environment( 6 ), $company, self::giig_candidate_list() );
 		} catch ( \Poolhall\Integration\Source\SourceException ) {
 			$sink = null; // Credentials absent: first-party capture only.
 		}
@@ -252,6 +291,28 @@ final class Plugin {
 	/** The configured candidate sink, exposed for the onboarding update path. */
 	public function candidate_sink_public(): \Poolhall\Integration\Source\CandidateSink {
 		return $this->candidate_sink();
+	}
+
+	/** Short, bounded approval sync; legacy submission paths remain unchanged. */
+	public function candidate_giig_sync(): \Poolhall\Integration\Onboarding\CandidateGiigSync {
+		try {
+			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+			$sink = new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment( 6 ), $company, self::giig_candidate_list() );
+		} catch ( \Poolhall\Integration\Source\SourceException ) {
+			$sink = new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
+		}
+		return new \Poolhall\Integration\Onboarding\CandidateGiigSync( $sink );
+	}
+
+	/** Staff linking uses a bounded ID read and never creates a candidate. */
+	public function candidate_giig_link(): \Poolhall\Integration\Onboarding\CandidateGiigLink {
+		try {
+			$company = defined( 'POOLHALL_GIIG_COMPANY_ID' ) ? (string) constant( 'POOLHALL_GIIG_COMPANY_ID' ) : null;
+			$sink = new \Poolhall\Integration\Source\Giig\GiigCandidateSink( GiigClient::from_environment( 6 ), $company, self::giig_candidate_list() );
+		} catch ( \Poolhall\Integration\Source\SourceException ) {
+			$sink = new \Poolhall\Integration\Source\UnconfiguredCandidateSink();
+		}
+		return new \Poolhall\Integration\Onboarding\CandidateGiigLink( $sink );
 	}
 
 	/** Gravity Forms candidate document workflow (signatures, PDFs, notifications). */

@@ -1,0 +1,16 @@
+/* Employers landing page: Adobe Stock recruitment hero. Loaded on this page only. */
+.ph-pagehead::before {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	content: "";
+	background:
+		linear-gradient(100deg, rgba(7, 26, 45, 0.97) 0%, rgba(12, 48, 79, 0.86) 52%, rgba(12, 48, 79, 0.54) 100%),
+		url("../img/content/employers-hero-recruitment.webp") center 42% / cover no-repeat;
+}
+
+@media (max-width: 767px) {
+	.ph-pagehead::before {
+		background-position: 58% center;
+	}
+}

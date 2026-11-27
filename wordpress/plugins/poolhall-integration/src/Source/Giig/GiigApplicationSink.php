@@ -55,7 +55,9 @@ final class GiigApplicationSink implements ApplicationSink {
 	}
 
 	public function submit( ApplicationPayload $payload ): ApplicationResult {
-		$candidate_id = $this->cached_candidate_id( $payload->idempotency_key );
+		$candidate_id = null !== $payload->existing_candidate_id && '' !== trim( $payload->existing_candidate_id )
+			? trim( $payload->existing_candidate_id )
+			: $this->cached_candidate_id( $payload->idempotency_key );
 
 		if ( null === $candidate_id ) {
 			$decoded      = $this->client->post_json( self::PATH_CANDIDATE, self::candidate_body( $payload, $this->company_id, $this->candidate_list ) );
@@ -76,6 +78,24 @@ final class GiigApplicationSink implements ApplicationSink {
 			source_candidate_id: $candidate_id,
 			source_application_id: '' !== $applicant_id ? $applicant_id : null,
 			cv_attached: false
+		);
+	}
+
+	/** Reuse the same configured transport for first-party candidate resolution. */
+	public function candidate_directory(): \Poolhall\Integration\Source\CandidateDirectory {
+		return new GiigCandidateSink( $this->client, $this->company_id, $this->candidate_list );
+	}
+
+	/** Add a non-sensitive website milestone to an existing candidate. */
+	public function add_note( string $candidate_id, string $note ): void {
+		$this->client->post_json(
+			'/public/api/v1/activity/note',
+			array(
+				'Source'     => 'Website',
+				'RecordType' => 'candidate',
+				'Id'         => $candidate_id,
+				'Note'       => $note,
+			)
 		);
 	}
 

@@ -12,14 +12,17 @@ namespace Poolhall\Integration\Applications;
 use Poolhall\Integration\Source\CandidatePayload;
 use Poolhall\Integration\Source\CandidateSink;
 use Poolhall\Integration\Source\SourceException;
+use Poolhall\Integration\Support\BrandedMail;
 use Poolhall\Integration\Support\Logger;
+use Poolhall\Integration\Support\PrivateStorage;
 
 /**
  * The public /register/ flow (directive §5.1, §7.4 "standalone (Register)"):
  * a candidate registers once and every captured detail lands in Giig as a
  * candidate record via POST /candidate, no manual re-keying. The CV is
- * stored privately and emailed to the applications inbox with a reference
- * in the Giig Notes (the documented API has no CV-upload endpoint).
+ * stored outside the public web root and linked from the authenticated
+ * recruiter cockpit and Giig Notes (the documented API has no CV-upload
+ * endpoint). Ordinary email never carries the CV as an attachment.
  *
  * Same never-lose guarantees as applications: the local record is written
  * before anything else; a failed Giig push queues the record and the
@@ -35,7 +38,6 @@ final class CvRegistration {
 	public const ACTION = 'poolhall_cv_register';
 
 	private const HONEYPOT          = 'company_url';
-	private const SUBDIR            = 'poolhall-applications';
 	private const RATE_WINDOW       = 3600; // One hour; literal so the class loads in unit tests without WP constants.
 	private const RATE_MAX          = 6;
 	private const PUSH_MAX_ATTEMPTS = 5;
@@ -51,6 +53,7 @@ final class CvRegistration {
 		'cv_too_large'        => 'CVs need to be under 25 MB.',
 		'cv_wrong_type'       => 'Please attach a PDF or Word document.',
 		'cv_upload_failed'    => 'That upload did not complete. Please try again.',
+		'system'              => 'We could not save your registration just now. Please try again or call the team.',
 	);
 
 	public function __construct(
@@ -197,10 +200,17 @@ final class CvRegistration {
 				'message'             => $request->message,
 				'cv_filename'         => $cv['name'],
 				'cv_status'           => 'pending',
+				'cv_path'             => $cv['path'],
 				'review_status'       => 'new',
 				'submitted_at'        => gmdate( \DateTimeInterface::ATOM ),
 			)
 		);
+		if ( $record_id <= 0 ) {
+			$this->logger->log( 'registration_store_failed', array() );
+			$this->delete_file( $cv['path'] );
+			$this->redirect( $back, 'invalid', array( 'system' ) );
+		}
+		CandidateIdentity::attach( $record_id, $request->email );
 
 		// Per-record download key so the Giig Notes can carry a stable CV
 		// link. The key alone grants nothing: download_cv() still requires a
@@ -241,26 +251,9 @@ final class CvRegistration {
 		$this->redirect( $back, $sent ? 'sent' : 'received', array() );
 	}
 
-	/** A previous registration with this email that already has a Giig id. */
-	private function existing_candidate_id( string $email, int $current ): string {
-		$prior = get_posts(
-			array(
-				'post_type'      => 'poolhall_application',
-				'post_status'    => 'any',
-				'posts_per_page' => 5,
-				'fields'         => 'ids',
-				'exclude'        => array( $current ),
-				'meta_key'       => 'applicant_email', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- exact-match reconciliation lookup.
-				'meta_value'     => $email, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-			)
-		);
-		foreach ( $prior as $pid ) {
-			$existing = (string) get_post_meta( (int) $pid, 'giig_candidate_id', true );
-			if ( '' !== $existing ) {
-				return $existing;
-			}
-		}
-		return '';
+	/** Giig id already bound to this durable candidate key, if any. */
+	private function existing_candidate_id( int $current ): string {
+		return CandidateIdentity::giig_id( $current );
 	}
 
 	/** Admin-post CV download URL for a record (admin login still required). */
@@ -270,13 +263,13 @@ final class CvRegistration {
 
 	/** Create the Giig candidate; queue for cron retry on failure. */
 	private function push( int $record_id, RegistrationRequest $request, string $cv_name, string $cv_link = '' ): void {
-		// Duplicate protection: Giig has no idempotency key, so reconcile by
-		// exact email against our own records before creating again.
-		$existing = $this->existing_candidate_id( $request->email, $record_id );
+		// Reuse only an id already bound to this durable candidate key. An
+		// unverified matching email is never sufficient identity evidence.
+		$existing = $this->existing_candidate_id( $record_id );
 		if ( '' !== $existing ) {
 			ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
-			ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $existing );
-			ApplicationRecord::update_meta( $record_id, 'giig_push_note', 'Reused existing candidate (same email) instead of creating a duplicate.' );
+			CandidateIdentity::remember_giig_id( $record_id, $existing );
+			ApplicationRecord::update_meta( $record_id, 'giig_push_note', 'Reused the candidate id already bound to this durable candidate key.' );
 			// Surface the repeat interest on the Giig timeline — otherwise the
 			// reuse is invisible in the ATS. Nothing sensitive in the note.
 			if ( $this->sink instanceof \Poolhall\Integration\Source\Giig\GiigCandidateSink ) {
@@ -300,9 +293,9 @@ final class CvRegistration {
 		}
 
 		try {
-			$result = $this->sink->register_candidate( self::payload( $request, $cv_name, $cv_link ) );
+			$result = $this->register_or_link( $record_id, self::payload( $request, $cv_name, $cv_link ) );
 			ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
-			ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $result->source_candidate_id );
+			CandidateIdentity::remember_giig_id( $record_id, $result->source_candidate_id );
 			$this->logger->log(
 				'registration_pushed',
 				array(
@@ -321,6 +314,12 @@ final class CvRegistration {
 					'error'  => $e->getMessage(),
 				)
 			);
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			ApplicationRecord::update_meta( $record_id, 'giig_push', 'queued' );
+			ApplicationRecord::update_meta( $record_id, 'giig_push_attempts', '1' );
+			ApplicationRecord::update_meta( $record_id, 'giig_push_error', 'unexpected_push_failure' );
+			$this->logger->log( 'registration_push_failed', array( 'record' => (string) $record_id ) );
 		}
 	}
 
@@ -356,6 +355,13 @@ final class CvRegistration {
 				continue;
 			}
 
+			$existing = CandidateIdentity::giig_id( $record_id );
+			if ( '' !== $existing ) {
+				ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
+				CandidateIdentity::remember_giig_id( $record_id, $existing );
+				continue;
+			}
+
 			$cv_key  = (string) get_post_meta( $record_id, 'cv_key', true );
 			$payload = new CandidatePayload(
 				first_name: (string) get_post_meta( $record_id, 'applicant_first', true ),
@@ -376,9 +382,9 @@ final class CvRegistration {
 			);
 
 			try {
-				$result = $this->sink->register_candidate( $payload );
+				$result = $this->register_or_link( $record_id, $payload );
 				ApplicationRecord::update_meta( $record_id, 'giig_push', 'pushed' );
-				ApplicationRecord::update_meta( $record_id, 'giig_candidate_id', $result->source_candidate_id );
+				CandidateIdentity::remember_giig_id( $record_id, $result->source_candidate_id );
 				$this->logger->log( 'registration_push_retried', array( 'record' => (string) $record_id ) );
 			} catch ( SourceException $e ) {
 				ApplicationRecord::update_meta( $record_id, 'giig_push_attempts', (string) ( $attempts + 1 ) );
@@ -388,6 +394,14 @@ final class CvRegistration {
 	}
 
 	// ------------------------------------------------------------ helpers --
+
+	/** Existing non-directory adapters remain compatible; Giig must search first. */
+	private function register_or_link( int $record, CandidatePayload $payload ): \Poolhall\Integration\Source\CandidateResult {
+		if ( $this->sink instanceof \Poolhall\Integration\Source\CandidateDirectory ) {
+			return new \Poolhall\Integration\Source\CandidateResult( ( new CandidateResolver( $this->sink ) )->resolve( $record, $payload ) );
+		}
+		return $this->sink->register_candidate( $payload );
+	}
 
 	/** Map the request onto the Giig candidate payload (pure, testable). */
 	public static function payload( RegistrationRequest $request, string $cv_name, string $cv_link = '' ): CandidatePayload {
@@ -438,15 +452,45 @@ final class CvRegistration {
 			);
 		}
 
-		$upload_dir = wp_upload_dir();
-		$target_dir = trailingslashit( $upload_dir['basedir'] ) . self::SUBDIR;
-		wp_mkdir_p( $target_dir );
-		if ( ! file_exists( $target_dir . '/.htaccess' ) ) {
-			file_put_contents( $target_dir . '/.htaccess', "Deny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- deny-all marker in a private dir.
+		$checked = wp_check_filetype_and_ext(
+			$tmp,
+			$name,
+			array(
+				'pdf'  => 'application/pdf',
+				'doc'  => 'application/msword',
+				'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			)
+		);
+		if ( empty( $checked['ext'] ) || empty( $checked['type'] ) ) {
+			return array(
+				'errors' => array( 'cv_wrong_type' ),
+				'path'   => '',
+				'name'   => $name,
+			);
 		}
-		$target = $target_dir . '/' . wp_generate_password( 20, false ) . '-' . $name;
+		try {
+			$target = PrivateStorage::opaque_path( 'cvs', 'candidate-cv', CvUpload::extension( $name ) );
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			return array(
+				'errors' => array( 'cv_upload_failed' ),
+				'path'   => '',
+				'name'   => $name,
+			);
+		}
 
 		if ( ! is_uploaded_file( $tmp ) || ! move_uploaded_file( $tmp, $target ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			return array(
+				'errors' => array( 'cv_upload_failed' ),
+				'path'   => '',
+				'name'   => $name,
+			);
+		}
+		try {
+			$target = PrivateStorage::protect_file( $target );
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			wp_delete_file( $target );
 			return array(
 				'errors' => array( 'cv_upload_failed' ),
 				'path'   => '',
@@ -462,6 +506,7 @@ final class CvRegistration {
 	}
 
 	private function notify( RegistrationRequest $request, string $cv_path, string $cv_name, int $record_id ): bool {
+		unset( $cv_path );
 		$inbox = (string) get_option( ApplicationService::INBOX_OPTION, '' );
 		if ( '' === $inbox ) {
 			$inbox = (string) get_option( 'admin_email' );
@@ -487,69 +532,41 @@ final class CvRegistration {
 			'Message:',
 			'' === $request->message ? '(none)' : $request->message,
 			'',
-			'CV attached: ' . $cv_name,
+			'CV retained in the protected candidate record: ' . $cv_name,
 			'Consent to store and process: yes',
 			'',
 			'pushed' === $push
 				? 'Giig: candidate created automatically (CandidateId ' . $candidate . ')'
 				: 'Giig: push queued for automatic retry (see Poolhall Jobs admin)',
+			'Review securely: ' . admin_url( 'admin.php?page=poolhall-candidates&record=' . $record_id ),
 		);
 
-		$headers     = array( 'Reply-To: ' . $request->full_name() . ' <' . $request->email . '>' );
-		$attachments = ( '' !== $cv_path && file_exists( $cv_path ) ) ? array( $cv_path ) : array();
-
-		// Branded pre-registration PDF for the team (never sent to the candidate).
-		$pdf_path = $this->registration_pdf( $request, $cv_name, $record_id );
-		if ( '' !== $pdf_path ) {
-			$attachments[] = $pdf_path;
+		$headers = array( 'Reply-To: ' . $request->full_name() . ' <' . $request->email . '>' );
+		try {
+			$sent = BrandedMail::send_text( $inbox, 'New CV registration: ' . $request->full_name(), implode( "\n", $lines ), $headers );
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			$sent = false;
 		}
-
-		$sent = (bool) wp_mail( $inbox, 'New CV registration: ' . $request->full_name(), implode( "\n", $lines ), $headers, $attachments );
-
-		if ( '' !== $pdf_path ) {
-			wp_delete_file( $pdf_path );
-		}
+		ApplicationRecord::update_meta( $record_id, 'admin_mail_status', $sent ? 'accepted' : 'failed' );
+		ApplicationRecord::update_meta( $record_id, 'admin_mail_attempted_at', gmdate( \DateTimeInterface::ATOM ) );
 
 		// Simple candidate receipt — no submitted data included.
-		wp_mail(
-			$request->email,
-			'Poolhall Recruitment - registration received',
-			'Thank you. Your registration has been submitted to Poolhall Recruitment. A member of the team will contact you if anything else is required.' . "\n\n"
-			. 'Poolhall Recruitment Limited' . "\n" . '0121 516 3000 - jobs@poolhallrecruitment.co.uk'
-		);
+		try {
+			$receipt_sent = BrandedMail::send_text(
+				$request->email,
+				'Poolhall Recruitment - registration received',
+				'Thank you. Your registration has been submitted to Poolhall Recruitment. A member of the team will contact you if anything else is required.' . "\n\n"
+				. 'Poolhall Recruitment Limited' . "\n" . '0121 516 3000 - jobs@poolhallrecruitment.co.uk'
+			);
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			$receipt_sent = false;
+		}
+		ApplicationRecord::update_meta( $record_id, 'receipt_mail_status', $receipt_sent ? 'accepted' : 'failed' );
+		ApplicationRecord::update_meta( $record_id, 'receipt_mail_attempted_at', gmdate( \DateTimeInterface::ATOM ) );
 
 		return $sent;
-	}
-
-	/** Renders the pre-registration as a branded PDF; '' when the builder fails. */
-	private function registration_pdf( RegistrationRequest $request, string $cv_name, int $record_id ): string {
-		try {
-			$pdf = new \Poolhall\Integration\Documents\PdfBuilder( 'Candidate Pre-Registration' );
-			$pdf->section( 'Candidate details' );
-			$pdf->row( 'Name', $request->full_name() );
-			$pdf->row( 'Email', $request->email );
-			$pdf->row( 'Phone', $request->phone );
-			$pdf->row( 'Location', $request->location );
-			$pdf->row( 'Looking for', $request->role_title );
-			$pdf->row( 'Salary expectations', $request->salary_expectations );
-			$pdf->row( 'Key skills', $request->skills );
-			$pdf->row( 'LinkedIn', $request->linkedin );
-			$pdf->row( 'Message', $request->message );
-			$pdf->row( 'CV file', $cv_name );
-			$pdf->row( 'Consent to store and process', 'Yes' );
-			$pdf->audit(
-				array(
-					'Record ID'            => (string) $record_id,
-					'Submission timestamp' => gmdate( 'Y-m-d H:i' ) . ' UTC',
-					'IP address'           => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
-					'Browser / user agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
-				)
-			);
-			return $pdf->save( 'Poolhall-Pre-Registration-' . $request->last_name . '-' . $request->first_name . '-' . $record_id . '.pdf' );
-		} catch ( \Throwable $t ) {
-			$this->logger->log( 'registration_pdf_failed', array( 'record' => (string) $record_id ) );
-			return '';
-		}
 	}
 
 	private function within_rate_limit(): bool {

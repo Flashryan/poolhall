@@ -55,6 +55,10 @@ final class ReviewsCarousel {
 				. esc_html__( 'Read all reviews', 'poolhall-integration' ) . '</a>';
 		}
 
+		// Source attribution sits with the "read all" link on the right of the
+		// head, so the section reads as Google's rating rather than our own.
+		$aside = '<div class="ph-reviews__aside">' . $this->google_mark() . $read_all . '</div>';
+
 		return '<section class="ph-reviews">'
 			. '<div class="ph-reviews__head">'
 			. '<div class="ph-stack-xs">'
@@ -62,12 +66,47 @@ final class ReviewsCarousel {
 			. '<h2 class="ph-h2 ph-reviews__title">' . esc_html__( 'Rated five stars by the people we work with', 'poolhall-integration' ) . '</h2>'
 			. '<p class="ph-lede ph-reviews__lede">' . esc_html__( 'Real feedback from the people we&rsquo;ve placed and the businesses we&rsquo;ve helped to hire.', 'poolhall-integration' ) . '</p>'
 			. '</div>'
-			. $read_all
+			. $aside
 			. '</div>'
-			. '<div class="ph-carousel" tabindex="0" role="group" aria-label="' . esc_attr__( 'Google reviews', 'poolhall-integration' ) . '">'
+			// `data-ph-carousel` + `.carousel-track` hand this to the shared
+			// carousel driver in ui.js, which moves one card per arrow press.
+			. '<div class="ph-reviews__carousel" data-ph-carousel>'
+			. '<div class="ph-carousel carousel-track" tabindex="0" role="group" aria-label="' . esc_attr__( 'Google reviews', 'poolhall-integration' ) . '">'
 			. $cards
 			. '</div>'
+			. '<div class="ph-reviews__nav">'
+			. $this->arrow( 'prev', __( 'Previous review', 'poolhall-integration' ) )
+			. $this->arrow( 'next', __( 'Next review', 'poolhall-integration' ) )
+			. '</div>'
+			. '</div>'
 			. '</section>';
+	}
+
+	/** One carousel arrow. `direction` is `prev` or `next`. */
+	private function arrow( string $direction, string $label ): string {
+		$path = 'prev' === $direction ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7';
+		return '<button type="button" class="ph-reviews__arrow" data-ph-carousel-' . esc_attr( $direction )
+			. ' aria-label="' . esc_attr( $label ) . '">'
+			. '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"'
+			. ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+			. '<path d="' . $path . '"/></svg>'
+			. '</button>';
+	}
+
+	/**
+	 * The Google "G" in its four brand colours, inline so it needs no request
+	 * and inherits nothing from the surrounding dark section.
+	 */
+	private function google_mark(): string {
+		return '<span class="ph-reviews__google">'
+			. '<svg class="ph-reviews__google-g" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" focusable="false">'
+			. '<path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>'
+			. '<path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>'
+			. '<path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>'
+			. '<path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>'
+			. '</svg>'
+			. '<span class="screen-reader-text">' . esc_html__( 'Reviews from Google', 'poolhall-integration' ) . '</span>'
+			. '</span>';
 	}
 
 	private function card( Review $review ): string {

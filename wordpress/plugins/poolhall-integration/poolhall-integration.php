@@ -3,7 +3,7 @@
  * Plugin Name: Poolhall Integration
  * Plugin URI: https://www.poolhallrecruitment.co.uk/
  * Description: Jobs, Giig ATS sync, applications, Google reviews, JobPosting schema, admin health and candidate accounts for Poolhall Recruitment.
- * Version: 0.1.0
+ * Version: 0.2.35
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author: Poolhall Recruitment
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'POOLHALL_INTEGRATION_VERSION', '0.1.0' );
+define( 'POOLHALL_INTEGRATION_VERSION', '0.2.35' );
 define( 'POOLHALL_INTEGRATION_FILE', __FILE__ );
 define( 'POOLHALL_INTEGRATION_DIR', plugin_dir_path( __FILE__ ) );
 define( 'POOLHALL_INTEGRATION_URL', plugin_dir_url( __FILE__ ) );

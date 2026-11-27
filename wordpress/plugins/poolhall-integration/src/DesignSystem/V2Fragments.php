@@ -29,10 +29,12 @@ final class V2Fragments {
 		'poolhall_v2_feature_strip' => 'feature_strip',
 		'poolhall_v2_featured_jobs' => 'featured_jobs',
 		'poolhall_v2_sector_tiles'  => 'sector_tiles',
+		'poolhall_v2_sectors'       => 'sectors_hub',
 		'poolhall_v2_sector_page'   => 'sector_page',
 		'poolhall_v2_delivery'      => 'delivery',
 		'poolhall_v2_secondary'     => 'secondary',
 		'poolhall_v2_candidates'    => 'candidates',
+		'poolhall_v2_guide'         => 'guide_page',
 		'poolhall_v2_about'         => 'about',
 		'poolhall_v2_points'        => 'points',
 		'poolhall_v2_services'      => 'services',
@@ -43,6 +45,7 @@ final class V2Fragments {
 		'poolhall_v2_job_single'    => 'job_single',
 		'poolhall_v2_jobs_head'     => 'jobs_head',
 		'poolhall_v2_legal_head'    => 'legal_head',
+		'poolhall_v2_cookie_policy' => 'cookie_policy',
 		'poolhall_v2_cta_bands'     => 'cta_bands',
 		'poolhall_v2_job_matches'   => 'job_matches',
 	);
@@ -106,6 +109,9 @@ final class V2Fragments {
 	}
 
 	private function image( string $filename ): string {
+		if ( in_array( $filename, array( 'poolhall-logo.png', 'poolhall-logo-dark.png', 'poolhall-logo-wordmark.svg' ), true ) ) {
+			return \Poolhall\Integration\Support\BrandAssets::url( 'poolhall-logo.png' === $filename ? 'logo-light.svg' : 'logo-dark.svg' );
+		}
 		$found = get_posts(
 			array(
 				'post_type'      => 'attachment',
@@ -116,7 +122,14 @@ final class V2Fragments {
 				'meta_value'     => $filename, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);
-		return array() === $found ? '' : (string) wp_get_attachment_image_url( (int) $found[0], 'large' );
+		if ( array() !== $found ) {
+			return (string) wp_get_attachment_image_url( (int) $found[0], 'large' );
+		}
+
+		// Release-bundled marketing artwork must remain available even before a
+		// setup script has imported it into the Media Library.
+		$bundled = POOLHALL_INTEGRATION_DIR . 'assets/img/content/' . $filename;
+		return is_file( $bundled ) ? POOLHALL_INTEGRATION_URL . 'assets/img/content/' . rawurlencode( $filename ) . '?ver=' . rawurlencode( POOLHALL_INTEGRATION_VERSION ) : '';
 	}
 
 	/** Minimal inline icons (Lucide-style strokes; brand glyphs are paths). */
@@ -161,7 +174,9 @@ final class V2Fragments {
 		if ( str_contains( $s, 'construct' ) ) {
 			return 'con';
 		}
-		if ( str_contains( $s, 'manufact' ) ) {
+		// Engineering sits under manufacturing: the roles are plant, process
+		// and maintenance rather than anything office-based.
+		if ( str_contains( $s, 'manufact' ) || str_contains( $s, 'engineer' ) ) {
 			return 'man';
 		}
 		return 'dig';
@@ -195,10 +210,47 @@ final class V2Fragments {
 		);
 	}
 
+	/**
+	 * Card artwork for a job, or '' when its sector is not one we hold a
+	 * picture for. Deliberately stricter than sector_key(): that method ends
+	 * in a catch-all `dig`, which would put an office photo on a welding job
+	 * whose sector is blank or unrecognised. No match here means the card
+	 * falls back to the brand mark, which is never wrong about the role.
+	 */
+	private function card_photo( string $sector ): string {
+		$s    = strtolower( $sector );
+		$file = '';
+		if ( str_contains( $s, 'construct' ) ) {
+			$file = 'sector-construction.webp';
+		} elseif ( str_contains( $s, 'manufact' ) || str_contains( $s, 'engineer' ) ) {
+			$file = 'sector-manufacturing.webp';
+		} else {
+			foreach ( array( 'digital', 'market', 'creative', 'media', 'seo', 'office', 'sales', 'insurance' ) as $needle ) {
+				if ( str_contains( $s, $needle ) ) {
+					$file = 'sector-digital.webp';
+					break;
+				}
+			}
+		}
+		return '' === $file ? '' : $this->image( $file );
+	}
+
+	/**
+	 * Outline brand mark used in place of a photo on job cards. Stock sector
+	 * photography is misleading against a specific vacancy, so the card leads
+	 * with the roundel drawn as line art instead.
+	 */
+	private function brand_mark(): string {
+		return '<span class="jc-mark" aria-hidden="true">'
+			. \Poolhall\Integration\Support\BrandAssets::inline_mark()
+			. '</span>';
+	}
+
 	// ------------------------------------------------------------- header --
 
 	public function header(): string {
-		$logo = $this->image( 'poolhall-logo.png' );
+		$copy = ApprovedMarketingCopy::shell();
+		$logo = $this->image( 'poolhall-logo-wordmark.svg' );
 
 		$employers = array(
 			array( 'shield-check', 'Why us', $this->url( 'why-us' ) ),
@@ -250,7 +302,7 @@ final class V2Fragments {
 			. '<div class="topbar"><div class="container">'
 			. '<div class="seg"><a href="tel:01215163000">' . $this->icon( 'phone' ) . '0121 516 3000</a>'
 			. '<a class="hide-sm" href="mailto:jobs@poolhallrecruitment.co.uk">' . $this->icon( 'mail' ) . 'jobs@poolhallrecruitment.co.uk</a></div>'
-			. '<div class="seg hide-sm"><span class="loc">' . $this->icon( 'map-pin' ) . 'West Midlands &middot; National reach</span></div>'
+			. '<div class="seg hide-sm"><span class="loc">' . $this->icon( 'map-pin' ) . esc_html( $copy['topbar_location'] ) . '</span></div>'
 			. '</div></div>'
 			. '<div class="container"><nav class="nav" aria-label="Primary">'
 			. '<a class="brand" href="' . esc_url( home_url( '/' ) ) . '">'
@@ -303,6 +355,7 @@ final class V2Fragments {
 	// ------------------------------------------------------------- footer --
 
 	public function footer(): string {
+		$copy   = ApprovedMarketingCopy::shell();
 		$logo   = $this->image( 'poolhall-logo.png' );
 		$col    = static function ( string $head, array $links ): string {
 			$out = '<div><h5>' . esc_html( $head ) . '</h5><ul>';
@@ -331,7 +384,7 @@ final class V2Fragments {
 			. '<div class="footer-brand"><div class="fb">'
 			. ( '' !== $logo ? '<img src="' . esc_url( $logo ) . '" alt="Poolhall Recruitment Limited" />' : '<span class="bn">Poolhall</span>' )
 			. '</div>'
-			. '<p>West Midlands roots, national recruitment reach. Specialists in Construction, Manufacturing and Digital, since 2021.</p>'
+			. '<p>' . esc_html( $copy['footer_intro'] ) . '</p>'
 			. '<div class="footer-soc">'
 			. '<a href="https://www.linkedin.com/company/poolhall-recruitment" aria-label="LinkedIn">' . $this->icon( 'linkedin' ) . '</a>'
 			. '<a href="https://www.instagram.com/poolhallrecruitment" aria-label="Instagram">' . $this->icon( 'instagram' ) . '</a>'
@@ -386,17 +439,17 @@ final class V2Fragments {
 			. '</span></div>'
 			. '</div>'
 			. '<button class="ph-backtop" type="button" data-ph-backtop aria-label="Back to top">' . $this->icon( 'arrow-right' ) . '</button>'
-			// Essential-cookies notice (directive §12/§13): this site sets no
-			// analytics or third-party cookies, so the notice is informational
-			// with a link to the cookie policy; dismissal is remembered locally.
-			. '<div class="ph-cookies" data-ph-cookies hidden><p>We only use essential cookies to run this site. No tracking, no third parties. <a href="' . esc_url( $this->url( 'cookies' ) ) . '">Cookie policy</a></p>'
-			. '<button type="button" class="btn btn-primary" data-ph-cookies-ok>OK</button></div>'
+			// Informational essential-storage notice. Non-essential analytics and
+			// advertising technologies are not loaded by this website.
+			. '<div class="ph-cookies" data-ph-cookies role="region" aria-label="Cookie information" hidden><p><strong>Your privacy matters.</strong> We use essential storage for secure sessions and preferences you request. No advertising or analytics cookies. <a href="' . esc_url( $this->url( 'cookies' ) ) . '">Read the cookie policy</a></p>'
+			. '<button type="button" class="btn btn-primary" data-ph-cookies-ok>Got it</button></div>'
 			. '</footer>';
 	}
 
 	// --------------------------------------------------------------- hero --
 
 	public function hero(): string {
+		$copy   = ApprovedMarketingCopy::home();
 		$worlds = array(
 			array( 'Construction', $this->image( 'sector-construction.webp' ) ),
 			array( 'Manufacturing', $this->image( 'sector-manufacturing.webp' ) ),
@@ -420,9 +473,8 @@ final class V2Fragments {
 		return '<section class="hero ph-v2-hero" data-ph-hero>'
 			. '<div class="hero-stage">' . $slides . '</div>'
 			. '<div class="container"><div class="hero-inner">'
-			. '<p class="label on-dark"><span class="idx">//</span> Recruitment, done well</p>'
-			. '<h1 class="display on-dark">Construction. Manufacturing.<br /><em>Digital.</em></h1>'
-			. '<p class="lead on-dark">Specialist recruitment for the people who build, make and market British business. West Midlands roots, national reach, and a team that&rsquo;s always happy to talk things through.</p>'
+			. '<p class="label on-dark"><span class="idx">//</span> ' . esc_html( $copy['hero_label'] ) . '</p>'
+			. '<h1 class="display on-dark">' . esc_html( $copy['hero_title'] ) . '</h1>'
 			. '<div class="hero-cta">'
 			. '<a class="btn btn-primary btn-lg" href="' . esc_url( $this->url( 'jobs' ) ) . '">Find work' . $this->icon( 'arrow-right' ) . '</a>'
 			. '<a class="btn btn-ghost-light btn-lg" href="' . esc_url( $this->url( 'employers' ) ) . '">Hire talent</a>'
@@ -434,11 +486,7 @@ final class V2Fragments {
 	// ------------------------------------------------------ feature strip --
 
 	public function feature_strip(): string {
-		$items = array(
-			array( 'shield-check', 'Specialist, not generalist', 'Three sectors we know inside out, so the conversation starts in the right place.' ),
-			array( 'phone', 'A friendly voice on the phone', 'Consultants who pick up, take the time to listen, and offer genuine advice.' ),
-			array( 'map-pin', 'National reach', 'Black Country roots, helping people find roles the length of the country.' ),
-		);
+		$items = ApprovedMarketingCopy::home()['features'];
 		$cells = '';
 		foreach ( $items as [ $icon, $title, $line ] ) {
 			$cells .= '<div class="feat"><span class="fi">' . $this->icon( $icon ) . '</span>'
@@ -474,7 +522,6 @@ final class V2Fragments {
 		$sectors  = wp_get_object_terms( $post_id, JobPostType::TAX_SECTOR, array( 'fields' => 'names' ) );
 		$sector   = is_array( $sectors ) && array() !== $sectors ? (string) $sectors[0] : '';
 		$key      = $this->sector_key( $sector );
-		$photo    = $this->sector_photo( $key );
 		$featured = '' !== (string) get_post_meta( $post_id, 'is_featured', true );
 		$location = (string) get_post_meta( $post_id, 'location_display', true );
 		$mode     = (string) get_post_meta( $post_id, 'work_mode_raw', true );
@@ -498,9 +545,13 @@ final class V2Fragments {
 				. '</span>';
 		}
 
+		$photo = $this->card_photo( $sector );
+
 		return '<a class="jobcard' . ( $featured ? ' feat' : '' ) . '" href="' . esc_url( $url ) . '">'
-			. '<span class="jc-photo">'
-			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />' : '' )
+			. '<span class="jc-photo' . ( '' === $photo ? ' jc-photo--mark' : '' ) . '">'
+			. ( '' !== $photo
+				? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />'
+				: $this->brand_mark() )
 			. ( '' !== $sector ? '<span class="jc-tag ' . esc_attr( $key ) . '">' . esc_html( $sector ) . '</span>' : '' )
 			. ( $featured ? '<span class="jc-feat">Featured</span>' : '' )
 			. '</span>'
@@ -538,6 +589,73 @@ final class V2Fragments {
 		return $out . '</div>';
 	}
 
+	// --------------------------------------------------------- sectors hub --
+
+	/** Main sectors landing page: alternating copy and licensed-photo galleries. */
+	public function sectors_hub(): string {
+		$copy      = ApprovedMarketingCopy::sectors_hub();
+		$body      = '';
+		$job_terms = get_terms(
+			array(
+				'taxonomy'   => JobPostType::TAX_SECTOR,
+				'hide_empty' => false,
+			)
+		);
+		$job_terms = is_array( $job_terms ) ? $job_terms : array();
+
+		foreach ( array_values( $copy['sectors'] ) as $index => $sector ) {
+			$roles = '';
+			foreach ( $sector['roles'] as $role ) {
+				$roles .= '<li>' . esc_html( $role ) . '</li>';
+			}
+
+			$slides = '';
+			foreach ( array_values( $sector['images'] ) as $slide_index => $image ) {
+				$photo   = $this->image( (string) $image[0] );
+				$loading = 0 === $slide_index ? ' loading="eager"' : ' loading="lazy"';
+				$slides .= '<figure class="sector-showcase__slide">'
+					. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( (string) $image[1] ) . '"' . $loading . ' />' : '' )
+					. '<figcaption><span>' . esc_html( str_pad( (string) ( $slide_index + 1 ), 2, '0', STR_PAD_LEFT ) ) . ' / ' . esc_html( str_pad( (string) count( $sector['images'] ), 2, '0', STR_PAD_LEFT ) ) . '</span>'
+					. '<strong>' . esc_html( (string) $image[2] ) . '</strong></figcaption></figure>';
+			}
+
+			$term_slug = sanitize_title( (string) $sector['term'] );
+			foreach ( $job_terms as $job_term ) {
+				if ( $job_term instanceof \WP_Term && $this->term_matches_key( $job_term->name, (string) $sector['key'] ) ) {
+					$term_slug = $job_term->slug;
+					break;
+				}
+			}
+			$jobs_url = add_query_arg( 'sector', $term_slug, $this->url( 'jobs' ) );
+			$number   = str_pad( (string) ( $index + 1 ), 2, '0', STR_PAD_LEFT );
+			$classes  = 'section sector-showcase sector-showcase--' . esc_attr( (string) $sector['key'] )
+				. ( ! empty( $sector['reverse'] ) ? ' sector-showcase--reverse' : '' )
+				. ( 1 === $index % 2 ? ' section--alt' : ' section--white' );
+
+			$body .= '<section class="' . $classes . '"><div class="container"><div class="sector-showcase__grid">'
+				. '<div class="sector-showcase__copy">'
+				. '<p class="label"><span class="idx">' . esc_html( $number ) . ' /</span> Core sector</p>'
+				. '<h2 class="h2">' . esc_html( (string) $sector['title'] ) . '</h2>'
+				. '<p class="lead">' . esc_html( (string) $sector['lead'] ) . '</p>'
+				. '<ul class="sector-showcase__roles" aria-label="Roles we recruit for">' . $roles . '</ul>'
+				. '<div class="sector-showcase__actions">'
+				. '<a class="btn btn-primary" href="' . esc_url( $jobs_url ) . '">View live roles ' . $this->icon( 'arrow-right' ) . '</a>'
+				. '<a class="btn btn-ghost" href="' . esc_url( $this->url( 'employers' ) . '#enquiry' ) . '">Talk to us</a>'
+				. '</div><a class="sector-showcase__detail" href="' . esc_url( $this->url( (string) $sector['page'] ) ) . '">Explore ' . esc_html( (string) $sector['title'] ) . ' recruitment ' . $this->icon( 'arrow-right' ) . '</a>'
+				. '</div>'
+				. '<div class="sector-showcase__visual"><div class="carousel" data-ph-carousel data-ph-carousel-autoplay="3000">'
+				. '<div class="carousel-track" tabindex="0" aria-label="' . esc_attr( (string) $sector['title'] ) . ' gallery">' . $slides . '</div>'
+				. '<div class="carousel-nav"><button type="button" class="cbtn" data-ph-carousel-prev aria-label="Previous image">' . $this->icon( 'arrow-right' ) . '</button>'
+				. '<button type="button" class="cbtn" data-ph-carousel-next aria-label="Next image">' . $this->icon( 'arrow-right' ) . '</button></div>'
+				. '</div></div></div></div></section>';
+		}
+
+		return '<div class="ph-v2page sectors-hub">'
+			. $this->pagehead( (string) $copy['eyebrow'], (string) $copy['title'], (string) $copy['lead'], (string) $copy['hero'] )
+			. $body
+			. '</div>' . $this->cta_bands();
+	}
+
 	// -------------------------------------------------------- sector page --
 
 	/**
@@ -551,26 +669,9 @@ final class V2Fragments {
 		$atts = shortcode_atts( array( 'sector' => 'construction' ), is_array( $atts ) ? $atts : array() );
 		$key  = $this->sector_key( (string) $atts['sector'] );
 
-		$copy = array(
-			'con' => array(
-				'name'  => 'Construction',
-				'blurb' => 'Site managers, project managers, engineers and skilled trades for contractors across the Midlands and nationally.',
-				'roles' => array( 'Project & Site Managers', 'Quantity Surveyors', 'Site Engineers', 'Skilled Trades & Operatives', 'M&amp;E / HVAC Engineers', 'Estimators' ),
-			),
-			'man' => array(
-				'name'  => 'Manufacturing',
-				'blurb' => 'Welders, fabricators, production and engineering talent for the Black Country&rsquo;s manufacturing heartland.',
-				'roles' => array( 'Welders & Fabricators', 'CNC Machinists', 'Production Operatives', 'Maintenance Engineers', 'Quality Inspectors', 'Production Managers' ),
-			),
-			'dig' => array(
-				'name'  => 'Digital',
-				'blurb' => 'Marketing, PPC, SEO and digital specialists for fast-growing agencies and in-house teams.',
-				'roles' => array( 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'Designers', 'Developers', 'Marketing Managers' ),
-			),
-		)[ $key ];
+		$copy = ApprovedMarketingCopy::sector( $key );
 
 		$name  = $copy['name'];
-		$lower = strtolower( $name );
 		$photo = $this->sector_photo( $key );
 
 		$crumb = '<div class="crumb">'
@@ -582,7 +683,7 @@ final class V2Fragments {
 			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" />' : '' )
 			. '<div class="container">' . $crumb
 			. '<p class="label on-dark"><span class="idx">//</span> Sector</p>'
-			. '<h1>' . esc_html( $name ) . ' recruitment</h1>'
+			. '<h1>' . esc_html( $name ) . ' Recruitment</h1>'
 			. '<p class="lead">' . wp_kses( $copy['blurb'], array() ) . '</p>'
 			. '</div></div>';
 
@@ -590,20 +691,39 @@ final class V2Fragments {
 		foreach ( $copy['roles'] as $role ) {
 			$role_items .= '<div class="role">' . wp_kses( $role, array() ) . '</div>';
 		}
+		$role_groups = '';
+		if ( ! empty( $copy['role_groups'] ) ) {
+			$group_icons = array( 'hard-hat', 'building', 'file-text', 'shield-check' );
+			$group_cards = '';
+			foreach ( array_values( $copy['role_groups'] ) as $index => $group ) {
+				$group_cards .= '<article class="sector-topic">'
+					. '<span class="sector-topic__icon">' . $this->icon( $group_icons[ $index ] ?? 'briefcase' ) . '</span>'
+					. '<span class="sector-topic__number">0' . esc_html( (string) ( $index + 1 ) ) . '</span>'
+					. '<h3>' . esc_html( $group ) . '</h3>'
+					. '</article>';
+			}
+			$role_groups = '<div class="sector-topics">'
+				. '<div class="section-head"><div><p class="label"><span class="idx">Swipe /</span> Specialist areas</p><h3>Explore construction recruitment by discipline.</h3></div></div>'
+				. '<div class="carousel" data-ph-carousel><div class="carousel-track" tabindex="0" aria-label="Construction recruitment disciplines">' . $group_cards . '</div>'
+				. '<div class="carousel-nav"><button type="button" class="cbtn" data-ph-carousel-prev aria-label="Previous discipline">' . $this->icon( 'arrow-right' ) . '</button>'
+				. '<button type="button" class="cbtn" data-ph-carousel-next aria-label="Next discipline">' . $this->icon( 'arrow-right' ) . '</button></div></div></div>';
+		}
+
 		$split = '<section class="section"><div class="container"><div class="split">'
 			. '<div>'
 			. '<p class="label"><span class="idx">01 /</span> Roles we place</p>'
-			. '<h2 class="h2">Talent across the whole ' . esc_html( $lower ) . ' chain.</h2>'
-			. '<p class="lead" style="margin-top:14px">From hands-on roles through to leadership, we help across the whole ' . esc_html( $lower ) . ' chain, with consultants who genuinely understand the work.</p>'
+			. '<h2 class="h2">' . esc_html( $copy['roles_title'] ) . '</h2>'
+			. '<p class="lead" style="margin-top:14px">' . esc_html( $copy['roles_lead'] ) . '</p>'
+			. ( ! empty( $copy['roles_extra'] ) ? '<p class="ph-v2p">' . esc_html( $copy['roles_extra'] ) . '</p>' : '' )
 			. '<div class="rolegrid">' . $role_items . '</div>'
 			. '</div>'
 			. '<div class="media">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( $name ) . '" />' : '' ) . '</div>'
-			. '</div></div></section>';
+			. '</div>' . $role_groups . '</div></section>';
 
 		$points = '<section class="section section--white"><div class="container"><div class="points">'
 			. '<div class="point"><div class="pi">// 01</div><h3>We know the market</h3><p>Real sector knowledge means we understand the role, the rates and the right fit, first time.</p></div>'
-			. '<div class="point"><div class="pi">// 02</div><h3>A network that runs deep</h3><p>Years of relationships across ' . esc_html( $lower ) . ' mean we reach people the job boards never see.</p></div>'
-			. '<div class="point"><div class="pi">// 03</div><h3>Compliance handled</h3><p>Right-to-work, certs and checks managed properly, so you can hire with confidence.</p></div>'
+			. '<div class="point"><div class="pi">// 02</div><h3>A network that runs deep</h3><p>' . esc_html( $copy['network'] ) . '</p></div>'
+			. '<div class="point"><div class="pi">// 03</div><h3>Compliance handled</h3><p>' . esc_html( $copy['compliance'] ) . '</p></div>'
 			. '<div class="point"><div class="pi">// 04</div><h3>A focused shortlist</h3><p>We send you a carefully chosen handful of strong candidates, so you can review them in the time you&rsquo;ve got.</p></div>'
 			. '</div></div></section>';
 
@@ -636,34 +756,15 @@ final class V2Fragments {
 	 */
 	public function delivery(): string {
 		$contact  = $this->url( 'contact' );
-		$services = array(
-			array( '01', 'users', 'Temporary', 'Flexible, compliant workforce when you need to scale up fast. Vetted, paid and managed by us.', 'sector-manufacturing.webp' ),
-			array( '02', 'user-check', 'Permanent', 'Full end-to-end search for permanent hires, sourced, screened and shortlisted to a brief.', 'poolhall-matt-desk.jpg' ),
-			array( '03', 'trending-up', 'Scale', 'Volume and project recruitment for growth phases, multiple hires through one accountable partner.', 'sector-digital.webp' ),
-			array( '04', 'calendar-clock', 'Pay Monthly', 'Spread the cost of a permanent placement across manageable monthly payments.', 'poolhall-office-culture.jpg' ),
-			array( '05', 'hard-hat', 'On-Site', 'A fully managed on-site service for high-volume, single-location requirements.', 'sector-construction.webp' ),
-		);
-
-		$card = function ( array $svc, bool $dark ) use ( $contact ): string {
-			[ $num, $icon, $title, $line, $img ] = $svc;
-			$photo                               = $this->image( $img );
-			return '<div class="svc' . ( $dark ? ' dark' : '' ) . '">'
-				. '<div class="svc-photo">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />' : '' ) . '</div>'
-				. '<div class="num">' . esc_html( $num ) . '</div>'
-				. '<span class="si">' . $this->icon( $icon ) . '</span>'
-				. '<h3>' . esc_html( $title ) . '</h3>'
-				. '<p>' . esc_html( $line ) . '</p>'
-				. '<a class="btn-text" href="' . esc_url( $contact ) . '">Enquire ' . $this->icon( 'arrow-right' ) . '</a>'
-				. '</div>';
-		};
+		$services = DeliveryServices::all();
 
 		$top = '';
 		foreach ( array_slice( $services, 0, 3 ) as $i => $svc ) {
-			$top .= $card( $svc, 1 === $i );
+			$top .= $this->svc_card( $svc[0], $svc[1], $svc[2], $svc[3], $svc[4], 1 === $i, 'Enquire', $contact );
 		}
 		$bottom = '';
 		foreach ( array_slice( $services, 3 ) as $svc ) {
-			$bottom .= $card( $svc, false );
+			$bottom .= $this->svc_card( $svc[0], $svc[1], $svc[2], $svc[3], $svc[4], false, 'Enquire', $contact );
 		}
 
 		$photo = $this->sector_photo( 'con' );
@@ -759,9 +860,10 @@ final class V2Fragments {
 	}
 
 	/** Prototype PhotoBand: full-bleed photo, kicker label, h2, text, actions. */
-	private function photoband( string $photo_file, string $kicker, string $title, string $text, string $actions ): string {
-		$photo = $this->image( $photo_file );
-		return '<section class="photoband">'
+	private function photoband( string $photo_file, string $kicker, string $title, string $text, string $actions, string $modifier = '' ): string {
+		$photo   = $this->image( $photo_file );
+		$classes = 'photoband' . ( '' !== $modifier ? ' ' . sanitize_html_class( $modifier ) : '' );
+		return '<section class="' . esc_attr( $classes ) . '">'
 			. ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" />' : '' )
 			. '<div class="container"><div class="pb-inner">'
 			. '<p class="label on-dark"><span class="idx">//</span> ' . esc_html( $kicker ) . '</p>'
@@ -785,6 +887,39 @@ final class V2Fragments {
 		return $out . '</div>';
 	}
 
+	/** Image-led support grid used by the Better Job Adverts page. */
+	private function bja_support_grid( array $items ): string {
+		$out = '<div class="bja-support-grid">';
+		foreach ( $items as $i => $item ) {
+			$title = (string) ( $item[0] ?? '' );
+			$line  = (string) ( $item[1] ?? '' );
+			$photo = $this->image( (string) ( $item[2] ?? '' ) );
+			$out  .= '<article class="bja-support-card">'
+				. '<div class="bja-support-card__media">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />' : '' ) . '</div>'
+				. '<div class="bja-support-card__body"><span class="bja-support-card__number">// ' . esc_html( str_pad( (string) ( $i + 1 ), 2, '0', STR_PAD_LEFT ) ) . '</span>'
+				. '<h3>' . esc_html( $title ) . '</h3><p>' . esc_html( $line ) . '</p></div></article>';
+		}
+		return $out . '</div>';
+	}
+
+	/** Image-led HR support cards with client-approved service titles. */
+	private function hr_services_grid( array $items ): string {
+		$out = '<div class="hr-service-grid"><div class="hr-service-grid__head">'
+			. '<p class="label"><span class="idx">04 /</span> Flexible HR support</p>'
+			. '<h2 class="h2">Support that works around your business.</h2></div><div class="hr-service-grid__cards">';
+		foreach ( $items as $item ) {
+			$title = (string) ( $item[0] ?? '' );
+			$line  = (string) ( $item[1] ?? '' );
+			$photo = $this->image( (string) ( $item[2] ?? '' ) );
+			$out  .= '<article class="hr-service-card">'
+				. '<div class="hr-service-card__media">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="" loading="lazy" />' : '' ) . '</div>'
+				. '<div class="hr-service-card__body"><h3>' . esc_html( $title ) . '</h3>'
+				. ( '' !== $line ? '<p>' . esc_html( $line ) . '</p>' : '' ) . '</div></article>';
+		}
+
+		return $out . '</div></div>';
+	}
+
 	/** One prototype service card (.svc). */
 	private function svc_card( string $num, string $icon, string $title, string $line, string $img, bool $dark, string $cta, string $href ): string {
 		$photo = $this->image( $img );
@@ -800,13 +935,7 @@ final class V2Fragments {
 
 	/** The delivery services as the prototype's grid (optionally excluding one). */
 	private function svc_grids( string $cta, string $href, string $exclude = '' ): string {
-		$services = array(
-			array( '01', 'users', 'Temporary', 'Flexible, compliant workforce when you need to scale up fast. Vetted, paid and managed by us.', 'sector-manufacturing.webp' ),
-			array( '02', 'user-check', 'Permanent', 'Full end-to-end search for permanent hires, sourced, screened and shortlisted to a brief.', 'poolhall-matt-desk.jpg' ),
-			array( '03', 'trending-up', 'Scale', 'Volume and project recruitment for growth phases, multiple hires through one accountable partner.', 'sector-digital.webp' ),
-			array( '04', 'calendar-clock', 'Pay Monthly', 'Spread the cost of a permanent placement across manageable monthly payments.', 'poolhall-office-culture.jpg' ),
-			array( '05', 'hard-hat', 'On-Site', 'A fully managed on-site service for high-volume, single-location requirements.', 'sector-construction.webp' ),
-		);
+		$services = DeliveryServices::all();
 
 		if ( '' !== $exclude ) {
 			$services = array_values( array_filter( $services, static fn( array $s ): bool => strtolower( str_replace( ' ', '-', $s[2] ) ) !== strtolower( $exclude ) ) );
@@ -831,12 +960,7 @@ final class V2Fragments {
 	public function points( $atts ): string {
 		$atts  = shortcode_atts( array( 'set' => 'employers' ), is_array( $atts ) ? $atts : array() );
 		$sets  = array(
-			'employers' => array(
-				array( 'Hire better people', 'Specialist consultants who understand the role and the sector, so the shortlist is genuinely worth your time.' ),
-				array( 'Better value for your budget', 'We take the time to get the fit right, so you spend less time on CVs that aren&rsquo;t quite there, and keep your cost-per-hire sensible.' ),
-				array( 'A strategic partner', 'From a single hire to a whole team, we plan with you, not just react to a vacancy.' ),
-				array( 'Honest, friendly advice', 'We&rsquo;ll always give you our genuine view on salary, market and timelines, gently and openly, so you can plan with confidence.' ),
-			),
+			'employers' => ApprovedMarketingCopy::employer_points(),
 		);
 		$items = $sets[ (string) $atts['set'] ] ?? $sets['employers'];
 		return '<div class="ph-v2page is-embed">' . $this->points_grid( $items ) . '</div>';
@@ -845,7 +969,46 @@ final class V2Fragments {
 	/** [poolhall_v2_services] — the ways-of-working grid inside a builder page. */
 	public function services( $atts = array() ): string {
 		$atts = shortcode_atts( array( 'exclude' => '' ), is_array( $atts ) ? $atts : array() );
-		return '<div class="ph-v2page is-embed">' . $this->svc_grids( 'Learn more', $this->url( 'delivery-options' ), (string) $atts['exclude'] ) . '</div>';
+		return '<div class="ph-v2page is-embed">'
+			. $this->svc_grids( 'Learn more', $this->url( 'delivery-options' ), (string) $atts['exclude'] )
+			. $this->employer_delivery_details()
+			. '</div>';
+	}
+
+	/** Render the approved long-form explanations beneath the service cards. */
+	private function employer_delivery_details(): string {
+		$out = '<div class="ph-stack-lg employer-delivery-details" style="margin-top:40px">';
+		foreach ( ApprovedMarketingCopy::employer_delivery_details() as $detail ) {
+			$out .= '<article class="ph-card" style="padding:clamp(24px,4vw,40px)">'
+				. '<h3 class="h3">' . esc_html( $detail['title'] ) . '</h3>'
+				. '<p class="lead" style="margin-top:12px">' . esc_html( $detail['intro'] ) . '</p>';
+
+			if ( ! empty( $detail['subheading'] ) ) {
+				$out .= '<h4 style="margin-top:22px">' . esc_html( $detail['subheading'] ) . '</h4>';
+			}
+			foreach ( $detail['paragraphs'] ?? array() as $paragraph ) {
+				$out .= '<p class="ph-v2p">' . esc_html( $paragraph ) . '</p>';
+			}
+			if ( ! empty( $detail['closing_heading'] ) ) {
+				$out .= '<h4 style="margin-top:22px">' . esc_html( $detail['closing_heading'] ) . '</h4>';
+			}
+			if ( ! empty( $detail['closing'] ) ) {
+				$out .= '<p class="ph-v2p">' . esc_html( $detail['closing'] ) . '</p>';
+			}
+			if ( ! empty( $detail['bullets_heading'] ) ) {
+				$out .= '<h4 style="margin-top:22px">' . esc_html( $detail['bullets_heading'] ) . '</h4>';
+			}
+			if ( ! empty( $detail['bullets'] ) ) {
+				$out .= '<ul class="checklist">';
+				foreach ( $detail['bullets'] as $bullet ) {
+					$out .= '<li>' . $this->icon( 'circle-check' ) . '<span>' . esc_html( $bullet ) . '</span></li>';
+				}
+				$out .= '</ul>';
+			}
+			$out .= '</article>';
+		}
+
+		return $out . '</div>';
 	}
 
 	/**
@@ -881,8 +1044,8 @@ final class V2Fragments {
 	 * @param array<string,string>|string $atts Shortcode atts: page=why-us|bespoke|hr|commitment|bja.
 	 */
 	public function secondary( $atts ): string {
-		$atts = shortcode_atts( array( 'page' => 'why-us' ), is_array( $atts ) ? $atts : array() );
-		$data = array(
+		$atts     = shortcode_atts( array( 'page' => 'why-us' ), is_array( $atts ) ? $atts : array() );
+		$data     = array(
 			'why-us'     => array(
 				'eyebrow' => 'For employers',
 				'title'   => 'Why Us',
@@ -944,39 +1107,160 @@ final class V2Fragments {
 				),
 			),
 		);
-		$page = $data[ (string) $atts['page'] ] ?? $data['why-us'];
-
-		$flyer = '';
-		if ( 'bja' === $atts['page'] ) {
-			$art   = $this->image( 'bja-flyer.png' );
-			$flyer = '<section class="section section--white"><div class="container"><div class="split">'
-				. '<div>'
-				. '<p class="label"><span class="idx">//</span> How it works</p>'
-				. '<h2 class="h2">We post. They apply. You hire.</h2>'
-				. '<p class="lead" style="margin-top:14px">Your role written up properly, posted across the major boards under your brand, with every CV screened into an organised, interview-ready shortlist.</p>'
-				. '<div class="rolegrid" style="margin-top:22px">'
-				. '<div class="role">CV-Library</div><div class="role">Reed</div><div class="role">Totaljobs</div><div class="role">Indeed</div>'
-				. '</div>'
-				. '<div class="acts" style="display:flex;gap:12px;margin-top:26px;flex-wrap:wrap">'
-				. '<a class="btn btn-primary" href="tel:01858457500">Call 01858 457500 ' . $this->icon( 'arrow-right' ) . '</a>'
-				. '<a class="btn btn-ghost" href="https://betterjobadverts.co.uk" target="_blank" rel="noopener">betterjobadverts.co.uk</a>'
-				. '</div></div>'
-				. '<div class="media media--flyer">' . ( '' !== $art ? '<img src="' . esc_url( $art ) . '" alt="Better Job Adverts flyer" />' : '' ) . '</div>'
-				. '</div></div></section>';
+		$key      = (string) $atts['page'];
+		$approved = ApprovedMarketingCopy::secondary( $key );
+		$page     = $approved ?? ( $data[ $key ] ?? $data['why-us'] );
+		$before   = $approved ? $this->secondary_before_points( $key, $page ) : '';
+		$after    = $approved ? $this->secondary_after_points( $key, $page ) : '';
+		if ( 'bja' === $key ) {
+			$points = $this->bja_support_grid( $page['points'] );
+		} elseif ( 'hr' === $key ) {
+			$points = $this->hr_services_grid( $page['points'] );
+		} else {
+			$points = $this->points_grid( $page['points'] );
+		}
+		$points_section_class = 'bja' === $key ? ' bja-support-section' : ( 'hr' === $key ? ' hr-service-section' : '' );
+		$heading              = '';
+		if ( ! empty( $page['points_heading'] ) ) {
+			$heading = '<div class="section-head center"><div>'
+				. '<h2 class="h2">' . esc_html( $page['points_heading'] ) . '</h2>'
+				. ( ! empty( $page['points_intro'] ) ? '<p class="lead" style="margin-top:14px">' . esc_html( $page['points_intro'] ) . '</p>' : '' )
+				. '</div></div>';
 		}
 
 		return '<div class="ph-v2page">'
 			. $this->pagehead( $page['eyebrow'], $page['title'], $page['lead'], $page['photo'] )
-			. '<section class="section"><div class="container">' . $this->points_grid( $page['points'] ) . '</div></section>'
-			. $flyer
+			. $before
+			. '<section class="section' . $points_section_class . '"><div class="container">' . $heading . $points . '</div></section>'
+			. $after
 			. $this->photoband(
-				'sector-manufacturing.webp',
+				(string) ( $page['cta_photo'] ?? 'sector-manufacturing.webp' ),
 				$page['eyebrow'],
 				'Let&rsquo;s chat about what you need.',
 				'A quick, friendly conversation with a senior consultant who&rsquo;ll really listen. We&rsquo;ll give you an honest, no-pressure view on how we can help.',
-				'<a class="btn btn-primary" href="' . esc_url( $this->url( 'contact' ) ) . '">Get in touch ' . $this->icon( 'arrow-right' ) . '</a>'
+				'<a class="btn btn-primary" href="' . esc_url( $this->url( 'contact' ) ) . '">Get in touch ' . $this->icon( 'arrow-right' ) . '</a>',
+				(string) ( $page['cta_class'] ?? '' )
 			)
 			. '</div>' . $this->cta_bands();
+	}
+
+	/** Long-form approved content placed before a secondary page's point grid. */
+	private function secondary_before_points( string $key, array $page ): string {
+		if ( 'bespoke' === $key ) {
+			$roles = '';
+			foreach ( $page['roles'] as $role ) {
+				$roles .= '<li>' . $this->icon( 'circle-check' ) . '<span>' . esc_html( $role ) . '</span></li>';
+			}
+			return '<section class="section section--white"><div class="container">'
+				. '<p class="lead">' . esc_html( $page['roles_intro'] ) . '</p>'
+				. '<ul class="checklist" style="margin-top:22px">' . $roles . '</ul>'
+				. '</div></section>';
+		}
+
+		if ( 'bja' === $key ) {
+			$paragraphs = '';
+			foreach ( $page['feature_paragraphs'] as $paragraph ) {
+				$paragraphs .= '<p class="ph-v2p">' . esc_html( $paragraph ) . '</p>';
+			}
+			$board_logos = '';
+			foreach ( $page['job_boards'] as [ $label, $filename ] ) {
+				$src = $this->image( $filename );
+				if ( '' !== $src ) {
+					$board_logos .= '<span class="bja-board"><img src="' . esc_url( $src ) . '" alt="' . esc_attr( $label ) . '" /></span>';
+				}
+			}
+			$feature_photo = $this->image( 'poolhall-office-culture.jpg' );
+			return '<section class="section section--white"><div class="container">'
+				. '<div class="bja-boards"><p class="label"><span class="idx">Multi-board /</span> Your vacancy, everywhere that matters</p><div class="bja-logo-rail"><div class="bja-board-track">'
+				. '<div class="bja-board-set">' . $board_logos . '</div><div class="bja-board-set" aria-hidden="true">' . $board_logos . '</div>'
+				. '</div></div></div>'
+				. '<div class="bja-intro"><div class="bja-intro__copy"><h2 class="h2">' . esc_html( $page['feature_heading'] ) . '</h2>' . $paragraphs . '</div>'
+				. '<figure class="bja-intro__visual">' . ( '' !== $feature_photo ? '<img src="' . esc_url( $feature_photo ) . '" alt="Poolhall Recruitment consultant managing an employer campaign" loading="lazy" />' : '' )
+				. '<figcaption><strong>£799</strong><span>One fixed fee. Your brand, our reach and a shortlist ready to review.</span></figcaption></figure></div>'
+				. '</div></section>';
+		}
+
+		if ( 'hr' === $key ) {
+			$paragraphs = '';
+			foreach ( $page['legal_paragraphs'] as $paragraph ) {
+				$paragraphs .= '<p class="ph-v2p">' . esc_html( $paragraph ) . '</p>';
+			}
+
+			$legal_photo = $this->image( (string) $page['legal_photo'] );
+			$pack_items  = '';
+			foreach ( $page['onboarding_items'] as $item ) {
+				$pack_items .= '<li>' . $this->icon( 'circle-check' ) . '<span>' . esc_html( $item ) . '</span></li>';
+			}
+
+			$legal = '<section class="section section--white hr-legal"><div class="container"><div class="hr-split">'
+				. '<div class="hr-copy"><p class="label"><span class="idx">01 /</span> Employer compliance</p>'
+				. '<h2 class="h2">' . esc_html( $page['legal_heading'] ) . '</h2>' . $paragraphs . '</div>'
+				. '<figure class="hr-media">' . ( '' !== $legal_photo ? '<img src="' . esc_url( $legal_photo ) . '" alt="Employer reviewing a written workplace agreement" loading="lazy" />' : '' ) . '</figure>'
+				. '</div></div></section>';
+
+			$question = '<section class="section hr-question" id="hr-question"><div class="container hr-question__inner">'
+				. '<div class="hr-question__head"><p class="label"><span class="idx">02 /</span> Ask an HR consultant</p>'
+				. '<h2 class="h2">' . esc_html( $page['question'] ) . '</h2></div>'
+				. '<div class="hr-question__form">' . do_shortcode( '[poolhall_enquiry_form]' ) . '</div>'
+				. '</div></section>';
+
+			$onboarding = '<section class="section section--white hr-onboarding"><div class="container"><div class="hr-onboarding__panel">'
+				. '<div class="hr-onboarding__copy"><p class="label"><span class="idx">03 /</span> Ready-to-use documents</p>'
+				. '<h2 class="h2">' . esc_html( $page['onboarding_heading'] ) . '</h2>'
+				. '<p class="lead">' . esc_html( $page['onboarding_intro'] ) . '</p>'
+				. '<p class="hr-onboarding__note">' . esc_html( $page['onboarding_note'] ) . '</p>'
+				. '<a class="btn btn-primary" href="#hr-question">Ask about the pack ' . $this->icon( 'arrow-right' ) . '</a></div>'
+				. '<div class="hr-onboarding__includes"><p class="label">Included in your pack</p><ul class="checklist">' . $pack_items . '</ul></div>'
+				. '</div></div></section>';
+
+			return $legal . $question . $onboarding;
+		}
+
+		return '';
+	}
+
+	/** Long-form approved content placed after a secondary page's point grid. */
+	private function secondary_after_points( string $key, array $page ): string {
+		if ( 'bja' === $key ) {
+			$benefits = '';
+			foreach ( $page['benefits'] as $benefit ) {
+				$benefits .= '<li>' . $this->icon( 'circle-check' ) . '<span>' . esc_html( $benefit ) . '</span></li>';
+			}
+			$case_cards = '';
+			foreach ( $page['case_studies'] as [ $title, $summary, $filename ] ) {
+				$src = $this->image( $filename );
+				if ( '' !== $src ) {
+					$case_cards .= '<figure class="bja-case-card"><div class="bja-case-card__device"><img src="' . esc_url( $src ) . '" alt="' . esc_attr( $title . ' case study' ) . '" loading="lazy" width="720" height="1280" /></div>'
+						. '<figcaption><strong>' . esc_html( $title ) . '</strong><span>' . esc_html( $summary ) . '</span></figcaption></figure>';
+				}
+			}
+			$case_studies = '<section class="section bja-proof-section"><div class="container"><div class="section-head"><div><p class="label"><span class="idx">Proof /</span> Our work</p>'
+				. '<h2 class="h2">Recent campaigns and results.</h2><p class="lead" style="margin-top:14px">Swipe through real examples of employer-branded advertising and client outcomes.</p></div></div>'
+				. '<div class="carousel bja-cases" data-ph-carousel><div class="carousel-track" tabindex="0" aria-label="Better Job Adverts case studies">' . $case_cards . '</div>'
+				. '<div class="carousel-nav"><button type="button" class="cbtn" data-ph-carousel-prev aria-label="Previous case study">' . $this->icon( 'arrow-right' ) . '</button>'
+				. '<button type="button" class="cbtn" data-ph-carousel-next aria-label="Next case study">' . $this->icon( 'arrow-right' ) . '</button></div></div></div></section>';
+
+			return $case_studies . '<section class="section section--white bja-benefits"><div class="container"><div class="split">'
+				. '<div><h2 class="h2">Why Businesses Choose Us</h2><ul class="checklist">' . $benefits . '</ul></div>'
+				. '<div><h2 class="h2">' . esc_html( $page['focus_heading'] ) . '</h2><p class="lead" style="margin-top:14px">' . esc_html( $page['focus'] ) . '</p>'
+				. '<h2 class="h2" style="margin-top:30px">' . esc_html( $page['close_heading'] ) . '</h2><p class="ph-v2p">' . esc_html( $page['close'] ) . '</p></div>'
+				. '</div></div></section>';
+		}
+
+		if ( 'hr' === $key ) {
+			$items = '';
+			foreach ( $page['support'] as $item ) {
+				$items .= '<li>' . $this->icon( 'circle-check' ) . '<span>' . esc_html( $item ) . '</span></li>';
+			}
+			$support_photo = $this->image( (string) $page['support_photo'] );
+			return '<section class="section section--white hr-support"><div class="container"><div class="hr-split hr-split--support">'
+				. '<div><p class="label"><span class="idx">05 /</span> Practical support</p><h2 class="h2">' . esc_html( $page['support_heading'] ) . '</h2>'
+				. '<ul class="checklist">' . $items . '</ul></div>'
+				. '<figure class="hr-media">' . ( '' !== $support_photo ? '<img src="' . esc_url( $support_photo ) . '" alt="HR consultant discussing workplace support with a client" loading="lazy" />' : '' ) . '</figure>'
+				. '</div></div></section>';
+		}
+
+		return '';
 	}
 
 	// ----------------------------------------------------- candidate hub --
@@ -1020,7 +1304,7 @@ final class V2Fragments {
 			. '<div class="svc-grid">' . $cards . '</div>'
 			. '</div></section>';
 
-		return '<div class="ph-v2page">'
+		return '<div class="ph-v2page candidate-hub">'
 			. $this->pagehead(
 				'For candidates',
 				'Find work that fits.',
@@ -1029,6 +1313,45 @@ final class V2Fragments {
 				$actions
 			)
 			. $steps . $guides_html
+			. '</div>' . $this->cta_bands();
+	}
+
+	/**
+	 * Image-led candidate advice page.
+	 *
+	 * @param array<string,string>|string $atts Shortcode atts: page=registration|interview|cv.
+	 */
+	public function guide_page( $atts ): string {
+		$atts = shortcode_atts( array( 'page' => 'registration' ), is_array( $atts ) ? $atts : array() );
+		$key  = sanitize_key( (string) $atts['page'] );
+		$copy = ApprovedMarketingCopy::guide( $key );
+
+		if ( null === $copy ) {
+			return '';
+		}
+
+		$cards = '';
+		foreach ( array_values( $copy['cards'] ) as $index => $card ) {
+			[ $title, $line, $filename, $alt ] = $card;
+			$photo                             = $this->image( (string) $filename );
+			$number                            = str_pad( (string) ( $index + 1 ), 2, '0', STR_PAD_LEFT );
+
+			$cards .= '<article class="guide-card">'
+				. '<figure class="guide-card__media">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( (string) $alt ) . '" loading="lazy" />' : '' ) . '</figure>'
+				. '<div class="guide-card__body"><p class="guide-card__index">// ' . esc_html( $number ) . '</p>'
+				. '<h2>' . esc_html( (string) $title ) . '</h2><p>' . esc_html( (string) $line ) . '</p></div>'
+				. '</article>';
+		}
+
+		$action = '<section class="section guide-action"><div class="container"><div class="guide-action__panel">'
+			. '<div><p class="label"><span class="idx">Next /</span> Take the next step</p><h2 class="h2">Ready when you are.</h2></div>'
+			. '<a class="btn btn-primary" href="' . esc_url( $this->url( (string) $copy['cta_page'] ) ) . '">' . esc_html( (string) $copy['cta_label'] ) . ' ' . $this->icon( 'arrow-right' ) . '</a>'
+			. '</div></div></section>';
+
+		return '<div class="ph-v2page candidate-guide candidate-guide--' . esc_attr( $key ) . '">'
+			. $this->pagehead( 'For candidates', (string) $copy['title'], (string) $copy['lead'], (string) $copy['hero'] )
+			. '<section class="section section--white candidate-guide__content"><div class="container"><div class="guide-card-grid">' . $cards . '</div></div></section>'
+			. $action
 			. '</div>' . $this->cta_bands();
 	}
 
@@ -1088,21 +1411,28 @@ final class V2Fragments {
 			'<a class="btn btn-primary" href="' . esc_url( $this->url( 'contact' ) ) . '">Get in touch ' . $this->icon( 'arrow-right' ) . '</a>'
 		);
 
-		$founder_photo = $this->image( 'poolhall-matthew-portrait.jpg' );
-		$tcards        = '<div class="tcard tcard--founder">'
-			. '<div class="tphoto">' . ( '' !== $founder_photo ? '<img src="' . esc_url( $founder_photo ) . '" alt="Matthew Tonks" />' : '' ) . '</div>'
-			. '<p class="trole">FOUNDER</p>'
-			. '<h3>Matthew Tonks</h3>'
-			. '<div class="ttags"><span class="ttag">Construction</span><span class="ttag">Manufacturing</span><span class="ttag">Digital</span></div>'
-			. '<p class="tbio">Poolhall is founder-led: when you call, you speak to the person whose name is on the business, backed by a trusted network of sector specialists.</p>'
-			. '</div>';
+		$team_copy = ApprovedMarketingCopy::about_team();
+		$tcards    = '';
+		foreach ( $team_copy['people'] as [ $name, $role, $tags, $image_name ] ) {
+			$photo = $this->image( $image_name );
+			$chips = '';
+			foreach ( $tags as $tag ) {
+				$chips .= '<span class="ttag">' . esc_html( $tag ) . '</span>';
+			}
+			$tcards .= '<div class="tcard">'
+				. '<div class="tphoto">' . ( '' !== $photo ? '<img src="' . esc_url( $photo ) . '" alt="' . esc_attr( $name ) . '" />' : '' ) . '</div>'
+				. '<p class="trole">' . esc_html( strtoupper( $role ) ) . '</p>'
+				. '<h3>' . esc_html( $name ) . '</h3>'
+				. '<div class="ttags">' . $chips . '</div>'
+				. '</div>';
+		}
 
 		$team = '<section class="section section--white"><div class="container">'
 			. '<div class="section-head"><div>'
-			. '<p class="label"><span class="idx">03 /</span> The person behind it</p>'
-			. '<h2 class="h2">Founder-led, personally accountable</h2>'
-			. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'join-our-team' ) ) . '">Meet the team ' . $this->icon( 'arrow-right' ) . '</a></div>'
-			. '<div class="team-grid team-grid--single">' . $tcards . '</div>'
+			. '<p class="label"><span class="idx">03 /</span> ' . esc_html( $team_copy['eyebrow'] ) . '</p>'
+			. '<h2 class="h2">' . esc_html( $team_copy['title'] ) . '</h2>'
+			. '</div><a class="btn btn-ghost" href="' . esc_url( $this->url( 'team' ) ) . '">Meet the team ' . $this->icon( 'arrow-right' ) . '</a></div>'
+			. '<div class="team-grid">' . $tcards . '</div>'
 			. '</div></section>';
 
 		return '<div class="ph-v2page">'
@@ -1124,7 +1454,7 @@ final class V2Fragments {
 			. $this->pagehead(
 				'For candidates',
 				'Register your CV',
-				'One quick form and we&rsquo;ll be in touch the moment something right comes along. We&rsquo;ll always treat your details with care.',
+				'Register your details today and, if a role aligns with your experience, skills, and expectations, we&rsquo;ll be ready to help you take the next step. Your information will always be treated with complete confidentiality.',
 				'poolhall-matt-desk.jpg'
 			)
 			. '<section class="section"><div class="container" style="max-width:820px">'
@@ -1456,6 +1786,62 @@ final class V2Fragments {
 			. ( '' !== $atts['lead'] ? '<p class="lead">' . esc_html( (string) $atts['lead'] ) . '</p>' : '' )
 			. ( '' !== $atts['updated'] ? '<p class="jupdated">' . esc_html( (string) $atts['updated'] ) . '</p>' : '' )
 			. '</div></div></div>';
+	}
+
+	/** Accurate, server-rendered cookie and browser-storage policy. */
+	public function cookie_policy(): string {
+		$rows = array(
+			array(
+				'Poolhall candidate session',
+				'<code>__Host-poolhall_candidate</code> or <code>poolhall_candidate</code>',
+				'Keeps an invited candidate securely signed in while completing private registration documents.',
+				'Expires automatically with the secure candidate session.',
+			),
+			array(
+				'Candidate invite hand-off',
+				'<code>__Host-poolhall_candidate_pending</code> or <code>poolhall_candidate_pending</code>',
+				'Protects the short step between opening a private invitation and starting the candidate session.',
+				'Short-lived and removed after the session starts.',
+			),
+			array(
+				'WordPress staff session',
+				'<code>wordpress_logged_in_*</code> and related WordPress cookies',
+				'Allows authorised Poolhall staff to use the website administration area securely.',
+				'For the browser session or the selected sign-in period.',
+			),
+			array(
+				'Cookie-notice preference',
+				'<code>ph-cookie-notice-v2</code> in local browser storage',
+				'Remembers that you dismissed the essential-storage notice so it does not appear on every page.',
+				'Until browser data is cleared or this notice is materially updated.',
+			),
+			array(
+				'Saved jobs',
+				'<code>ph-saved-jobs</code> in local browser storage',
+				'Remembers jobs you explicitly choose to save on this device. It is not used to track browsing.',
+				'Until you remove the saved jobs or clear browser data.',
+			),
+		);
+
+		$items = '';
+		foreach ( $rows as [ $name, $technology, $purpose, $duration ] ) {
+			$items .= '<article class="cookie-policy__item"><div><p class="cookie-policy__name">' . esc_html( $name ) . '</p>'
+				. '<p class="cookie-policy__tech">' . wp_kses( $technology, array( 'code' => array() ) ) . '</p></div>'
+				. '<p><strong>Purpose</strong><span>' . esc_html( $purpose ) . '</span></p>'
+				. '<p><strong>Duration</strong><span>' . esc_html( $duration ) . '</span></p></article>';
+		}
+
+		return '<div class="ph-v2page cookie-policy">'
+			. '<div class="pagehead"><div class="container"><div class="crumb"><a href="' . esc_url( home_url( '/' ) ) . '">Home</a>' . $this->icon( 'chevron-right' ) . '<span>Legal</span>' . $this->icon( 'chevron-right' ) . '<span>Cookie policy</span></div>'
+			. '<h1>Cookie policy</h1><p class="lead">A clear record of the essential cookies and local browser storage this website actually uses.</p><p class="jupdated">Last reviewed 4 August 2026</p></div></div>'
+			. '<section class="section section--white"><div class="container cookie-policy__layout"><article class="cookie-policy__main">'
+			. '<p class="cookie-policy__intro">Poolhall Recruitment does <strong>not</strong> currently use advertising, profiling or analytics cookies. We only use the essential technologies needed for secure candidate and staff sessions, plus preferences you request on this device.</p>'
+			. '<h2 class="h2">What this website stores</h2><div class="cookie-policy__list">' . $items . '</div>'
+			. '<h2 class="h2">External services</h2><p>This site loads its typefaces from Google Fonts. That request may share standard connection information, such as your IP address and browser details, with Google, but Poolhall does not use it for advertising or analytics. No Google Analytics or advertising tags are loaded by this website.</p>'
+			. '<h2 class="h2">Managing your browser data</h2><p>You can remove cookies and local storage through your browser settings. Blocking essential session cookies may prevent secure candidate registration or staff sign-in from working. Removing saved-job storage only clears jobs saved on that device.</p>'
+			. '<h2 class="h2">If our use changes</h2><p>If non-essential analytics or advertising technology is added later, it will be blocked until an appropriate choice has been made and this policy will be updated first.</p>'
+			. '</article><aside class="cookie-policy__aside"><p class="label"><span class="idx">Need /</span> More detail?</p><h2>Privacy and questions</h2><p>For information about how candidate and enquiry data is handled, read our Privacy Policy. You can also contact the Poolhall team directly.</p>'
+			. '<div class="cookie-policy__actions"><a class="btn btn-primary" href="' . esc_url( $this->url( 'privacy-policy' ) ) . '">Privacy policy ' . $this->icon( 'arrow-right' ) . '</a><a class="btn btn-ghost" href="' . esc_url( $this->url( 'contact' ) ) . '">Contact us</a></div></aside></div></section></div>';
 	}
 
 	// ---------------------------------------------------------- CTA bands --

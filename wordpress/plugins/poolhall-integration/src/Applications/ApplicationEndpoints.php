@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Poolhall\Integration\Applications;
 
 use Poolhall\Integration\Jobs\JobPostType;
+use Poolhall\Integration\Support\PrivateStorage;
 
 /**
  * Handles `poolhall_apply` submissions over admin-post (signed-in and
@@ -20,14 +21,14 @@ use Poolhall\Integration\Jobs\JobPostType;
  *
  * The popup submits by fetch and expects JSON; a plain (no-JS) POST gets a
  * redirect back to the job with a status flag. CVs are written only to a
- * protected uploads subdirectory (deny-all + random names), never the
- * media library, and are removed once the notification email carries them.
+ * private directory outside the web root (owner-only + random names), never
+ * the media library. A protected copy is retained for recruiter review and
+ * later onboarding so the candidate does not have to upload it twice.
  */
 final class ApplicationEndpoints {
 
 	public const ACTION         = 'poolhall_apply';
 	public const HONEYPOT_FIELD = 'company_url';
-	private const SUBDIR        = 'poolhall-applications';
 
 	public function __construct( private readonly ApplicationService $service ) {
 	}
@@ -141,9 +142,28 @@ final class ApplicationEndpoints {
 			);
 		}
 
-		$dir  = $this->protected_dir();
-		$dest = trailingslashit( $dir ) . wp_generate_uuid4() . '.' . CvUpload::extension( $name );
+		try {
+			$dest = PrivateStorage::opaque_path( 'cvs', 'candidate-cv', CvUpload::extension( $name ) );
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			return array(
+				'errors' => array( 'cv_upload_failed' ),
+				'path'   => '',
+				'name'   => $name,
+			);
+		}
 		if ( ! move_uploaded_file( $tmp, $dest ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_move_uploaded_file
+			return array(
+				'errors' => array( 'cv_upload_failed' ),
+				'path'   => '',
+				'name'   => $name,
+			);
+		}
+		try {
+			$dest = PrivateStorage::protect_file( $dest );
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			wp_delete_file( $dest );
 			return array(
 				'errors' => array( 'cv_upload_failed' ),
 				'path'   => '',
@@ -164,22 +184,6 @@ final class ApplicationEndpoints {
 			'doc'  => 'application/msword',
 			'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 		);
-	}
-
-	/** Ensure the deny-all protected uploads subdirectory exists. */
-	private function protected_dir(): string {
-		$uploads = wp_upload_dir();
-		$dir     = trailingslashit( $uploads['basedir'] ) . self::SUBDIR;
-		if ( ! is_dir( $dir ) ) {
-			wp_mkdir_p( $dir );
-		}
-		if ( ! file_exists( $dir . '/.htaccess' ) ) {
-			file_put_contents( $dir . '/.htaccess', "Require all denied\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		}
-		if ( ! file_exists( $dir . '/index.html' ) ) {
-			file_put_contents( $dir . '/index.html', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		}
-		return $dir;
 	}
 
 	private function delete( string $path ): void {

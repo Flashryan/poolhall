@@ -19,10 +19,17 @@ use Poolhall\Integration\Support\Options;
  */
 final class SchemaOutput {
 
+	/** Prevent duplicate JSON-LD when both the head and footer hooks run. */
+	private bool $printed = false;
+
 	public function __construct( private readonly Options $options ) {}
 
 	public function register(): void {
 		add_action( 'wp_head', array( $this, 'print_schema' ) );
+		// Some Elementor Theme Builder documents resolve their singular context
+		// after wp_head. The footer fallback keeps eligible jobs discoverable
+		// without duplicating markup on templates where the head hook succeeds.
+		add_action( 'wp_footer', array( $this, 'print_schema' ) );
 		// Expiry hygiene (Google "Remove a job posting"): a closed role must
 		// stop being advertised as live. Keeping the page reachable but
 		// unindexed and out of the sitemap is Google's recommended route and
@@ -79,6 +86,9 @@ final class SchemaOutput {
 	}
 
 	public function print_schema(): void {
+		if ( $this->printed ) {
+			return;
+		}
 		if ( ! is_singular( JobPostType::POST_TYPE ) ) {
 			return;
 		}
@@ -117,8 +127,10 @@ final class SchemaOutput {
 			return; // Eligibility gate refused; no markup is correct behavior.
 		}
 
+		$this->printed = true;
 		echo '<script type="application/ld+json">'
 			. wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
 			. '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD from wp_json_encode.
 	}
+
 }

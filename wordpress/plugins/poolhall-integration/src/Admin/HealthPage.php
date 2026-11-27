@@ -10,8 +10,12 @@ declare(strict_types=1);
 namespace Poolhall\Integration\Admin;
 
 use Poolhall\Integration\Accounts\PortalPages;
+use Poolhall\Integration\Documents\ContractPdfBuilder;
+use Poolhall\Integration\Documents\DocumentWorkflow;
+use Poolhall\Integration\Documents\FormDefinitions;
 use Poolhall\Integration\Jobs\SyncService;
 use Poolhall\Integration\Support\Logger;
+use Poolhall\Integration\Support\PrivateStorage;
 
 /**
  * "Poolhall Jobs" admin area (architecture doc §13): health summary, recent
@@ -171,6 +175,8 @@ final class HealthPage {
 				. esc_html( (string) $last['guard_reason'] ) . '</p></div>';
 		}
 
+		$this->render_candidate_readiness();
+
 		$sync_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::SYNC_ACTION ), self::SYNC_ACTION );
 		echo '<p style="margin-top:16px"><a href="' . esc_url( $sync_url ) . '" class="button button-primary">'
 			. esc_html__( 'Sync now', 'poolhall-integration' ) . '</a></p>';
@@ -186,6 +192,47 @@ final class HealthPage {
 				. esc_html( (string) $row->context ) . '</code></td></tr>';
 		}
 		echo '</tbody></table></div>';
+	}
+
+	/** Show the deployment gates that protect candidate forms and documents. */
+	private function render_candidate_readiness(): void {
+		$map         = array_map( 'intval', (array) get_option( DocumentWorkflow::FORM_MAP_OPTION, array() ) );
+		$form_errors = (array) get_option( DocumentWorkflow::SETUP_ERRORS_OPTION, array() );
+		$forms_ok    = class_exists( '\\GFAPI' ) && array() === $form_errors;
+		foreach ( \Poolhall\Integration\Onboarding\TaskPolicy::tasks() as $kind ) {
+			$forms_ok = $forms_ok && isset( $map[ $kind ] ) && is_array( \GFAPI::get_form( $map[ $kind ] ) );
+		}
+		$task_page        = get_page_by_path( \Poolhall\Integration\Onboarding\InviteManager::HUB_SLUG );
+		$task_page_markup = $task_page instanceof \WP_Post
+			? (string) $task_page->post_content . ' ' . (string) get_post_meta( $task_page->ID, '_elementor_data', true )
+			: '';
+		$task_page_ok     = $task_page instanceof \WP_Post
+			&& 'publish' === $task_page->post_status
+			&& str_contains( $task_page_markup, \Poolhall\Integration\Onboarding\CandidateHub::SHORTCODE );
+
+		try {
+			PrivateStorage::directory( 'documents' );
+			PrivateStorage::directory( 'cvs' );
+			$storage = 'Ready (outside the WordPress web root)';
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			$storage = 'Blocked — configure a writable absolute private-storage directory';
+		}
+
+		echo '<h2>' . esc_html__( 'Candidate workflow readiness', 'poolhall-integration' ) . '</h2>';
+		echo '<table class="widefat striped" style="max-width:760px"><tbody>';
+		$rows = array(
+			'Private document storage' => $storage,
+			'Gravity Forms workflow'   => $forms_ok ? 'Ready' : 'Setup required' . ( array() !== $form_errors ? ' (' . implode( ', ', array_map( 'sanitize_key', $form_errors ) ) . ')' : '' ),
+			'Candidate task page'      => $task_page_ok ? 'Ready' : 'Setup required',
+			'Approved candidate terms' => \Poolhall\Integration\Onboarding\TaskPolicy::archived( 'terms' ) ? 'Archived — excluded from onboarding' : ( FormDefinitions::candidate_terms_ready() ? 'Ready' : 'Blocked until approved legal wording and a version are saved' ),
+			'Agency Worker Contract'   => ContractPdfBuilder::source_ready() ? 'Ready (' . ContractPdfBuilder::SOURCE_VERSION . ')' : 'Blocked until the approved source PDF is restored',
+			'Candidate reminders'      => false !== wp_next_scheduled( \Poolhall\Integration\Onboarding\ReminderService::HOOK ) ? 'Scheduled' : 'Not scheduled',
+		);
+		foreach ( $rows as $label => $value ) {
+			echo '<tr><th scope="row" style="width:340px">' . esc_html( $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
 	}
 
 	/** Outcome notices for the last Site setup run, then the stash clears. */
@@ -282,6 +329,12 @@ final class HealthPage {
 				'label'    => __( 'Candidate portal pages', 'poolhall-integration' ),
 				'runnable' => true,
 				'reason'   => '',
+			),
+			array(
+				'key'      => 'create-document-pages.php',
+				'label'    => __( 'Candidate workflow forms and secure task pages', 'poolhall-integration' ),
+				'runnable' => class_exists( '\\GFAPI' ),
+				'reason'   => __( 'Gravity Forms is not active.', 'poolhall-integration' ),
 			),
 			array(
 				'key'      => 'configure-elementor-kit.php',

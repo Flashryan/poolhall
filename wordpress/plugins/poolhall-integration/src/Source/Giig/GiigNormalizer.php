@@ -127,7 +127,7 @@ final class GiigNormalizer {
 			address_locality: $this->str( $raw, 'locality' ),
 			address_region: $this->str( $raw, 'region' ),
 			address_country: $this->str( $raw, 'country' ),
-			sector: $this->str( $raw, 'sector' ),
+			sector: $this->resolve_sector( $raw ),
 			job_type: $this->enum( $raw, 'JobType', self::JOB_TYPES ) ?? $this->str( $raw, 'job_type' ),
 			experience_requirement: $this->str( $raw, 'experience' ),
 			education_requirement: $this->str( $raw, 'education' ),
@@ -136,6 +136,55 @@ final class GiigNormalizer {
 			source_url: $this->str( $raw, 'url' ),
 			job_reference: $this->str( $raw, 'reference' ),
 		);
+	}
+
+	/**
+	 * Industry, as a sector name — or null when Giig has not set one.
+	 *
+	 * Giig sends Industry as an INTEGER id, not a name. Two things went wrong
+	 * with treating it as a string:
+	 *
+	 * 1. `Industry: 0` means "not set", but 0 is neither null nor '' so it
+	 *    survived is_present() and became the string "0". Passing "0" to
+	 *    wp_set_object_terms() does not create a term — it CLEARS the taxonomy
+	 *    for that post, so every sync silently wiped the job's sector.
+	 * 2. A real id (e.g. 109) became a term literally named "109" instead of
+	 *    the sector it stands for.
+	 *
+	 * So: ignore non-positive ids, translate known ids through a filterable
+	 * legend, ignore unknown ids (never invent a numeric term), and keep
+	 * accepting a genuine textual industry if the API ever sends one.
+	 *
+	 * @param array<string,mixed> $raw Raw payload.
+	 */
+	private function resolve_sector( array $raw ): ?string {
+		$value = $this->pick( $raw, 'sector' );
+		if ( null === $value ) {
+			return null;
+		}
+
+		if ( is_int( $value ) || ( is_string( $value ) && ctype_digit( trim( $value ) ) ) ) {
+			$id = (int) $value;
+			if ( $id <= 0 ) {
+				return null; // Giig's "unset".
+			}
+
+			/**
+			 * Map a Giig Industry id to a sector name.
+			 *
+			 * Giig has not published the legend, so this is empty by default:
+			 * an unknown id yields no sector rather than a term named after a
+			 * number. Populate it once the ids are known.
+			 *
+			 * @param array<int,string> $map Industry id => sector name.
+			 */
+			$map = (array) apply_filters( 'poolhall_giig_industry_map', array() );
+			$name = $map[ $id ] ?? null;
+
+			return ( is_string( $name ) && '' !== trim( $name ) ) ? trim( $name ) : null;
+		}
+
+		return $this->str( $raw, 'sector' );
 	}
 
 	/**

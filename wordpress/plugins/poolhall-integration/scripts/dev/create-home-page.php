@@ -34,6 +34,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	echo "Run via: wp eval-file scripts/dev/create-home-page.php\n";
 	exit( 1 );
 }
+
+// Refuse to clobber Elementor documents edited since the builder last ran.
+require_once __DIR__ . '/_builder-guard.php';
 if ( ! did_action( 'elementor/loaded' ) || ! defined( 'ELEMENTOR_PRO_VERSION' ) ) {
 	echo "FAIL: Elementor + Elementor Pro must be active.\n";
 	exit( 1 );
@@ -713,7 +716,7 @@ $featured = $container(
 		)
 	),
 	array(
-		$section_head( '01 / Featured roles', 'Live jobs, this week', 'A snapshot of what we&rsquo;re recruiting right now. New roles land all the time.' ),
+		$section_head( '01 / Featured roles', 'Hiring Now', 'Hand-picked roles from our latest live vacancies. Swipe to see more.' ),
 		$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_featured_jobs]' ) ),
 	)
 );
@@ -745,7 +748,10 @@ if ( ! empty( $prior ) ) {
 update_post_meta( $poolhall_home_page->ID, '_elementor_edit_mode', 'builder' );
 update_post_meta( $poolhall_home_page->ID, '_elementor_template_type', 'wp-page' );
 update_post_meta( $poolhall_home_page->ID, '_wp_page_template', 'elementor_header_footer' );
-update_post_meta( $poolhall_home_page->ID, '_elementor_data', wp_slash( wp_json_encode( $home_data ) ) );
+if ( poolhall_builder_may_write( (int) $poolhall_home_page->ID ) ) {
+	update_post_meta( $poolhall_home_page->ID, '_elementor_data', wp_slash( wp_json_encode( $home_data ) ) );
+	poolhall_builder_stamp( (int) $poolhall_home_page->ID );
+}
 
 // Point the site front page at /home/ (idempotent).
 update_option( 'show_on_front', 'page' );

@@ -1,0 +1,492 @@
+/*
+ * Poolhall design system v3 - Elementor pilot layer.
+ *
+ * Scoped to pages carrying the ph-design-v3 body class so the approved
+ * Construction pilot can be assessed without changing the current site.
+ * After approval these tokens become Elementor Global Colors/Fonts and the
+ * component classes are reused by the remaining page families.
+ */
+
+body.ph-design-v3,
+.ph-design-v3 {
+	/* Signed-off Poolhall palette. Pilot pages must not invent substitutes. */
+	--ph3-navy: #0b2846;
+	--ph3-navy-deep: #06182b;
+	--ph3-blue: #3e6e8e;
+	--ph3-blue-dark: var(--ph3-navy);
+	--ph3-gold: var(--ph-color-gold-500, #fdbb5d);
+	--ph3-gold-dark: var(--ph-color-gold-600, #e0a33f);
+	--ph3-ink: #0b2846;
+	--ph3-text: #5b6670;
+	--ph3-soft: #f2f4f6;
+	--ph3-line: #e6e9ed;
+	--ph3-white: #ffffff;
+	--ph3-shell: 1180px;
+	--ph3-gutter: clamp(20px, 4vw, 46px);
+	--ph3-section: clamp(72px, 8vw, 108px);
+	--ph3-shadow: 0 18px 44px -32px rgba(6, 24, 43, .4);
+	--ph3-font: "Manrope", Arial, sans-serif;
+	font-family: var(--ph3-font);
+	color: var(--ph3-text);
+}
+
+body.ph-design-v3 .elementor-widget-heading .elementor-heading-title,
+body.ph-design-v3 .elementor-widget-text-editor,
+body.ph-design-v3 .elementor-button,
+body.ph-design-v3 .ph-v2-header,
+body.ph-design-v3 .ph-v2-footer {
+	font-family: var(--ph3-font);
+}
+
+body.ph-design-v3 .elementor-widget-text-editor p:last-child { margin-bottom: 0; }
+
+.ph3-construction { overflow: clip; background: var(--ph3-white); }
+.ph3-shell { width: min(calc(100% - (2 * var(--ph3-gutter))), var(--ph3-shell)); margin-inline: auto; }
+.ph3-section { padding-block: var(--ph3-section); background: var(--ph3-white); }
+.ph3-section--soft { background: var(--ph3-soft); }
+.ph3-section--compact { padding-block: clamp(56px, 7vw, 84px); }
+
+/* Transparent header over the pilot hero; solid after the first scroll. */
+body.ph-construction-pilot .elementor-location-header,
+body.ph-construction-pilot header.elementor:has(.ph-v2-header) {
+	position: fixed !important;
+	inset: 0 0 auto 0;
+	z-index: 100;
+	transition: background-color .25s ease, box-shadow .25s ease;
+}
+body.admin-bar.ph-construction-pilot .elementor-location-header,
+body.admin-bar.ph-construction-pilot header.elementor:has(.ph-v2-header) { top: 32px; }
+body.ph-construction-pilot .ph-v2-header {
+	position: relative;
+	background: rgba(6, 24, 43, .16);
+	border-bottom: 1px solid rgba(255,255,255,.2);
+	backdrop-filter: none;
+	transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+body.ph-construction-pilot .ph-v2-header .topbar { display: none; }
+body.ph-construction-pilot .ph-v2-header .nav { height: 88px; }
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .brand img { filter: brightness(0) invert(1); }
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .nav-item > a { color: #fff; }
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .nav-item > a svg { color: rgba(255,255,255,.74); }
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .nav-item > a:hover {
+	color: #fff;
+	background: rgba(255,255,255,.12);
+}
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .btn-find {
+	color: #fff;
+	border-color: rgba(255,255,255,.55);
+	background: transparent;
+}
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .btn-find:hover {
+	color: var(--ph3-navy-deep);
+	border-color: #fff;
+	background: #fff;
+}
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .btn-find .elementor-button {
+	color: #fff !important;
+	border: 1px solid rgba(255,255,255,.62) !important;
+	background: transparent !important;
+}
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .btn-find .elementor-button:hover {
+	color: var(--ph3-navy-deep) !important;
+	border-color: #fff !important;
+	background: #fff !important;
+}
+body.ph-construction-pilot.ph-header-scrolled .ph-v2-header .btn-find .elementor-button {
+	color: var(--ph3-navy) !important;
+	border: 1px solid var(--ph3-navy) !important;
+	background: transparent !important;
+}
+body.ph-construction-pilot:not(.ph-header-scrolled) .ph-v2-header .burger {
+	color: #fff;
+	border-color: rgba(255,255,255,.45);
+	background: rgba(6,24,43,.24);
+}
+body.ph-construction-pilot.ph-header-scrolled .ph-v2-header {
+	background: rgba(255,255,255,.97);
+	border-color: var(--ph3-line);
+	box-shadow: 0 10px 34px -28px rgba(6,24,43,.65);
+	backdrop-filter: saturate(1.15) blur(12px);
+}
+
+/* Match the approved pilot footer without changing the current global footer. */
+body.ph-construction-pilot .ph-v2-footer {
+	padding-block: 48px 24px;
+	border-top: 5px solid var(--ph3-gold);
+}
+body.ph-construction-pilot .ph-v2-footer .footer-brand img {
+	content: url("../img/poolhall-logo-wordmark-light.svg");
+	width: 205px;
+	height: auto;
+	padding: 0;
+	border-radius: 0;
+	background: transparent;
+}
+body.ph-construction-pilot .ph-v2-footer .footer-brand .elementor-widget-text-editor,
+body.ph-construction-pilot .ph-v2-footer .footer-brand .elementor-widget-text-editor p {
+	color: rgba(255,255,255,.66) !important;
+}
+body.ph-construction-pilot .ph-v2-footer .footer-accred {
+	margin-top: 28px;
+	padding-top: 20px;
+}
+body.ph-construction-pilot .ph-v2-footer .footer-bottom {
+	margin-top: 20px;
+	padding-top: 16px;
+}
+
+/* Hero. */
+.ph3-hero,
+.s-construction-hero {
+	position: relative;
+	min-height: clamp(610px, 76vh, 760px);
+	align-items: center;
+	background-color: var(--ph3-navy-deep);
+	background-position: center center;
+	background-size: cover;
+}
+.ph3-hero::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, rgba(6,24,43,.98) 0%, rgba(11,40,70,.94) 29%, rgba(11,40,70,.69) 49%, rgba(11,40,70,.30) 72%, rgba(11,40,70,.08) 100%);
+	pointer-events: none;
+}
+
+/* Atomic Elementor classes are what the v4 document renders on staging. */
+.s-construction-hero-image,
+.s-candidate-cta-image,
+.s-employer-cta-image {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+}
+.s-construction-hero-image img,
+.s-candidate-cta-image img,
+.s-employer-cta-image img {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+}
+.s-construction-hero-image img { object-position: center center !important; }
+.s-construction-hero-overlay {
+	background: linear-gradient(90deg, rgba(6,24,43,.98) 0%, rgba(11,40,70,.94) 29%, rgba(11,40,70,.69) 49%, rgba(11,40,70,.30) 72%, rgba(11,40,70,.08) 100%) !important;
+}
+.s-construction-hero { border-bottom: 5px solid var(--ph3-gold); }
+.s-construction-hero-overlay-left { display: none !important; }
+.ph3-hero .ph3-shell { position: relative; z-index: 1; padding-top: 116px; }
+.ph3-hero-copy { max-width: 570px; gap: 0; }
+.ph3-hero-title .elementor-heading-title {
+	max-width: 10ch;
+	font-size: clamp(3rem, 5.6vw, 5.2rem);
+	line-height: .98;
+	letter-spacing: -.045em;
+	font-weight: 800;
+	color: #fff;
+}
+.ph3-hero-subtitle .elementor-heading-title {
+	margin-top: 20px;
+	font-size: clamp(1.2rem, 2vw, 1.5rem);
+	font-weight: 700;
+	line-height: 1.25;
+	color: var(--ph3-gold);
+}
+.s-construction-subtitle { color: var(--ph3-gold) !important; }
+.ph3-hero-text { max-width: 52ch; margin-top: 18px; font-size: 16px; line-height: 1.75; color: rgba(255,255,255,.84); }
+.ph3-actions { --display: flex; display: flex; flex-direction: row; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.ph3-btn { width: auto !important; }
+.ph3-btn .elementor-button {
+	min-height: 48px;
+	padding: 13px 24px;
+	border: 1px solid transparent;
+	border-radius: 0;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1;
+	transition: transform .18s ease, background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+.ph3-btn .elementor-button:hover { transform: translateY(-2px); }
+.ph3-btn--primary .elementor-button { background: var(--ph3-gold); color: var(--ph3-navy-deep); }
+.ph3-btn--primary .elementor-button:hover { background: var(--ph3-gold-dark); color: #fff; }
+.ph3-btn--blue .elementor-button { background: var(--ph3-blue); color: #fff; }
+.ph3-btn--blue .elementor-button:hover { background: var(--ph3-blue-dark); color: #fff; }
+.s-construction-hero .ph3-btn--blue .elementor-button {
+	background: var(--ph3-gold);
+	color: var(--ph3-navy-deep);
+}
+.s-construction-hero .ph3-btn--blue .elementor-button:hover {
+	background: var(--ph3-gold-dark);
+	color: var(--ph3-navy-deep);
+}
+.ph3-btn--outline-light .elementor-button { background: transparent; border-color: rgba(255,255,255,.58); color: #fff; }
+.ph3-btn--outline-light .elementor-button:hover { background: #fff; border-color: #fff; color: var(--ph3-navy); }
+.ph3-btn--outline .elementor-button { background: transparent; border-color: var(--ph3-blue); color: var(--ph3-navy); }
+.ph3-btn--outline .elementor-button:hover { background: var(--ph3-navy); border-color: var(--ph3-navy); color: #fff; }
+
+/* Shared type and section structure. */
+.ph3-heading .elementor-heading-title {
+	font-size: clamp(2rem, 3.5vw, 3rem);
+	line-height: 1.08;
+	letter-spacing: -.035em;
+	font-weight: 800;
+	color: var(--ph3-ink);
+}
+.s-construction-title,
+.s-roles-heading,
+.s-disciplines-heading,
+.s-construction-jobs-heading,
+.s-candidate-cta-heading,
+.s-employer-cta-heading {
+	font-weight: 800 !important;
+}
+.ph3-heading--small .elementor-heading-title { font-size: clamp(1.65rem, 2.7vw, 2.3rem); }
+.ph3-lead { max-width: 58ch; margin-top: 20px; font-size: 16px; line-height: 1.75; color: var(--ph3-text); }
+.ph3-section-head { --display: flex; display: flex; flex-direction: row; justify-content: space-between; align-items: end; gap: 28px; margin-bottom: 38px; }
+.ph3-intro-grid { --display: grid; display: grid; grid-template-columns: .78fr 1.22fr; gap: clamp(48px, 7vw, 96px); align-items: start; }
+
+/* Clean editorial treatment for the Construction pilot. */
+.s-construction-roles {
+	position: relative;
+	background: var(--ph3-white) !important;
+}
+.s-construction-roles-copy {
+	padding-left: 0 !important;
+	border-left: 0 !important;
+}
+
+/* Roles. */
+.ph3-role-grid { --display: grid; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 32px; }
+.ph3-role {
+	padding: 19px 0;
+	border-bottom: 1px solid var(--ph3-line);
+}
+.ph3-role .elementor-icon-box-wrapper { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: center; }
+.ph3-role .elementor-icon-box-icon { margin: 0; }
+.ph3-role .elementor-icon { display: grid; place-items: center; width: 36px; height: 36px; color: var(--ph3-gold-dark) !important; font-size: 23px; }
+.ph3-role .elementor-icon svg { width: 1em; height: 1em; fill: currentColor; }
+.ph3-role .elementor-icon-box-title { margin: 0; font-size: 14px; line-height: 1.35; font-weight: 650; color: var(--ph3-ink); }
+
+/* Discipline cards. */
+.ph3-discipline-grid { --display: grid; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; }
+.s-construction-disciplines {
+	position: relative;
+	background:
+		linear-gradient(154deg, var(--ph3-soft) 0 81%, rgba(253,187,93,.28) 81% 83%, var(--ph3-white) 83% 100%) !important;
+}
+.s-construction-discipline-grid { padding-bottom: 0 !important; }
+.ph3-discipline-card {
+	--display: flex;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	background: #fff;
+	border: 1px solid var(--ph3-line);
+	border-top: 5px solid var(--ph3-gold);
+	box-shadow: var(--ph3-shadow);
+	transition: transform .22s ease, box-shadow .22s ease;
+}
+.ph3-discipline-card:hover { transform: translateY(-5px); box-shadow: 0 24px 50px -30px rgba(6,24,43,.52); }
+.s-discipline-labour-trades,
+.s-discipline-mechanical-electrical,
+.s-discipline-design-professional,
+.s-discipline-facilities-management {
+	border: 1px solid var(--ph3-line) !important;
+	border-top: 5px solid var(--ph3-gold) !important;
+	background: var(--ph3-white) !important;
+	box-shadow: var(--ph3-shadow) !important;
+	transition: transform .22s ease, box-shadow .22s ease !important;
+}
+.s-discipline-labour-trades:hover,
+.s-discipline-mechanical-electrical:hover,
+.s-discipline-design-professional:hover,
+.s-discipline-facilities-management:hover { transform: translateY(-5px); }
+.ph3-discipline-card .elementor-widget-image { overflow: hidden; }
+.ph3-discipline-card .elementor-widget-image img { width: 100%; height: 240px; object-fit: cover; transition: transform .45s ease; }
+.ph3-discipline-card:hover .elementor-widget-image img { transform: scale(1.035); }
+.ph3-discipline-card .elementor-widget-heading { padding: 20px 18px 22px; }
+.ph3-discipline-card .elementor-heading-title { font-size: 16px; line-height: 1.35; font-weight: 750; color: var(--ph3-ink); }
+.s-discipline-labour-trades,
+.s-discipline-mechanical-electrical,
+.s-discipline-design-professional,
+.s-discipline-facilities-management { padding: 0 !important; }
+.s-discipline-labour-trades-image,
+.s-discipline-mechanical-electrical-image,
+.s-discipline-design-professional-image,
+.s-discipline-facilities-management-image {
+	width: 100% !important;
+	height: 270px !important;
+	object-fit: cover !important;
+}
+
+/* Fixed-image proof section with raised white cards and restrained gold details. */
+.s-construction-proof {
+	background-color: var(--ph3-navy-deep) !important;
+	background-image:
+		linear-gradient(rgba(6,24,43,.78), rgba(6,24,43,.86)),
+		url("../img/construction-pilot-proof-bg.webp") !important;
+	background-position: center center !important;
+	background-repeat: no-repeat !important;
+	background-size: cover !important;
+	background-attachment: scroll, fixed !important;
+}
+.ph3-proof-grid {
+	--display: grid;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0,1fr));
+	gap: 20px;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+.s-construction-proof-grid {
+	background: transparent !important;
+	border: 0 !important;
+	box-shadow: none !important;
+}
+.ph3-proof-card {
+	min-width: 0;
+	padding: clamp(30px, 4vw, 44px) 24px;
+	border: 0 !important;
+	background: var(--ph3-white) !important;
+	box-shadow: 0 22px 54px -28px rgba(6,24,43,.78);
+}
+.ph3-proof-card .elementor-icon-box-wrapper { text-align: center; }
+.ph3-proof-card .elementor-icon { color: var(--ph3-blue) !important; font-size: 35px; }
+.ph3-proof-card .elementor-icon svg { fill: currentColor !important; }
+.ph3-proof-card .elementor-icon-box-title { margin: 18px 0 0; font-size: 15px; line-height: 1.35; font-weight: 750; color: var(--ph3-ink); }
+.ph3-proof-card .elementor-icon-box-description { margin-top: 12px; font-size: 13px; line-height: 1.7; color: var(--ph3-text); }
+
+/* Live, Giig-backed WordPress job cards. */
+.ph3-jobs-widget { width: 100%; }
+.ph3-job-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 22px; }
+.s-construction-jobs-heading { padding-left: 22px; border-left: 5px solid var(--ph3-gold); }
+.s-construction-jobs .elementor-element-construction-all-jobs .elementor-button {
+	background: var(--ph3-gold);
+	border-color: var(--ph3-gold);
+	color: var(--ph3-navy-deep);
+}
+.s-construction-jobs .elementor-element-construction-all-jobs .elementor-button:hover {
+	background: var(--ph3-gold-dark);
+	border-color: var(--ph3-gold-dark);
+	color: var(--ph3-navy-deep);
+}
+.ph3-job-card { display: flex; flex-direction: column; min-width: 0; padding: 28px; border: 1px solid var(--ph3-line); border-top: 5px solid var(--ph3-gold); background: #fff; transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.ph3-job-card:hover { transform: translateY(-3px); border-color: var(--ph3-blue); box-shadow: var(--ph3-shadow); }
+.ph3-job-card h3 { margin: 0; font-family: var(--ph3-font); font-size: 18px; line-height: 1.35; font-weight: 750; }
+.ph3-job-card h3 a { color: var(--ph3-ink); text-decoration: none; }
+.ph3-job-card__meta { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 15px; font-size: 12px; color: var(--ph3-text); }
+.ph3-job-card__meta span { display: inline-flex; align-items: center; gap: 7px; }
+.ph3-job-card__meta i { width: 13px; color: var(--ph3-blue); text-align: center; }
+.ph3-job-card > p { margin: 18px 0 24px; font-size: 13.5px; line-height: 1.65; color: var(--ph3-text); }
+.ph3-job-card__foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: auto; padding-top: 18px; border-top: 1px solid var(--ph3-line); font-size: 12px; }
+.ph3-job-card__foot a { display: inline-flex; align-items: center; gap: 8px; color: var(--ph3-gold-dark); font-weight: 750; text-decoration: none; }
+.ph3-job-card__foot span { color: var(--ph3-text); }
+.ph3-jobs-empty { padding: 30px; border: 1px solid var(--ph3-line); background: #fff; }
+
+/* Paired closing calls to action. */
+.ph3-cta-grid { --display: grid; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0; }
+.s-construction-closing-ctas,
+.s-candidate-cta,
+.s-employer-cta { padding: 0 !important; }
+.s-construction-closing-ctas {
+	border: 0 !important;
+	border-bottom: 5px solid var(--ph3-gold) !important;
+}
+.s-candidate-cta,
+.s-employer-cta { border: 0 !important; }
+.ph3-cta,
+.s-candidate-cta,
+.s-employer-cta {
+	position: relative;
+	min-height: 390px;
+	align-items: center;
+	background-color: var(--ph3-navy-deep);
+	background-position: center;
+	background-size: cover;
+}
+.ph3-cta::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(6,24,43,.96), rgba(11,40,70,.68) 58%, rgba(11,40,70,.15)); }
+.s-candidate-cta-overlay,
+.s-employer-cta-overlay {
+	background: linear-gradient(90deg, rgba(6,24,43,.97) 0%, rgba(11,40,70,.82) 40%, rgba(11,40,70,.46) 67%, rgba(11,40,70,.12) 100%) !important;
+}
+.ph3-cta > .e-con-inner,
+.ph3-cta > .e-con { position: relative; z-index: 1; }
+.ph3-cta-copy { position: relative; z-index: 1; width: min(100% - 48px, 470px); margin-inline: auto; }
+.ph3-cta .elementor-heading-title { max-width: 12ch; font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1.05; letter-spacing: -.035em; font-weight: 800; color: #fff; }
+.ph3-cta-text { max-width: 42ch; margin-top: 18px; font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.85); }
+
+/* Elementor design-board helpers. */
+.ph3-board-hero { padding-block: clamp(130px, 15vw, 190px) 80px; background: var(--ph3-navy); }
+.ph3-board-hero .elementor-heading-title { color: #fff; }
+.ph3-board-grid { --display: grid; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; }
+.ph3-swatch { min-height: 150px; justify-content: end; padding: 20px; border: 1px solid var(--ph3-line); }
+.ph3-swatch .elementor-heading-title { font-size: 15px; color: inherit; }
+.ph3-swatch--navy { background: var(--ph3-navy); color: #fff; }
+.ph3-swatch--blue { background: var(--ph3-blue); color: #fff; }
+.ph3-swatch--orange { background: var(--ph3-gold); color: var(--ph3-navy-deep); }
+.ph3-swatch--soft { background: var(--ph3-soft); color: var(--ph3-ink); }
+
+/* Scoped reveal enhancement; no-JS content remains visible. */
+.ph3-will-reveal { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; transition-delay: var(--ph3-delay, 0ms); }
+.ph3-will-reveal.ph3-from-left { transform: translateX(-18px); }
+.ph3-will-reveal.ph3-from-right { transform: translateX(18px); }
+.ph3-will-reveal.is-visible { opacity: 1; transform: none; }
+
+@media (max-width: 1024px) {
+	body.ph-construction-pilot .ph-v2-header .nav { height: 82px; }
+	.ph3-intro-grid { grid-template-columns: 1fr; }
+	.ph3-discipline-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+	.ph3-discipline-card:nth-child(even),
+	.ph3-discipline-card:nth-child(even):hover { transform: none; }
+	.s-discipline-labour-trades,
+	.s-discipline-mechanical-electrical,
+	.s-discipline-design-professional,
+	.s-discipline-facilities-management,
+	.s-discipline-labour-trades:hover,
+	.s-discipline-mechanical-electrical:hover,
+	.s-discipline-design-professional:hover,
+	.s-discipline-facilities-management:hover { transform: none; }
+	.s-construction-discipline-grid { padding-bottom: 0 !important; }
+	.ph3-proof-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+	.ph3-board-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 767px) {
+	body.admin-bar.ph-construction-pilot .elementor-location-header,
+	body.admin-bar.ph-construction-pilot header.elementor:has(.ph-v2-header) { top: 46px; }
+	.ph3-hero,
+	.s-construction-hero { min-height: 650px; background-position: 62% center; }
+	.ph3-hero::before { background: linear-gradient(90deg, rgba(6,24,43,.97), rgba(11,40,70,.82) 68%, rgba(11,40,70,.52)); }
+	.s-construction-hero-image img { object-position: 62% center !important; }
+	.s-construction-hero-overlay { background: linear-gradient(90deg, rgba(6,24,43,.97), rgba(11,40,70,.82) 68%, rgba(11,40,70,.52)) !important; }
+	.ph3-hero .ph3-shell { padding-top: 108px; }
+	.ph3-hero-title .elementor-heading-title { font-size: clamp(2.65rem, 13vw, 4rem); }
+	.ph3-section-head { flex-direction: column; align-items: flex-start; }
+	.ph3-role-grid { grid-template-columns: 1fr; }
+	.ph3-discipline-grid,
+	.ph3-job-list,
+	.ph3-cta-grid,
+	.ph3-board-grid { grid-template-columns: 1fr; }
+	.ph3-discipline-card .elementor-widget-image img { height: 230px; }
+	.s-discipline-labour-trades-image,
+	.s-discipline-mechanical-electrical-image,
+	.s-discipline-design-professional-image,
+	.s-discipline-facilities-management-image { height: 230px !important; }
+	.ph3-proof-grid { grid-template-columns: 1fr; }
+	.s-construction-proof { background-attachment: scroll !important; }
+	.s-construction-roles { background: var(--ph3-white) !important; }
+	.s-construction-roles-copy { padding-left: 0 !important; border-left: 0 !important; }
+	.s-employer-cta { border: 0 !important; }
+	.ph3-cta { min-height: 360px; }
+	body.ph-construction-pilot .ph-v2-footer .footer-brand img { width: 190px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ph3-will-reveal,
+	.ph3-discipline-card,
+	.ph3-discipline-card img,
+	.ph3-job-card,
+	.ph3-btn .elementor-button { opacity: 1 !important; transform: none !important; transition: none !important; }
+}

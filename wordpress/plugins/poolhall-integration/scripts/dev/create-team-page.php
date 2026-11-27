@@ -28,6 +28,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	echo "Run via: wp eval-file scripts/dev/create-team-page.php\n";
 	exit( 1 );
 }
+
+// Refuse to clobber Elementor documents edited since the builder last ran.
+require_once __DIR__ . '/_builder-guard.php';
 if ( ! did_action( 'elementor/loaded' ) ) {
 	echo "FAIL: Elementor must be active.\n";
 	exit( 1 );
@@ -621,7 +624,10 @@ if ( ! empty( $prior ) ) {
 update_post_meta( $poolhall_team_page->ID, '_elementor_edit_mode', 'builder' );
 update_post_meta( $poolhall_team_page->ID, '_elementor_template_type', 'wp-page' );
 update_post_meta( $poolhall_team_page->ID, '_wp_page_template', 'elementor_header_footer' );
-update_post_meta( $poolhall_team_page->ID, '_elementor_data', wp_slash( wp_json_encode( $team_data ) ) );
+if ( poolhall_builder_may_write( (int) $poolhall_team_page->ID ) ) {
+	update_post_meta( $poolhall_team_page->ID, '_elementor_data', wp_slash( wp_json_encode( $team_data ) ) );
+	poolhall_builder_stamp( (int) $poolhall_team_page->ID );
+}
 
 // Regenerate CSS and clear caches (hard rule 12).
 \Elementor\Plugin::instance()->files_manager->clear_cache();

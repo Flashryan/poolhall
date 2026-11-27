@@ -29,6 +29,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	echo "Run via: wp eval-file scripts/dev/create-marketing-pages.php\n";
 	exit( 1 );
 }
+
+// Refuse to clobber Elementor documents edited since the builder last ran.
+require_once __DIR__ . '/_builder-guard.php';
 if ( ! did_action( 'elementor/loaded' ) ) {
 	echo "FAIL: Elementor must be active.\n";
 	exit( 1 );
@@ -375,7 +378,10 @@ $write_page = static function ( WP_Post $page, array $data ): void {
 	update_post_meta( $page->ID, '_elementor_edit_mode', 'builder' );
 	update_post_meta( $page->ID, '_elementor_template_type', 'wp-page' );
 	update_post_meta( $page->ID, '_wp_page_template', 'elementor_header_footer' );
-	update_post_meta( $page->ID, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+	if ( poolhall_builder_may_write( (int) $page->ID ) ) {
+		update_post_meta( $page->ID, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+		poolhall_builder_stamp( (int) $page->ID );
+	}
 };
 
 $contact_details = static fn() => $widget(
@@ -401,7 +407,7 @@ $employers_data = array(
 	$hero_slim(
 		'For employers',
 		'More than just recruitment.',
-		'A hiring partner that represents your business like it&rsquo;s our own. Better people, less wasted spend, and a process that respects your time.',
+		'A hiring partner that represents your business like it&rsquo;s our own. Confidence, less wasted spend, and a process that works.',
 		array(
 			$container(
 				array(
@@ -423,7 +429,7 @@ $employers_data = array(
 	$section(
 		'#FFFFFF',
 		array(
-			$section_head( 'How we help employers', 'Hire better, waste less, think long-term', 'Three things our clients tell us make the difference.' ),
+			$section_head( 'How we help employers', 'Solution based process, embrace change, think long-term', 'Three things our clients tell us make the difference.' ),
 			// Prototype bordered points grid, server-rendered.
 			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_points set="employers"]' ) ),
 		)
@@ -435,7 +441,7 @@ $employers_data = array(
 		array(
 			$section_head( 'Recruitment delivery options', 'Five ways to work with us', 'Whatever the shape of your hiring need, there&rsquo;s a model that fits.' ),
 			// Prototype photo-top service cards (3 + 2, dark second card).
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_services exclude="pay-monthly"]' ) ),
+			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_services]' ) ),
 			$container(
 				array(
 					'content_width'        => 'full',
@@ -447,16 +453,6 @@ $employers_data = array(
 				),
 				true
 			),
-		)
-	),
-
-	// Flexible terms band (client feedback: tiers removed; rebate/fee
-	// balance shown as an illustrative toggle, Pay Monthly as an advantage).
-	$section(
-		'#FFFFFF',
-		array(
-			$section_head( 'How we work with you', 'Shaped around your hiring, not a rate card', 'The same senior consultants on every brief, with commercial terms we flex to fit.' ),
-			$widget( 'shortcode', array( 'shortcode' => '[poolhall_v2_flexibility]' ) ),
 		)
 	),
 
@@ -505,7 +501,7 @@ $employers_data = array(
 							'',
 							array_map(
 								static fn( string $s ): string => '<span class="ph-chip" style="background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.16)">' . esc_html( $s ) . '</span>',
-								array( 'Construction & Skilled Trade', 'Manufacturing', 'Marketing & PR', 'Sales', 'Insurance', 'Automotive' )
+								array( 'Construction & Skilled Trade', 'Manufacturing', 'Marketing & Office' )
 							)
 						)
 						. '</div>',
@@ -578,18 +574,18 @@ $employers_data = array(
 $poolhall_sector_sections = array(
 	array(
 		'Construction & Skilled Trade',
-		'From site supervision to commercial leadership, we place the people who deliver projects safely, on time and on budget.',
-		array( 'Site Managers', 'Project Managers', 'Quantity Surveyors', 'Estimators', 'Skilled Trades & Labour' ),
+		'National Suppliers of both Blue & White collar workers. From site operatives, supervisors to commercial leadership, we place the people who deliver projects for you.',
+		array( 'CSCS Operatives', 'Site Managers', 'Project Managers', 'Quantity Surveyors', 'Estimators', 'Skilled Trades & Labour' ),
 	),
 	array(
 		'Manufacturing',
-		'Hands-on specialists for the factory floor and the engineers who keep production moving.',
-		array( 'Welders & Fabricators', 'CNC Machinists & Programmers', 'Production Operatives', 'Maintenance Engineers', 'Quality & Compliance' ),
+		'From the shop floor to the drawing, sales or leadership offices, we have you covered with time served vetted candidates',
+		array( 'Welders & Fabricators', 'Skilled Machinists', 'Production Operatives', 'Maintenance Engineers', 'Quality', 'Management', 'CAD Technicians & Estimators' ),
 	),
 	array(
-		'Digital & Marketing',
-		'Creative and performance marketers who grow brands — agency-side and in-house.',
-		array( 'Marketing Managers', 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'PR & Communications' ),
+		'Digital & Office',
+		'Creative and performance marketers who grow brands — agency-side and in-house. We also cover your standard office based roles, from support to sales & management.',
+		array( 'Marketing Managers', 'Paid Media & PPC', 'SEO Specialists', 'Content & Social', 'PR & Communications', 'Sales', 'Administration', 'Finance', 'IT', 'Management' ),
 	),
 );
 $sector_blocks            = array();
@@ -646,7 +642,7 @@ $sectors_data = array_merge(
 		$hero_slim(
 			'Sectors we cover',
 			'Specialists in the work that builds Britain',
-			'Three core specialisms, backed by decades of combined experience. We also recruit across Sales, Insurance and Automotive through our live jobs board.'
+			'Three core specialisms, backed by decades of combined experience. We also have a bespoke search function where we just simply match to your requirements.Hands-on specialists for the factory floor and the engineers who keep production moving.'
 		),
 	),
 	$sector_blocks,
@@ -1931,11 +1927,16 @@ $register_data = array(
 
 // ----------------------------------------------------------- write all ----
 // v2 parity: these pages are fully server-rendered prototype templates.
-$bja_data      = $poolhall_v2_mount( '[poolhall_v2_secondary page="bja"]' );
-$contact_data  = $poolhall_v2_mount( '[poolhall_v2_contact]' );
-$about_data    = $poolhall_v2_mount( '[poolhall_v2_about]' );
-$blog_data     = $poolhall_v2_mount( '[poolhall_v2_blog_index]' );
-$register_data = $poolhall_v2_mount( '[poolhall_v2_register_page]' );
+$bja_data                = $poolhall_v2_mount( '[poolhall_v2_secondary page="bja"]' );
+$sectors_data            = $poolhall_v2_mount( '[poolhall_v2_sectors]' );
+$contact_data            = $poolhall_v2_mount( '[poolhall_v2_contact]' );
+$about_data              = $poolhall_v2_mount( '[poolhall_v2_about]' );
+$blog_data               = $poolhall_v2_mount( '[poolhall_v2_blog_index]' );
+$register_data           = $poolhall_v2_mount( '[poolhall_v2_register_page]' );
+$registration_guide_data = $poolhall_v2_mount( '[poolhall_v2_guide page="registration"]' );
+$interview_tips_data     = $poolhall_v2_mount( '[poolhall_v2_guide page="interview"]' );
+$cv_tips_data            = $poolhall_v2_mount( '[poolhall_v2_guide page="cv"]' );
+$cookies_data            = $poolhall_v2_mount( '[poolhall_v2_cookie_policy]' );
 
 $write_page( $poolhall_pages['better-job-adverts'], $bja_data );
 $write_page( $poolhall_pages['employers'], $employers_data );
@@ -1952,6 +1953,7 @@ $write_page( $poolhall_pages['sectors/construction'], $sector_construction_data 
 $write_page( $poolhall_pages['sectors/manufacturing'], $sector_manufacturing_data );
 $write_page( $poolhall_pages['sectors/digital'], $sector_digital_data );
 $write_page( $poolhall_pages['register'], $register_data );
+$write_page( $poolhall_pages['cookies'], $cookies_data );
 
 // Regenerate CSS and clear caches (hard rule 12).
 \Elementor\Plugin::instance()->files_manager->clear_cache();

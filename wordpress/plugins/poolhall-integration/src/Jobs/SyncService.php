@@ -11,6 +11,7 @@ namespace Poolhall\Integration\Jobs;
 
 use Poolhall\Integration\Source\JobSource;
 use Poolhall\Integration\Source\SourceException;
+use Poolhall\Integration\Support\BrandedMail;
 use Poolhall\Integration\Support\Logger;
 
 /**
@@ -207,7 +208,7 @@ final class SyncService {
 
 	private function alert_staff( int $failures, string $error ): void {
 		$recipient = (string) get_option( 'admin_email' );
-		wp_mail(
+		BrandedMail::send_text(
 			$recipient,
 			sprintf( '[Poolhall] Job sync has failed %d times in a row', $failures ),
 			"The Giig job sync is failing.\n\nMost recent error: {$error}\n\n"

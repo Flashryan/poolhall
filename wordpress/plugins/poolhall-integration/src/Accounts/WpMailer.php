@@ -9,13 +9,15 @@ declare(strict_types=1);
 
 namespace Poolhall\Integration\Accounts;
 
+use Poolhall\Integration\Support\BrandedMail;
+
 /**
- * Default production mailer. Plain text; branded HTML templates arrive with
- * the email-inventory work (portal spec §14).
+ * Default production mailer. Callers hand over plain text; it leaves in the
+ * branded shell with that same text kept as the plain-text part.
  */
 final class WpMailer implements Mailer {
 
 	public function send( string $to, string $subject, string $message ): bool {
-		return wp_mail( $to, $subject, $message );
+		return BrandedMail::send_text( $to, $subject, $message );
 	}
 }

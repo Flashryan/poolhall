@@ -1,0 +1,40 @@
+{
+  "assets": {
+    "why-us-cta-matthew-call.webp": {
+      "created_on": "2026-08-04",
+      "method": "OpenAI built-in image generation, identity-preserve workflow",
+      "reference_images": [
+        "poolhall-matt-desk.jpg",
+        "poolhall-matthew-portrait.jpg"
+      ],
+	  "description": "AI-assisted website banner depicting Matthew from Poolhall Recruitment on a friendly client phone call."
+	},
+	"better-job-adverts-cta-matthew-email.webp": {
+	  "created_on": "2026-08-04",
+	  "method": "OpenAI built-in image generation, identity-preserve workflow",
+	  "reference_images": [
+		"poolhall-matt-desk.jpg",
+		"poolhall-matthew-portrait.jpg"
+	  ],
+	  "description": "AI-assisted website banner depicting Matthew from Poolhall Recruitment composing or reviewing an email at a laptop."
+	},
+	"hr-partner-matthew.webp": {
+	  "created_on": "2026-08-04",
+	  "method": "OpenAI built-in image generation, identity-preserve workflow",
+	  "reference_images": [
+		"poolhall-matt-desk.jpg",
+		"poolhall-matthew-portrait.jpg"
+	  ],
+	  "description": "AI-assisted service-card image depicting Matthew from Poolhall Recruitment in a friendly HR consultation."
+	},
+	"hr-cta-matthew-consultation.webp": {
+	  "created_on": "2026-08-04",
+	  "method": "OpenAI built-in image generation, identity-preserve workflow",
+	  "reference_images": [
+		"poolhall-matt-desk.jpg",
+		"poolhall-matthew-portrait.jpg"
+	  ],
+	  "description": "AI-assisted website banner depicting Matthew from Poolhall Recruitment reviewing an HR handbook with a client."
+	}
+  }
+}

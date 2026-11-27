@@ -26,6 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	echo "Run via: wp eval-file scripts/dev/create-jobs-templates.php\n";
 	exit( 1 );
 }
+
+// Refuse to clobber Elementor documents edited since the builder last ran.
+require_once __DIR__ . '/_builder-guard.php';
 if ( ! did_action( 'elementor/loaded' ) || ! defined( 'ELEMENTOR_PRO_VERSION' ) ) {
 	echo "FAIL: Elementor + Elementor Pro must be active.\n";
 	exit( 1 );
@@ -81,7 +84,10 @@ $ensure_template = static function ( string $title, string $type, array $data, ?
 
 	update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
 	update_post_meta( $post_id, '_elementor_template_type', $type );
-	update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+	if ( poolhall_builder_may_write( (int) $post_id ) ) {
+		update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+		poolhall_builder_stamp( (int) $post_id );
+	}
 	if ( null !== $conditions ) {
 		update_post_meta( $post_id, '_elementor_conditions', $conditions );
 	}
@@ -340,7 +346,10 @@ if ( ! empty( $prior ) ) {
 update_post_meta( $jobs_page->ID, '_elementor_edit_mode', 'builder' );
 update_post_meta( $jobs_page->ID, '_elementor_template_type', 'wp-page' );
 update_post_meta( $jobs_page->ID, '_wp_page_template', 'elementor_header_footer' );
-update_post_meta( $jobs_page->ID, '_elementor_data', wp_slash( wp_json_encode( $archive_data ) ) );
+if ( poolhall_builder_may_write( (int) $jobs_page->ID ) ) {
+	update_post_meta( $jobs_page->ID, '_elementor_data', wp_slash( wp_json_encode( $archive_data ) ) );
+	poolhall_builder_stamp( (int) $jobs_page->ID );
+}
 
 // ------------------------------------------------- single job template ----
 // §14: navy hero with sector/title/meta, content + apply-card sidebar.

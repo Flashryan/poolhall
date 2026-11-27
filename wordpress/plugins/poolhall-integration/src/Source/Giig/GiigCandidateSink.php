@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace Poolhall\Integration\Source\Giig;
 
 use Poolhall\Integration\Source\CandidatePayload;
+use Poolhall\Integration\Source\CandidateReferenceReader;
 use Poolhall\Integration\Source\CandidateResult;
-use Poolhall\Integration\Source\CandidateSink;
 use Poolhall\Integration\Source\SourceException;
 
 /**
@@ -24,11 +24,10 @@ use Poolhall\Integration\Source\SourceException;
  *             Notes, SalaryExpectations, LinkedIn.
  *   Returns the new CandidateId.
  *
- * There is no CV/file field on candidate create (documented critical gap),
- * so the CV is handled separately by the application flow; registration only
- * creates the candidate record.
+ * This adapter sends supported profile basics only. CVs and signed documents
+ * remain in protected WordPress storage; no file upload is implemented here.
  */
-final class GiigCandidateSink implements CandidateSink {
+final class GiigCandidateSink implements CandidateReferenceReader {
 
 	private const PATH      = '/public/api/v1/candidate';
 	private const PATH_NOTE = '/public/api/v1/activity/note';
@@ -41,6 +40,43 @@ final class GiigCandidateSink implements CandidateSink {
 
 	public function is_configured(): bool {
 		return $this->client->is_configured();
+	}
+
+	/** Sensitive-endpoint permission is required; lookup failure must stop create. */
+	public function find_candidates_by_email( string $email ): array {
+		if ( false === filter_var( trim( $email ), FILTER_VALIDATE_EMAIL ) ) {
+			throw new SourceException( 'Candidate lookup requires a valid email.' );
+		}
+		$data = $this->client->get_json( '/public/api/v1/candidate/get', array( 'search' => trim( $email ), 'start' => 0, 'limit' => 100 ) );
+		$rows = GiigCandidateLookup::rows( $data );
+		if ( count( $rows ) >= 100 ) {
+			throw new SourceException( 'Giig candidate lookup reached its limit; manual review is required.', true );
+		}
+		return GiigCandidateLookup::exact_email_matches( $rows, $email );
+	}
+
+	/** Verify a staff-supplied ID without performing an email search. */
+	public function find_candidate_by_id( string $id ): ?array {
+		if ( ! preg_match( '/^[1-9][0-9]{0,19}$/', $id ) ) {
+			throw new SourceException( 'Candidate verification requires a valid ID.' );
+		}
+		$data = $this->client->get_json( '/public/api/v1/candidate/get', array( 'id' => $id, 'start' => 0, 'limit' => 2 ) );
+		return GiigCandidateLookup::by_id( GiigCandidateLookup::rows( $data ), $id );
+	}
+
+	/** Map only supported, non-sensitive profile basics; never tax/bank/signature data. */
+	public function update_profile( string $id, CandidatePayload $profile, array $address ): void {
+		$this->update_candidate( $id, array(
+			'FirstName' => $profile->first_name,
+			'LastName' => $profile->last_name,
+			'PhoneNumber' => $profile->phone,
+			'RoleTitle' => $profile->role_title,
+			'Location' => $profile->location,
+			'AddressLine1' => $address['line1'] ?? '',
+			'Town' => $address['town'] ?? '',
+			'County' => $address['county'] ?? '',
+			'Postcode' => $address['postcode'] ?? '',
+		) );
 	}
 
 	public function register_candidate( CandidatePayload $payload ): CandidateResult {
@@ -65,14 +101,33 @@ final class GiigCandidateSink implements CandidateSink {
 	 * @param array<string,string> $fields PascalCase Giig fields.
 	 */
 	public function update_candidate( string $candidate_id, array $fields ): void {
-		$body = array( 'CandidateId' => $candidate_id );
+		$allowed = array(
+			'FirstName',
+			'LastName',
+			'PhoneNumber',
+			'RoleTitle',
+			'Skills',
+			'Tags',
+			'Currency',
+			'SalaryExpectations',
+			'LinkedIn',
+			'Source',
+			'Location',
+			'ProfilePicture',
+			'AddressLine1',
+			'Town',
+			'County',
+			'Country',
+			'Postcode',
+			'Latitude',
+			'Longitude',
+			'Summary',
+		);
+		$body    = array( 'CandidateId' => $candidate_id );
 		foreach ( $fields as $key => $value ) {
-			if ( '' !== trim( $value ) ) {
+			if ( in_array( $key, $allowed, true ) && '' !== trim( $value ) ) {
 				$body[ $key ] = trim( $value );
 			}
-		}
-		if ( null !== $this->company_id && '' !== $this->company_id ) {
-			$body['CompanyId'] = $this->company_id;
 		}
 		$this->client->post_json( '/public/api/v1/candidate/update', $body );
 	}

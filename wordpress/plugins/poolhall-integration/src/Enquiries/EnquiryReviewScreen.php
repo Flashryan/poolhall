@@ -26,7 +26,10 @@ final class EnquiryReviewScreen {
 	}
 
 	public function register(): void {
-		add_action( 'admin_menu', array( $this, 'menu' ) );
+		// The Candidates top-level menu is registered at the default priority.
+		// Register this child afterwards so WordPress derives the correct
+		// `candidates_page_*` hook instead of an inaccessible `admin_page_*` hook.
+		add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 		add_action( 'admin_post_poolhall_enquiry_review', array( $this, 'handle_action' ) );
 	}
 

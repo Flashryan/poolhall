@@ -78,10 +78,10 @@ final class AuthForms {
 	 * and an optional cross-link row beneath the card (spec §3.9).
 	 */
 	private function auth_card( string $title, string $sub, string $inner, string $foot = '' ): string {
-		$logo_url = POOLHALL_INTEGRATION_URL . 'assets/img/content/poolhall-logo.png';
+		$logo_url = \Poolhall\Integration\Support\BrandAssets::url( 'logo-dark.svg' );
 		$head     = '<div class="ph-auth-card__head">'
 			. '<a class="ph-auth-card__logo" href="' . esc_url( home_url( '/' ) ) . '">'
-			. '<img src="' . esc_url( $logo_url ) . '" alt="" width="40" height="40" /><span>Poolhall</span></a>'
+			. '<img src="' . esc_url( $logo_url ) . '" alt="Poolhall Recruitment" width="200" height="50" /></a>'
 			. '<h1 class="ph-auth-card__title">' . esc_html( $title ) . '</h1>'
 			. ( '' !== $sub ? '<p class="ph-auth-card__sub">' . esc_html( $sub ) . '</p>' : '' )
 			. '</div>';
